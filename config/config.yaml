@@ -1,0 +1,28 @@
+variables:
+  forcing:
+    - cos_latitude
+    - cos_longitude
+  diagnostic:
+    - t2m
+  prognostic:
+    - sp
+
+dataset:
+  _target_: equicast.dataset.AnemoiDataset
+  path: /home/masc/remote/data/era5_anemoi.zarr
+  variables: ${variables}
+
+model:
+  _target_: equicast.model.simple.Simple
+
+trainer:
+  _target_: equicast.trainer.trainer.Trainer
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+
+scheduler:
+  null
+  # _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  # mode: min

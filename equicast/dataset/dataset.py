@@ -1,15 +1,15 @@
+import torch
 from anemoi.datasets import open_dataset
+from torch.utils.data import Dataset
 
-#  from torch.utils.data import Dataset
 
-
-class Dataset:
-    def __init__(self, path, forcing=None, prognostic=None, diagnostic=None):
+class AnemoiDataset(Dataset):
+    def __init__(self, path, variables):
         self.data = open_dataset(path)
         self.data.name_to_index
-        self.forcing_idxs = self._get_data_idxs(forcing)
-        self.prognostic_idxs = self._get_data_idxs(prognostic)
-        self.diagnostic_idxs = self._get_data_idxs(diagnostic)
+        self.forcing_idxs = self._get_data_idxs(variables.forcing)
+        self.prognostic_idxs = self._get_data_idxs(variables.prognostic)
+        self.diagnostic_idxs = self._get_data_idxs(variables.diagnostic)
 
         pass
 
@@ -20,16 +20,17 @@ class Dataset:
         return len(self.data) - 1
 
     def __getitem__(self, idx):
-        frame = self.data[idx].squeeze()
+        cond = torch.tensor(self.data[idx].squeeze())
+        target = torch.tensor(self.data[idx + 1].squeeze())
 
-        forcing = frame[self.forcing_idxs]
-        prognostic = frame[self.prognostic_idxs]
-        diagnostic = frame[self.diagnostic_idxs]
+        forcing = cond[self.forcing_idxs]
+        prognostic = cond[self.prognostic_idxs]
+        cond = torch.concatenate([forcing, prognostic])
 
-        batch = {
-            "forcing": forcing,
-            "prognostic": prognostic,
-            "diagnostic": diagnostic,
-        }
+        prognostic = target[self.prognostic_idxs]
+        diagnostic = target[self.diagnostic_idxs]
+        target = torch.concatenate([prognostic, diagnostic])
+
+        batch = {"condition": cond.T, "target": target.T}
 
         return batch

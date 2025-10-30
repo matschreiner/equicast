@@ -2,3 +2,5 @@
 *cpython*
 *.egg*
 venv
+lightning_logs
+outputs
