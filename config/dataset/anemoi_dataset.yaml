@@ -1,6 +1,0 @@
-_target_: equicast.dataset.AnemoiDataset
-
-path: /home/masc/remote/data/era5_anemoi.zarr
-forcing: [cos_latitude]
-diagnostic: [t2m]
-prognostic: [sp]

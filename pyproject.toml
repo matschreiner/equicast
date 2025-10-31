@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Minimal package for Equicast experiments"
 authors = [{ name = "Mathias Schreiner" }]
 requires-python = ">=3.10"
-dependencies = ['mlflow', 'anemoi-datasets']
+dependencies = ['mlflow', 'anemoi-datasets', 'anemoi-graphs', 'trimesh']
 
 [tool.setuptools.packages.find]
 where = ["."]

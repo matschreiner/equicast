@@ -13,21 +13,26 @@ dataset:
   path: /home/masc/remote/data/era5_anemoi.zarr
   variables: ${variables}
 
+graph_provider:
+  _target_: equicast.graph_provider.static_graph_provider.StaticGraphProvider
+  path: ./graph/graph.pt
+
 model:
   _target_: equicast.model.simple.Simple
 
 trainer:
   _target_: equicast.trainer.trainer.Trainer
+  callbacks:
+    - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+      dirpath: ./checkpoints
+      filename: best
+      save_top_k: 1
 
 optimizer:
   _target_: torch.optim.Adam
   lr: 0.001
 
-scheduler:
-  null
-  # _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
-  # mode: min
-  # monitor: loss
+scheduler: null
 
 logger:
   _target_: pytorch_lightning.loggers.mlflow.MLFlowLogger
