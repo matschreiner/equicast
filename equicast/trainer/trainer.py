@@ -7,6 +7,7 @@ class Trainer(pl.Trainer):
     def __init__(self, optimizer=None, scheduler=None, *args, **kwargs):
         self.scheduler = scheduler
         self.optimizer = optimizer
+        self.scheduler = None
 
         super().__init__(*args, **kwargs)
 
@@ -33,6 +34,16 @@ class Trainer(pl.Trainer):
 
     @staticmethod
     def on_train_batch_end(pl_module, loss, batch, dataloader_idx):
-        pl_module.log(
-            "train/loss", loss["loss"], prog_bar=True, on_step=True, on_epoch=True
-        )
+        pl_module.log("loss", loss["loss"], prog_bar=True, on_step=True, on_epoch=True)
+        log_lr(pl_module)
+
+
+def log_lr(pl_module):
+    opt = pl_module.trainer.optimizers[0]
+    lr = opt.param_groups[0]["lr"]
+    pl_module.log(
+        "lr",
+        lr,
+        on_step=True,
+        on_epoch=False,  # usually makes sense only per step
+    )

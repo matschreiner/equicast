@@ -2,6 +2,8 @@ import torch
 from anemoi.datasets import open_dataset
 from torch.utils.data import Dataset
 
+from equicast import DTYPE
+
 
 class AnemoiDataset(Dataset):
     def __init__(self, path, variables):
@@ -11,7 +13,7 @@ class AnemoiDataset(Dataset):
         self.prognostic_idxs = self._get_data_idxs(variables.prognostic)
         self.diagnostic_idxs = self._get_data_idxs(variables.diagnostic)
 
-        pass
+        self.statistics = self.to_torch(self.data.statistics)
 
     def _get_data_idxs(self, names):
         return [self.data.name_to_index[name] for name in names]
@@ -19,9 +21,22 @@ class AnemoiDataset(Dataset):
     def __len__(self):
         return len(self.data) - 1
 
+    def to_torch(self, statistics):
+        for key in statistics:
+            statistics[key] = torch.tensor(statistics[key], dtype=DTYPE)
+        return statistics
+
+    def normalize(self, data):
+        mean = self.statistics["mean"]
+        std = self.statistics["stdev"]
+        return (data - mean) / std
+
     def __getitem__(self, idx):
-        cond = torch.tensor(self.data[idx].squeeze())
-        target = torch.tensor(self.data[idx + 1].squeeze())
+        cond = torch.tensor(self.data[idx].squeeze()).T
+        target = torch.tensor(self.data[idx + 1].squeeze()).T
+
+        cond = self.normalize(cond)
+        target = self.normalize(target)
 
         forcing = cond[self.forcing_idxs]
         prognostic = cond[self.prognostic_idxs]
