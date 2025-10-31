@@ -6,9 +6,7 @@ from omegaconf import OmegaConf
 
 def main(cfg):
     dataset = instantiate(cfg.dataset)
-    instantiate(cfg.model)
-    variables = cfg.variables
-    model = instantiate(cfg.model, variables=variables)
+    model = instantiate(cfg.model)
     optimizer = instantiate(cfg.optimizer, params=model.parameters())
     scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
     logger = instantiate(cfg.logger)
