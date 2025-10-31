@@ -6,7 +6,7 @@ from equicast import DTYPE
 
 
 class AnemoiDataset(Dataset):
-    def __init__(self, path, variables, transforms=None):
+    def __init__(self, path, variables, graph_provider=None):
         super().__init__()
         self.data = open_dataset(path)
         self.data.name_to_index
@@ -14,10 +14,7 @@ class AnemoiDataset(Dataset):
         self.prognostic_idxs = self._get_data_idxs(variables.prognostic)
         self.diagnostic_idxs = self._get_data_idxs(variables.diagnostic)
         self.statistics = self.to_torch(self.data.statistics)
-
-        #  transforms = list(transforms)
-        assert isinstance(transforms, list) or transforms is None
-        self.transforms = transforms if transforms is not None else []
+        self.graph_provider = graph_provider
 
     def _get_data_idxs(self, names):
         return [self.data.name_to_index[name] for name in names]
@@ -50,9 +47,10 @@ class AnemoiDataset(Dataset):
         diagnostic = target[self.diagnostic_idxs]
         target = torch.concatenate([prognostic, diagnostic])
 
-        batch = {"condition": cond.T, "target": target.T, "idx"=idx}
+        batch = {"condition": cond.T, "target": target.T, "idx": idx}
 
-        for transform in self.transforms:
-            batch = transform(batch)
+        if self.graph_provider is not None:
+            graph = self.graph_provider.get_graph(idx)
+            batch["graph"] = graph
 
         return batch

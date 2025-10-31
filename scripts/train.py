@@ -5,18 +5,13 @@ from omegaconf import OmegaConf
 
 
 def main(cfg):
-    #  def t(batch):
-    #      __import__("pdb").set_trace()  # TODO delme
-    #      print(batch)
-    #      return batch
-    #
-    dataset = instantiate(cfg.dataset, transforms=[t])
-    variables = cfg.dataset.variables
+    dataset = instantiate(cfg.dataset)
+    instantiate(cfg.model)
+    variables = cfg.variables
     model = instantiate(cfg.model, variables=variables)
     optimizer = instantiate(cfg.optimizer, params=model.parameters())
     scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
     logger = instantiate(cfg.logger)
-    graph_provider = instantiate(cfg.graph_provider)
 
     trainer = instantiate(
         cfg.trainer,

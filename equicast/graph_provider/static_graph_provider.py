@@ -18,5 +18,5 @@ class StaticGraphProvider(BaseGraphProvider):
         self.graph = self.graph.to(*args, **kwargs)
         return self
 
-    def get_graph(self, idx):
+    def get_graph(self, idx=None):
         return self.graph
