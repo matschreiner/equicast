@@ -4,6 +4,7 @@ variables:
     - cos_longitude
   diagnostic:
     - t2m
+    - msl
   prognostic:
     - sp
 
@@ -26,3 +27,10 @@ scheduler:
   null
   # _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
   # mode: min
+  # monitor: loss
+
+logger:
+  _target_: pytorch_lightning.loggers.mlflow.MLFlowLogger
+  experiment_name: masc
+  tracking_uri: https://mlflow.dmidev.org/
+  run_name: null
