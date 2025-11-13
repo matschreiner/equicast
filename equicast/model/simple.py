@@ -13,11 +13,15 @@ class Simple(pl.LightningModule):
         x = self.net(x)
         return x
 
+    def loss(self, pred, target):
+        loss = (pred - target) ** 2
+        return loss.mean()
+
     def training_step(self, batch, batch_idx):
         cond = batch["condition"]
         target = batch["target"]
 
         out = self.forward(cond)
+        loss = self.loss(out, target)
 
-        loss = (out - target) ** 2
         return loss.mean()
