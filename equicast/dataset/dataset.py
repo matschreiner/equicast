@@ -39,15 +39,15 @@ class AnemoiDataset(Dataset):
         cond = self.normalize(cond)
         target = self.normalize(target)
 
-        forcing = cond[self.forcing_idxs]
-        prognostic = cond[self.prognostic_idxs]
-        cond = torch.concatenate([forcing, prognostic])
+        forcing = cond[:, self.forcing_idxs]
+        prognostic = cond[:, self.prognostic_idxs]
+        cond = torch.concatenate([forcing, prognostic], dim=-1)
 
-        prognostic = target[self.prognostic_idxs]
-        diagnostic = target[self.diagnostic_idxs]
-        target = torch.concatenate([prognostic, diagnostic])
+        prognostic = target[:, self.prognostic_idxs]
+        diagnostic = target[:, self.diagnostic_idxs]
+        target = torch.concatenate([prognostic, diagnostic], dim=-1)
 
-        batch = {"condition": cond.T, "target": target.T, "idx": idx}
+        batch = {"condition": cond, "target": target, "idx": idx}
 
         if self.graph_provider is not None:
             graph = self.graph_provider.get_graph(idx)
