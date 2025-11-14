@@ -13,12 +13,19 @@ dataset:
   path: /home/masc/remote/data/era5_anemoi.zarr
   variables: ${variables}
   graph_provider:
-    _target_: equicast.graph_provider.graph_provider.StaticGraphProvider
+    _target_: equicast.graph.graph_provider.StaticGraphProvider
     path: ./graph/graph.pt
 
 model:
   _target_: equicast.model.simple.Simple
   variables: ${variables}
+  # _target_: equicast.model.from_checkpoint
+  # model_class: equicast.model.simple.Simple
+  # checkpoint_provider:
+  #   _target_: equicast.checkpoint.MLFlowCheckpointProvider
+  #   tracking_uri: https://mlflow.dmidev.org/
+  #   run_id: 6b1df7f1d616435883cf3b672cb8f7ba
+  #   checkpoint_name: latest
 
 trainer:
   _target_: equicast.trainer.trainer.Trainer
