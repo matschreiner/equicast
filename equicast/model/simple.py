@@ -12,6 +12,7 @@ class Simple(pl.LightningModule):
 
     def forward(self, x):
         x = self.net(x)
+        __import__("pdb").set_trace()  # TODO delme
         return x
 
     def loss(self, pred, target):

@@ -4,3 +4,6 @@
 venv
 lightning_logs
 outputs
+graph
+checkpoints
+*.ckpt

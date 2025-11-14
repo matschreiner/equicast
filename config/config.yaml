@@ -3,14 +3,16 @@ variables:
     - cos_latitude
     - cos_longitude
   diagnostic:
-    - t2m
-    - msl
+    - 10u
+    - 10v
+    - 2d
+    - 2t
   prognostic:
     - sp
 
 dataset:
   _target_: equicast.dataset.AnemoiDataset
-  path: /home/masc/remote/data/era5_anemoi.zarr
+  path: /home/masc/storage/mini_aifs.zarr
   variables: ${variables}
   graph_provider:
     _target_: equicast.graph.graph_provider.StaticGraphProvider
