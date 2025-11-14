@@ -1,0 +1,1 @@
+from equicast.model.from_checkpoint import from_checkpoint
