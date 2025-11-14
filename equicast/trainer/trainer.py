@@ -34,16 +34,20 @@ class Trainer(pl.Trainer):
 
     @staticmethod
     def on_train_batch_end(pl_module, loss, batch, dataloader_idx):
-        pl_module.log("loss", loss["loss"], prog_bar=True, on_step=True, on_epoch=True)
-        log_lr(pl_module)
+        lr = get_lr(pl_module)
+        pl_module.log_dict(
+            {
+                **loss,
+                "lr": lr,
+            },
+            on_step=True,
+            on_epoch=False,
+            prog_bar=True,
+            logger=True,
+        )
 
 
-def log_lr(pl_module):
+def get_lr(pl_module):
     opt = pl_module.trainer.optimizers[0]
     lr = opt.param_groups[0]["lr"]
-    pl_module.log(
-        "lr",
-        lr,
-        on_step=True,
-        on_epoch=False,  # usually makes sense only per step
-    )
+    return lr
