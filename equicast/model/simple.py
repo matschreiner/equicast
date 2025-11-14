@@ -5,6 +5,7 @@ import torch
 class Simple(pl.LightningModule):
     def __init__(self, variables):
         super(Simple, self).__init__()
+        self.save_hyperparameters()
         in_channels = len(variables.forcing) + len(variables.prognostic)
         out_channels = len(variables.prognostic) + len(variables.diagnostic)
         self.net = torch.nn.Linear(in_channels, out_channels)
