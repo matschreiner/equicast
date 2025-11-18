@@ -2,6 +2,8 @@ from types import MethodType
 
 import pytorch_lightning as pl
 
+from equicast.eval.plot import make_plot
+
 
 class Trainer(pl.Trainer):
     def __init__(self, optimizer=None, scheduler=None, *args, **kwargs):
@@ -45,6 +47,15 @@ class Trainer(pl.Trainer):
             prog_bar=True,
             logger=True,
         )
+
+        if (pl_module.global_step + 1) % 999 == 0:
+            path = f"/tmp/plot_step_{pl_module.global_step + 1}.png"
+
+            make_plot(pl_module, batch, path)
+            pl_module.logger.log_artifact(
+                path,
+                artifact_path="plots",
+            )
 
 
 def get_lr(pl_module):
