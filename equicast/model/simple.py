@@ -10,20 +10,19 @@ class Simple(pl.LightningModule):
         out_channels = len(variables.prognostic) + len(variables.diagnostic)
         self.net = torch.nn.Linear(in_channels, out_channels)
 
-    def forward(self, x):
-        x = self.net(x)
-        __import__("pdb").set_trace()  # TODO delme
-        return x
+    def forward(self, batch):
+        x = batch["condition"]
+        y = self.net(x)
+        return y
 
     def loss(self, pred, target):
         loss = (pred - target) ** 2
         return loss.mean()
 
     def training_step(self, batch, batch_idx):
-        cond = batch["condition"]
         target = batch["target"]
 
-        out = self.forward(cond)
+        out = self.forward(batch)
         loss = self.loss(out, target)
 
         return loss.mean()
