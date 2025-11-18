@@ -73,29 +73,6 @@ class EmbedNode(nn.Module):
         return self.mlp(node_features)
 
 
-#  class graphconv(messagepassing):
-#      def __init__(self, in_dim, out_dim, aggr="mean"):
-#          super().__init__(aggr=aggr)
-#          self.embed_edge = embededge(out_dim=out_dim)
-#          self.embed_node = embednode(in_dim=in_dim, out_dim=out_dim)
-#
-#      def forward(
-#          self,
-#          src: tensor,
-#          edge_storage: dict,
-#          size: optional[tuple[int, int]] = none,
-#      ) -> tensor:
-#
-#          # forward embed edge
-#          #  def forward(self, edge_storage) -> tensor:
-#          #      edge_attr_in = torch.cat([edge_storage["edge_dirs"], edge_storage["edge_length"]], dim=-1)
-#          #      return self.mlp(edge_attr_in)
-#
-#      def message(self, ...):
-#          # embed nodes and edges
-#          # return elementwise multiplication of embeddings
-
-
 class GraphConv(MessagePassing):
     def __init__(self, in_dim: int, out_dim: int, aggr: str = "mean"):
         super().__init__(aggr=aggr)
