@@ -2,6 +2,8 @@ variables:
   forcing:
     - cos_latitude
     - cos_longitude
+    - sin_latitude
+    - sin_longitude
   diagnostic:
     - 10u
     - 10v
@@ -16,11 +18,16 @@ dataset:
   variables: ${variables}
   graph_provider:
     _target_: equicast.graph.graph_provider.StaticGraphProvider
-    path: ./graph/graph.pt
+    path: ./graph/aifs-graph.pt
 
 model:
-  _target_: equicast.model.simple.Simple
+  _target_: equicast.model.gnn.GNN
   variables: ${variables}
+  hidden_dim: 16
+
+  # _target_: equicast.model.simple.Simple
+  # variables: ${variables}
+
   # _target_: equicast.model.from_checkpoint
   # model_class: equicast.model.simple.Simple
   # checkpoint_provider:
@@ -28,10 +35,11 @@ model:
   #   tracking_uri: https://mlflow.dmidev.org/
   #   run_id: 6b1df7f1d616435883cf3b672cb8f7ba
   #   checkpoint_name: latest
+  #
 
 trainer:
-  _target_: equicast.trainer.trainer.Trainer
-  max_epochs: 1
+  _target_: equicast.trainer.Trainer
+  max_epochs: 10
   callbacks:
     - _target_: pytorch_lightning.callbacks.ModelCheckpoint
       every_n_epochs: 1
