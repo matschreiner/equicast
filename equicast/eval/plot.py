@@ -37,7 +37,7 @@ def make_plot(module, batch, path):
     proj = ccrs.PlateCarree()
     fig, ax = plt.subplots(3, 1, figsize=(10, 5), subplot_kw=dict(projection=proj))
 
-    coords = batch["graph"]["data"].x.T
+    coords = batch["graph"]["data"].x.T.cpu()
 
     lat_rad = coords[0]  # [-π/2, π/2]
     lat_deg = lat_rad * 180 / np.pi
