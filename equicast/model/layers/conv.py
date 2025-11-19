@@ -41,30 +41,29 @@ class EmbedNode(nn.Module):
 class GraphConv(MessagePassing):
     def __init__(self, in_dim: int, out_dim: int, aggr: str = "mean"):
         super().__init__(aggr=aggr)
-        self.embed_edge = EmbedEdge(out_dim=out_dim)
-        self.embed_node = EmbedNode(in_dim=in_dim, out_dim=out_dim)
+        self.mlp = MLP(
+            in_dim=2 * in_dim,
+            out_dim=out_dim,
+        )
 
     def forward(
         self,
-        src: torch.Tensor,
+        x: torch.Tensor,
         edge_storage: dict,
         size: Optional[tuple[int, int]] = None,
     ) -> torch.Tensor:
+
         edge_index: torch.Tensor = edge_storage["edge_index"].long()
 
-        edge_attr = self.embed_edge(edge_storage)
-        node_attr = self.embed_node(src)
-
         out = self.propagate(
+            x=x,
             edge_index=edge_index,
-            node_attr=node_attr,
-            edge_attr=edge_attr,
         )
 
         return out
 
-    def message(self, node_attr_j, edge_attr: torch.Tensor) -> torch.Tensor:
-        return node_attr_j * edge_attr
+    def message(self, x_j, x_i):
+        return self.mlp(torch.cat([x_i, x_j], dim=-1))
 
     def update(self, aggr_out: torch.Tensor) -> torch.Tensor:
         return aggr_out

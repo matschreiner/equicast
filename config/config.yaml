@@ -1,5 +1,5 @@
 defaults:
-  - model: simple
+  - model: gnn
   - variables: base
   - _self_
 
