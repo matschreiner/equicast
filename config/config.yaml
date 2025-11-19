@@ -1,16 +1,7 @@
-variables:
-  forcing:
-    - cos_latitude
-    - cos_longitude
-    - sin_latitude
-    - sin_longitude
-  diagnostic:
-    - 10u
-    - 10v
-    - 2d
-    - 2t
-  prognostic:
-    - sp
+defaults:
+  - model: simple
+  - variables: base
+  - _self_
 
 dataset:
   _target_: equicast.dataset.AnemoiDataset
@@ -20,26 +11,9 @@ dataset:
     _target_: equicast.graph.graph_provider.StaticGraphProvider
     path: ./graph/aifs-graph.pt
 
-model:
-  _target_: equicast.model.gnn.GNN
-  variables: ${variables}
-  hidden_dim: 16
-
-  # _target_: equicast.model.simple.Simple
-  # variables: ${variables}
-
-  # _target_: equicast.model.from_checkpoint
-  # model_class: equicast.model.simple.Simple
-  # checkpoint_provider:
-  #   _target_: equicast.checkpoint.MLFlowCheckpointProvider
-  #   tracking_uri: https://mlflow.dmidev.org/
-  #   run_id: 6b1df7f1d616435883cf3b672cb8f7ba
-  #   checkpoint_name: latest
-  #
-
 trainer:
   _target_: equicast.trainer.Trainer
-  max_epochs: 10
+  max_epochs: 30
   callbacks:
     - _target_: pytorch_lightning.callbacks.ModelCheckpoint
       every_n_epochs: 1
@@ -58,7 +32,6 @@ optimizer:
 
 scheduler: null
 logger:
-  # _target_: pytorch_lightning.loggers.mlflow.MLFlowLogger
   _target_: equicast.logger.mlflow.MLFlowLogger
   experiment_name: masc
   tracking_uri: https://mlflow.dmidev.org/
