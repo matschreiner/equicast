@@ -1,0 +1,7 @@
+_target_: equicast.model.from_checkpoint
+model_class: equicast.model.simple.Simple
+checkpoint_provider:
+  _target_: equicast.checkpoint.MLFlowCheckpointProvider
+  tracking_uri: https://mlflow.dmidev.org/
+  run_id: ???
+  checkpoint_name: latest

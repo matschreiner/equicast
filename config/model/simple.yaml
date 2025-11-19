@@ -1,0 +1,3 @@
+_target_: equicast.model.simple.Simple
+variables: ${variables}
+hidden_dim: 64

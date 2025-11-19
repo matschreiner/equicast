@@ -1,0 +1,3 @@
+_target_: equicast.model.gnn.GNN
+variables: ${variables}
+hidden_dim: 64
