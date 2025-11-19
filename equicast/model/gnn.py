@@ -2,10 +2,6 @@ from typing import Optional
 
 import pytorch_lightning as pl
 import torch
-
-#  from anemoi.models.layers.conv import GraphConv, GraphTransformerConv
-from anemoi.models.layers.mlp import MLP
-from anemoi.models.layers.normalization import AutocastLayerNorm
 from anemoi.utils.config import DotDict
 from torch import Tensor, nn
 from torch.nn import GELU, Linear
@@ -14,34 +10,7 @@ from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.typing import Adj, OptPairTensor, OptTensor, Size
 from torch_geometric.utils import scatter, softmax
 
-
-class MLP(nn.Module):
-    def __init__(
-        self,
-        in_dim,
-        out_dim,
-        activation=GELU(),
-        norm=AutocastLayerNorm,
-        num_layers=3,
-        hidden_dim=None,
-    ):
-        super().__init__()
-
-        if hidden_dim is None:
-            hidden_dim = out_dim
-
-        layers = []
-        for i in range(num_layers):
-            input_dim = in_dim if i == 0 else hidden_dim
-            output_dim = out_dim if i == num_layers - 1 else hidden_dim
-            layers.append(Linear(input_dim, output_dim))
-            if i != num_layers - 1:
-                layers.append(norm(output_dim))
-                layers.append(activation)
-        self.network = nn.Sequential(*layers)
-
-    def forward(self, x: Tensor) -> Tensor:
-        return self.network(x)
+from equicast.model.layers.mlp import MLP
 
 
 class EmbedEdge(nn.Module):
