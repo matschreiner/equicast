@@ -24,12 +24,26 @@ def main(cfg):
     trainer.fit(model, dataset)
 
 
+import sys
+
+from hydra import compose, initialize
+from hydra.utils import instantiate
+from omegaconf import DictConfig
+
 if __name__ == "__main__":
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument("config_path")
+    overrides = sys.argv[1:]
 
-    args = argparser.parse_args()
-    cfg = OmegaConf.load(args.config_path)
+    with initialize(config_path="../config", version_base="1.3"):
+        cfg = compose(config_name="config", overrides=overrides)
 
-    OmegaConf.resolve(cfg)
     main(cfg)
+
+#  if __name__ == "__main__":
+#      argparser = argparse.ArgumentParser()
+#      argparser.add_argument("config_path")
+#
+#      args = argparser.parse_args()
+#      cfg = OmegaConf.load(args.config_path)
+#
+#      OmegaConf.resolve(cfg)
+#      main(cfg)
