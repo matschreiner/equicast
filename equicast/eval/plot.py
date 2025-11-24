@@ -5,7 +5,6 @@ import numpy as np
 
 
 def plot_global_field(ax, lat, lon, field, title=None, vmin=None, vmax=None):
-
     lat = np.asarray(lat)
     lon = np.asarray(lon)
     field = np.asarray(field)
@@ -35,7 +34,7 @@ def make_plot(module, batch, path):
     target = batch["target"][:, -1].detach().cpu().numpy()
 
     proj = ccrs.PlateCarree()
-    fig, ax = plt.subplots(3, 1, figsize=(10, 5), subplot_kw=dict(projection=proj))
+    fig, ax = plt.subplots(3, 1, figsize=(20, 10), subplot_kw=dict(projection=proj))
 
     coords = batch["graph"]["data"].x.T.cpu()
 
