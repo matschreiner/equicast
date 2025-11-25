@@ -14,9 +14,9 @@ class FeatureRouter(torch.nn.Module):
     def _get_data_idxs(self, names):
         return [self.name_to_index[name] for name in names]
 
-    def transform(self, batch):
-        cond = batch.data[..., 0, :, :]
-        target = batch.data[..., 1, :, :]
+    def transform(self, data):
+        cond = data[..., 0, :, :]
+        target = data[..., 1, :, :]
 
         forcing = cond[..., self.forcing_idxs]
         prognostic = cond[..., self.prognostic_idxs]
@@ -26,13 +26,9 @@ class FeatureRouter(torch.nn.Module):
         diagnostic = target[..., self.diagnostic_idxs]
         target = torch.concatenate([prognostic, diagnostic], dim=-1)
 
-        batch["cond"] = cond
-        batch["target"] = target
-
         return DotDict(
             {
                 "cond": cond,
                 "target": target,
-                "idx": batch["idx"],
             }
         )
