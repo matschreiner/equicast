@@ -1,11 +1,9 @@
 import torch
 
-from equicast import utils
-
 
 class Scaler:
     def __init__(self, statistics):
-        self.statistics = utils.cast_dict(statistics, torch.Tensor)
+        self.statistics = statistics
         self.std = self.statistics["stdev"]
         self.mean = self.statistics["mean"]
 

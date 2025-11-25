@@ -13,7 +13,7 @@ def dataset():
 
 @pytest.fixture
 def batch(dataset):
-    dataloader = DataLoader(dataset, batch_size=2, shuffle=False)
+    dataloader = DataLoader(dataset, batch_size=3, shuffle=False)
 
     for batch in dataloader:
         return batch

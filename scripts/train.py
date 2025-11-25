@@ -1,16 +1,22 @@
-import argparse
-from pathlib import Path
-
 from hydra.utils import instantiate
-from omegaconf import OmegaConf
 
+import equicast
 
 def main(cfg):
+    # Data
     dataset = instantiate(cfg.dataset)
+    #  scaler = instantiate(cfg.scaler, statistics=dataset.statistics)
+    #  router = instantiate(cfg.feature_router, name_to_idx=dataset.data.name_to_index)
+
+    scaler = equicast.data.scaler Scaler(dataset.statistics)
+    __import__("pdb").set_trace() #TODO delme 
+
+    # Model
     model = instantiate(cfg.model)
     optimizer = instantiate(cfg.optimizer, params=model.parameters())
     scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
 
+    # Logger
     logger = instantiate(cfg.logger)
     logger.log_hyperparams({"config": cfg})
 

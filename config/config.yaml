@@ -1,6 +1,6 @@
 defaults:
-  - model: gnn
-  - variables: base
+  - model: from_checkpoint
+  - features: base
   - _self_
 
 dataset:
@@ -9,7 +9,7 @@ dataset:
   variables: ${variables}
   graph_provider:
     _target_: equicast.graph.graph_provider.StaticGraphProvider
-    path: ./graph/aifs-graph.pt
+    path: ./graph/aifs-single.pt
 
 trainer:
   _target_: equicast.trainer.Trainer

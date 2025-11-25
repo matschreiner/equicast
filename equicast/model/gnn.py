@@ -1,23 +1,24 @@
 import pytorch_lightning as pl
-from torch import nn
 
 from equicast.model.layers.conv import GraphConv
 
 
 class GNN(pl.LightningModule):
-    def __init__(self, variables, hidden_dim=16):
+    def __init__(self, features, preprocess=None):
         super().__init__()
         self.save_hyperparameters()
-        out_dim = len(variables.prognostic) + len(variables.diagnostic)
-        in_dim = len(variables.forcing) + len(variables.prognostic)
-
-        self.enc = GraphConv(in_dim=in_dim, out_dim=out_dim)
-        #  self.dec = GraphConv(in_dim=hidden_dim, out_dim=out_dim)
+        out_dim = len(features.prognostic) + len(features.diagnostic)
+        in_dim = len(features.forcing) + len(features.prognostic)
+        self.preprocess = preprocess
+        self.conv = GraphConv(in_dim=in_dim, out_dim=out_dim)
 
     def forward(self, batch):
+        if self.preprocess is not None:
+            batch = self.preprocess(batch)
+
         graph = batch["graph"]
 
-        x = self.enc(
+        x = self.conv(
             batch["condition"],
             graph["data", "to", "data"],
             size=(graph["data"], graph["data"]),

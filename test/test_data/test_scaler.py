@@ -1,6 +1,6 @@
 import torch
 
-from equicast.model.layers.scaler import Scaler
+from equicast.data.scaler import Scaler
 
 
 def test_scaler_instantiate(dataset, batch):
