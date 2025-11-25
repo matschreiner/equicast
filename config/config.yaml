@@ -1,12 +1,12 @@
 defaults:
-  - model: from_checkpoint
+  - model: simple
   - features: base
   - _self_
 
 dataset:
   _target_: equicast.dataset.AnemoiDataset
   path: /home/masc/storage/mini_aifs.zarr
-  variables: ${variables}
+  features: ${features}
   graph_provider:
     _target_: equicast.graph.graph_provider.StaticGraphProvider
     path: ./graph/aifs-single.pt
