@@ -1,15 +1,23 @@
 defaults:
-  - model: simple
+  - backbone: simple
   - features: base
   - _self_
+
+model:
+  _target_: equicast.model.model.Model
+  backbone: ${backbone}
+  features: ${features}
 
 dataset:
   _target_: equicast.dataset.AnemoiDataset
   path: /home/masc/storage/mini_aifs.zarr
-  features: ${features}
   graph_provider:
     _target_: equicast.graph.graph_provider.StaticGraphProvider
     path: ./graph/aifs-single.pt
+
+dataloader:
+  _target_: torch_geometric.data.DataLoader
+  batch_size: 2
 
 trainer:
   _target_: equicast.trainer.Trainer

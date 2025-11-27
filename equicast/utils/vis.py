@@ -5,9 +5,7 @@ import numpy as np
 import plotly.graph_objects as go
 
 
-def plot_field_interactive(
-    field, coords, n_lat=256, n_lon=512, center_lon=90, center_lat=0
-):
+def plot_field_interactive(field, coords, n_lat=256, n_lon=512, center_lon=90, center_lat=0):
     field = field.detach()
     lon = ((coords[:, 1].numpy() * 180 / np.pi + 180) % 360) - 180
     lat = np.clip(coords[:, 0].numpy() * 180 / np.pi, -90, 90)
@@ -69,5 +67,3 @@ def plot_field_interactive(
     with tempfile.NamedTemporaryFile("w", suffix=".html", delete=False) as f:
         fig.write_html(f.name, include_plotlyjs="cdn")
         webbrowser.open(f.name)
-
-    __import__("sys").exit()  # TODO delme

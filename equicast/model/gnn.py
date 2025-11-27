@@ -19,7 +19,7 @@ class GNN(pl.LightningModule):
         graph = batch["graph"]
 
         x = self.conv(
-            batch["condition"],
+            batch["cond"],
             graph["data", "to", "data"],
             size=(graph["data"], graph["data"]),
         )

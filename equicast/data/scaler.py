@@ -12,3 +12,6 @@ class Scaler:
 
     def inverse_transform(self, x: torch.Tensor) -> torch.Tensor:
         return x * self.std + self.mean
+
+    def __call__(self, x: torch.Tensor) -> torch.Tensor:
+        return self.transform(x)
