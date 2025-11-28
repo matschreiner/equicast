@@ -19,11 +19,11 @@ class MLP(torch.nn.Module):
 
         layers = []
         for i in range(num_layers):
-            input_dim = in_dim if i == 0 else hidden_dim
-            output_dim = out_dim if i == num_layers - 1 else hidden_dim
-            layers.append(torch.nn.Linear(input_dim, output_dim))
+            in_dim = in_dim if i == 0 else hidden_dim
+            out_dim = out_dim if i == num_layers - 1 else hidden_dim
+            layers.append(torch.nn.Linear(in_dim, out_dim))
             if i != num_layers - 1:
-                layers.append(norm(output_dim))
+                layers.append(norm(out_dim))
                 layers.append(activation)
         self.network = torch.nn.Sequential(*layers)
 

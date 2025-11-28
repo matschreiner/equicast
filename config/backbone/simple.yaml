@@ -1,3 +1,1 @@
-_target_: equicast.model.simple.Simple
-features: ${features}
-hidden_dim: 64
+_target_: equicast.model.backbones.simple.Simple

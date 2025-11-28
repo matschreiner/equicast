@@ -7,11 +7,11 @@ class Scaler:
         self.std = self.statistics["stdev"]
         self.mean = self.statistics["mean"]
 
-    def transform(self, x: torch.Tensor) -> torch.Tensor:
-        return (x - self.mean) / self.std
+    def transform(self, graph):
+        x = graph["data"].raw
+        x = (x - self.mean) / self.std
+        graph["data"].raw = x
+        return graph
 
-    def inverse_transform(self, x: torch.Tensor) -> torch.Tensor:
-        return x * self.std + self.mean
-
-    def __call__(self, x: torch.Tensor) -> torch.Tensor:
-        return self.transform(x)
+    def __call__(self, graph):
+        return self.transform(graph)

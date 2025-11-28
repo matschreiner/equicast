@@ -1,12 +1,8 @@
 defaults:
   - backbone: simple
   - features: base
+  - model: from_checkpoint
   - _self_
-
-model:
-  _target_: equicast.model.model.Model
-  backbone: ${backbone}
-  features: ${features}
 
 dataset:
   _target_: equicast.dataset.AnemoiDataset
@@ -16,8 +12,9 @@ dataset:
     path: ./graph/aifs-single.pt
 
 dataloader:
-  _target_: torch_geometric.data.DataLoader
+  _target_: torch_geometric.loader.DataLoader
   batch_size: 2
+  num_workers: 4
 
 trainer:
   _target_: equicast.trainer.Trainer

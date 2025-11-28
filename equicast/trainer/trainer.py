@@ -19,9 +19,7 @@ class Trainer(pl.Trainer):
         *args,
         **kwargs,
     ):
-        model.configure_optimizers = MethodType(
-            self.configure_optimizers_callback(), model
-        )
+        model.configure_optimizers = MethodType(self.configure_optimizers_callback(), model)
         model.on_train_batch_end = MethodType(self.on_train_batch_end, model)
 
         super().fit(model, *args, **kwargs)
@@ -47,15 +45,15 @@ class Trainer(pl.Trainer):
             prog_bar=True,
             logger=True,
         )
-
-        if (pl_module.global_step + 1) % 999 == 0:
-            path = f"/tmp/plot_step_{pl_module.global_step + 1}.png"
-
-            make_plot(pl_module, batch, path)
-            pl_module.logger.log_artifact(
-                path,
-                artifact_path="plots",
-            )
+        #  if (pl_module.global_step + 1) % 999 == 0:
+        #      path = f"/tmp/plot_step_{pl_module.global_step + 1}.png"
+        #
+        #      make_plot(pl_module, batch, path)
+        #      pl_module.logger.log_artifact(
+        #          path,
+        #          artifact_path="plots",
+        #      )
+        #
 
 
 def get_lr(pl_module):

@@ -1,42 +1,54 @@
-import pytorch_lightning as pl
+import warnings
+from contextlib import contextmanager
 
-from equicast.data.feature_router import FeatureRouter
+import pytorch_lightning as pl
 
 
 class Model(pl.LightningModule):
     def __init__(
         self,
         backbone,
-        statistics,
-        name_to_index,
-        features=None,
+        scaler,
+        feature_router,
     ):
         super().__init__()
-        self.save_hyperparameters()
+        with ignore_backbone_warning():
+            self.save_hyperparameters()
+
         self.backbone = backbone
-        self.features = features
-        self.name_to_index = name_to_index
-        self.statistics = statistics
-        self.feature_router = FeatureRouter(features, name_to_index)
+        self.scaler = scaler
+        self.feature_router = feature_router
 
-    def forward(self, batch):
-        cond = batch["cond"]
-        #  target = batch["data"].target
-        self.prepare_input(cond)
+    def forward(self, graph):
+        graph = self.prepare_input(graph)
+        graph = self.backbone(graph)
+        return graph
 
-        graph = self.feature_router(batch["data"])
-
-        __import__("pdb").set_trace()  # TODO delme
-
-        self.backbone(graph)
-
-        return
+    def forecast(self, graph):
+        graph = self.prepare_input(graph)
+        pred = self.forward(graph)
+        return pred
 
     def prepare_input(self, graph):
-        graph.scalar_features = graph.cond
+        graph = self.scaler(graph)
+        graph = self.feature_router(graph)
+        return graph
 
-    def training_step(self, batch, batch_idx):
-        pred = self.forward(batch)
-        target = batch["target"]
+    def training_step(self, graph, batch_idx):
+        graph = self.forward(graph)
+
+        pred = graph["data"].pred
+        target = graph["data"].target
+
         loss = ((pred - target) ** 2).mean()
         return loss
+
+
+@contextmanager
+def ignore_backbone_warning():
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"Attribute 'backbone' is an instance of `nn\.Module`",
+        )
+        yield

@@ -3,6 +3,14 @@ from anemoi.utils.config import DotDict
 
 
 class FeatureRouter:
+    @property
+    def in_dim(self):
+        return len(self.in_idxs)
+
+    @property
+    def out_dim(self):
+        return len(self.out_idxs)
+
     def __init__(self, features, name_to_index):
         self.features = features
         self.name_to_index = name_to_index
@@ -11,8 +19,8 @@ class FeatureRouter:
         prognostic_idxs = self._get_data_idxs(features["prognostic"])
         diagnostic_idxs = self._get_data_idxs(features["diagnostic"])
 
-        self.input_idxs = forcing_idxs + prognostic_idxs
-        self.output_idxs = prognostic_idxs + diagnostic_idxs
+        self.in_idxs = forcing_idxs + prognostic_idxs
+        self.out_idxs = prognostic_idxs + diagnostic_idxs
 
     def _get_data_idxs(self, names):
         return [self.name_to_index[name] for name in names]
@@ -21,8 +29,10 @@ class FeatureRouter:
         return self.transform(data)
 
     def transform(self, graph):
-        input = graph.cond[:, self.input_idxs]
-        output = graph.target[:, self.output_idxs]
-        graph.input = input
-        graph.output = output
+        cond = graph["data"].raw[:, 0, self.in_idxs]
+        target = graph["data"].raw[:, 1, self.out_idxs]
+
+        graph["data"].cond = cond
+        graph["data"].target = target
+
         return graph

@@ -1,0 +1,2 @@
+_target_: equicast.model.model.Model
+backbone: ${backbone}

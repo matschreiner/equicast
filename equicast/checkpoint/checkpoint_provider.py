@@ -19,15 +19,11 @@ class MLFlowCheckpointProvider(CheckpointProvider):
         self.run_id = run_id
 
         self.checkpoint_name = (
-            checkpoint_name
-            if checkpoint_name.endswith(".ckpt")
-            else checkpoint_name + ".ckpt"
+            checkpoint_name if checkpoint_name.endswith(".ckpt") else checkpoint_name + ".ckpt"
         )
 
     def get_checkpoint(self) -> str:
-
         artifact_path = os.path.join(CHECKPOINT_PATH, self.checkpoint_name)
-        artifact_path = "checkpoint/latest.ckpt"
 
         local_path = self.client.download_artifacts(
             self.run_id,

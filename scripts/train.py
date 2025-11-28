@@ -1,22 +1,37 @@
+import sys
+
+from hydra import compose, initialize
 from hydra.utils import instantiate
 
-import equicast
+from equicast.data.feature_router import FeatureRouter
+from equicast.data.scaler import Scaler
+
 
 def main(cfg):
-    # Data
     dataset = instantiate(cfg.dataset)
-    #  scaler = instantiate(cfg.scaler, statistics=dataset.statistics)
-    #  router = instantiate(cfg.feature_router, name_to_idx=dataset.data.name_to_index)
 
-    scaler = equicast.data.scaler Scaler(dataset.statistics)
-    __import__("pdb").set_trace() #TODO delme 
+    scaler = Scaler(statistics=dataset.statistics)
+    feature_router = FeatureRouter(
+        features=cfg.features,
+        name_to_index=dataset.name_to_index,
+    )
+    backbone = instantiate(
+        cfg.backbone,
+        in_dim=feature_router.in_dim,
+        out_dim=feature_router.out_dim,
+    )
 
-    # Model
-    model = instantiate(cfg.model)
+    model = instantiate(
+        cfg.model,
+        backbone=backbone,
+        scaler=scaler,
+        feature_router=feature_router,
+    )
+
+    dataloader = instantiate(cfg.dataloader, dataset=dataset)
     optimizer = instantiate(cfg.optimizer, params=model.parameters())
     scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
 
-    # Logger
     logger = instantiate(cfg.logger)
     logger.log_hyperparams({"config": cfg})
 
@@ -26,15 +41,8 @@ def main(cfg):
         scheduler=scheduler,
         logger=logger,
     )
+    trainer.fit(model, dataloader)
 
-    trainer.fit(model, dataset)
-
-
-import sys
-
-from hydra import compose, initialize
-from hydra.utils import instantiate
-from omegaconf import DictConfig
 
 if __name__ == "__main__":
     overrides = sys.argv[1:]
@@ -43,13 +51,3 @@ if __name__ == "__main__":
         cfg = compose(config_name="config", overrides=overrides)
 
     main(cfg)
-
-#  if __name__ == "__main__":
-#      argparser = argparse.ArgumentParser()
-#      argparser.add_argument("config_path")
-#
-#      args = argparser.parse_args()
-#      cfg = OmegaConf.load(args.config_path)
-#
-#      OmegaConf.resolve(cfg)
-#      main(cfg)
