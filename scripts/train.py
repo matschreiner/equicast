@@ -4,28 +4,28 @@ from hydra import compose, initialize
 from hydra.utils import instantiate
 
 from equicast.data.feature_router import FeatureRouter
-from equicast.data.scaler import Scaler
+from equicast.data.processor import SimpleDataProcessor
 
 
 def main(cfg):
     dataset = instantiate(cfg.dataset)
 
-    scaler = Scaler(statistics=dataset.statistics)
-    feature_router = FeatureRouter(
-        features=cfg.features,
+    processor = SimpleDataProcessor(
+        statistics=dataset.statistics,
         name_to_index=dataset.name_to_index,
+        features=cfg.features,
     )
+
     backbone = instantiate(
         cfg.backbone,
-        in_dim=feature_router.in_dim,
-        out_dim=feature_router.out_dim,
+        in_dim=processor.in_dim,
+        out_dim=processor.out_dim,
     )
 
     model = instantiate(
         cfg.model,
         backbone=backbone,
-        scaler=scaler,
-        feature_router=feature_router,
+        processor=processor,
     )
 
     dataloader = instantiate(cfg.dataloader, dataset=dataset)

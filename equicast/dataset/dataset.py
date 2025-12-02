@@ -4,7 +4,6 @@ from anemoi.utils.config import DotDict
 from torch.utils.data import Dataset
 
 from equicast import DTYPE
-from equicast.data.feature_router import FeatureRouter
 from equicast.data.scaler import Scaler
 from equicast.utils import utils
 
@@ -23,8 +22,7 @@ class AnemoiDataset(Dataset):
         return len(self.data) - 1
 
     def __getitem__(self, idx):
-        graph = self.graph_provider.get_graph(idx)
+        graph = self.graph_provider.get_graph()
+        data = torch.tensor(self.data[idx : idx + 2]).squeeze().permute(0, 2, 1)
 
-        raw = torch.Tensor(self.data[idx : idx + 2]).squeeze().permute([2, 0, 1])
-        graph["data"].raw = raw
-        return graph
+        return DotDict(data=data, graph=graph)

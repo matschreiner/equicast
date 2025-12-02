@@ -8,37 +8,25 @@ class Model(pl.LightningModule):
     def __init__(
         self,
         backbone,
-        scaler,
-        feature_router,
+        processor,
     ):
         super().__init__()
         with ignore_backbone_warning():
             self.save_hyperparameters()
 
         self.backbone = backbone
-        self.scaler = scaler
-        self.feature_router = feature_router
+        self.processor = processor
 
-    def forward(self, graph):
-        graph = self.prepare_input(graph)
-        graph = self.backbone(graph)
-        return graph
+    def forward(self, batch):
+        batch = self.backbone(batch)
+        return batch
 
-    def forecast(self, graph):
-        graph = self.prepare_input(graph)
-        pred = self.forward(graph)
-        return pred
+    def training_step(self, batch, batch_idx):
+        batch["input"] = processor.prepare(batch["input"])
+        out = batch["target"]
 
-    def prepare_input(self, graph):
-        graph = self.scaler(graph)
-        graph = self.feature_router(graph)
-        return graph
-
-    def training_step(self, graph, batch_idx):
-        graph = self.forward(graph)
-
-        pred = graph["data"].pred
-        target = graph["data"].target
+        batch = self.processor.preprocess(batch)
+        batch = self.forward(batch)
 
         loss = ((pred - target) ** 2).mean()
         return loss

@@ -1,6 +1,3 @@
-import torch
-
-
 class Scaler:
     def __init__(self, statistics):
         self.statistics = statistics

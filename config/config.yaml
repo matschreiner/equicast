@@ -1,7 +1,7 @@
 defaults:
   - backbone: simple
   - features: base
-  - model: from_checkpoint
+  - model: model
   - _self_
 
 dataset:
@@ -12,9 +12,9 @@ dataset:
     path: ./graph/aifs-single.pt
 
 dataloader:
-  _target_: torch_geometric.loader.DataLoader
+  _target_: torch.utils.data.DataLoader
   batch_size: 2
-  num_workers: 4
+  # num_workers: 4
 
 trainer:
   _target_: equicast.trainer.Trainer
