@@ -1,7 +1,7 @@
 from equicast.data import feature_router
 
 
-def test_feature_router_instantiate(dataset, batch):
+def test_feature_router_instantiate(dataset, batch, features):
     features = {
         "forcing": ["lsm", "cos_julian_day"],
         "prognostic": ["10u"],

@@ -10,25 +10,11 @@ from equicast.data.processor import SimpleDataProcessor
 def main(cfg):
     dataset = instantiate(cfg.dataset)
 
-    processor = SimpleDataProcessor(
-        statistics=dataset.statistics,
-        name_to_index=dataset.name_to_index,
-        features=cfg.features,
-    )
-
-    backbone = instantiate(
-        cfg.backbone,
-        in_dim=processor.in_dim,
-        out_dim=processor.out_dim,
-    )
-
     model = instantiate(
         cfg.model,
-        backbone=backbone,
-        processor=processor,
     )
 
-    dataloader = instantiate(cfg.dataloader, dataset=dataset)
+    dataloader = instantiate(cfg.dataloader)  # , dataset=dataset)
     optimizer = instantiate(cfg.optimizer, params=model.parameters())
     scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
 

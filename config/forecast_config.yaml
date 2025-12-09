@@ -1,5 +1,5 @@
 defaults:
-  - model: from_checkpoint
+  - model: simple
   - features: base
   - _self_
 

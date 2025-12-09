@@ -7,18 +7,39 @@ defaults:
 dataset:
   _target_: equicast.dataset.AnemoiDataset
   path: /home/masc/storage/mini_aifs.zarr
+  features: ${features}
   graph_provider:
     _target_: equicast.graph.graph_provider.StaticGraphProvider
     path: ./graph/aifs-single.pt
 
 dataloader:
-  _target_: torch.utils.data.DataLoader
+  _target_: torch_geometric.loader.DataLoader
   batch_size: 2
-  # num_workers: 4
+  dataset: ${dataset}
+
+model:
+  _target_: equicast.model.model.Model
+  backbone:
+    _target_: equicast.model.backbones.simple.Simple
+    in_dim: 91
+    out_dim: 87
+
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.001
+
+logger:
+  _target_: equicast.logger.mlflow.MLFlowLogger
+  experiment_name: masc
+  tracking_uri: https://mlflow.dmidev.org/
 
 trainer:
   _target_: equicast.trainer.Trainer
   max_epochs: 30
+  optimizer:
+    _target_: torch.optim.Adam
+    lr: 0.001
+  scheduler: null
   callbacks:
     - _target_: pytorch_lightning.callbacks.ModelCheckpoint
       every_n_epochs: 1
@@ -30,13 +51,3 @@ trainer:
       mode: min
       monitor: loss
       filename: "minloss"
-
-optimizer:
-  _target_: torch.optim.Adam
-  lr: 0.001
-
-scheduler: null
-logger:
-  _target_: equicast.logger.mlflow.MLFlowLogger
-  experiment_name: masc
-  tracking_uri: https://mlflow.dmidev.org/

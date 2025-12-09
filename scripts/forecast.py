@@ -6,8 +6,8 @@ from hydra.utils import instantiate
 
 def main(cfg):
     model = instantiate(cfg.model)
-    dataset = instantiate(cfg.dataset)
 
+    dataset = instantiate(cfg.dataset)
     batch = dataset[0]
 
     forecaster = instantiate(

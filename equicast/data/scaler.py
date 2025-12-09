@@ -4,11 +4,9 @@ class Scaler:
         self.std = self.statistics["stdev"]
         self.mean = self.statistics["mean"]
 
-    def transform(self, graph):
-        x = graph["data"].raw
-        x = (x - self.mean) / self.std
-        graph["data"].raw = x
-        return graph
+    def transform(self, data):
+        data = (data - self.mean) / self.std
+        return data
 
     def __call__(self, graph):
         return self.transform(graph)
