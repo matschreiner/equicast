@@ -4,7 +4,6 @@ import torch
 from torch import nn
 from torch_geometric.nn import MessagePassing
 from torch_geometric.nn.conv import MessagePassing
-from torch_geometric.typing import OptPairTensor, OptTensor
 
 from equicast.model.layers.mlp import MLP
 
@@ -20,7 +19,9 @@ class EmbedEdge(nn.Module):
         )
 
     def forward(self, edge_storage) -> torch.Tensor:
-        edge_attr_in = torch.cat([edge_storage["edge_dirs"], edge_storage["edge_length"]], dim=-1)
+        edge_attr_in = torch.cat(
+            [edge_storage["edge_dirs"], edge_storage["edge_length"]], dim=-1
+        )
         return self.mlp(edge_attr_in)
 
 
@@ -50,7 +51,7 @@ class GraphConv(MessagePassing):
         self,
         x: torch.Tensor,
         edge_storage: dict,
-        size: Optional[tuple[int, int]] = None,
+        _: Optional[tuple[int, int]] = None,
     ) -> torch.Tensor:
 
         edge_index: torch.Tensor = edge_storage["edge_index"].long()
@@ -62,8 +63,8 @@ class GraphConv(MessagePassing):
 
         return out
 
-    def message(self, x_j, x_i):
+    def message(self, x_j, x_i):  # type: ignore
         return self.mlp(torch.cat([x_i, x_j], dim=-1))
 
-    def update(self, aggr_out: torch.Tensor) -> torch.Tensor:
-        return aggr_out
+    def update(self, inputs: torch.Tensor) -> torch.Tensor:
+        return inputs

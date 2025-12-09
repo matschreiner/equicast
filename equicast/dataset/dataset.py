@@ -1,9 +1,7 @@
 import torch
 from anemoi.datasets import open_dataset
-from anemoi.utils.config import DotDict
 from torch.utils.data import Dataset
 
-from equicast import DTYPE
 from equicast.data.scaler import Scaler
 from equicast.utils import utils
 
@@ -16,7 +14,6 @@ class AnemoiDataset(Dataset):
         self.name_to_index = self.data.name_to_index
         self.graph_provider = graph_provider
         self.scaler = Scaler(self.statistics)
-        #  self.data = self.data[:10]
 
         self.cond_idxs = self._get_idxs(features.forcing) + self._get_idxs(
             features.prognostic
