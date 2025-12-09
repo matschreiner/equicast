@@ -7,3 +7,5 @@ outputs
 graph
 checkpoints
 *.ckpt
+Graph.gv
+Graph.gv.pdf
