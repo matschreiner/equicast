@@ -20,14 +20,14 @@ class Model(pl.LightningModule):
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
 
-    def forward(self, batch):
-        batch = self.backbone(batch)
-        return batch
+    def forward(self, graph):
+        graph = self.backbone(graph)
+        return graph
 
-    def training_step(self, batch, batch_idx):
-        batch = self.forward(batch)
-        target = batch["data"].target
-        pred = batch["data"].pred
+    def training_step(self, graph, _):
+        graph = self.forward(graph)
+        target = graph["data"].target
+        pred = graph["data"].pred
 
         loss = ((pred - target) ** 2).mean()
         return loss
