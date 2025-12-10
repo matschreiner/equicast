@@ -7,7 +7,7 @@ from equicast.utils import utils
 
 
 class AnemoiDataset(Dataset):
-    def __init__(self, path, graph_provider, features):
+    def __init__(self, path, graph_provider: int, feature_config):
         super().__init__()
         self.data = open_dataset(path)
         self.statistics = utils.cast_dict(self.data.statistics, torch.Tensor)
@@ -15,12 +15,12 @@ class AnemoiDataset(Dataset):
         self.graph_provider = graph_provider
         self.scaler = Scaler(self.statistics)
 
-        self.cond_idxs = self._get_idxs(features.forcing) + self._get_idxs(
-            features.prognostic
+        self.cond_idxs = self._get_idxs(feature_config.forcing) + self._get_idxs(
+            feature_config.prognostic
         )
-        self.target_idxs = self._get_idxs(features.prognostic) + self._get_idxs(
-            features.diagnostic
-        )
+        self.target_idxs = self._get_idxs(
+            feature_config.prognostic
+        ) + self._get_idxs(feature_config.diagnostic)
 
     def __len__(self):
         return len(self.data) - 1
@@ -37,7 +37,7 @@ class AnemoiDataset(Dataset):
 
         graph = self.graph_provider.get_graph()
 
-        graph["data"].cond = cond
-        graph["data"].target = target
+        graph["grid"].cond = cond
+        graph["grid"].target = target
 
         return graph

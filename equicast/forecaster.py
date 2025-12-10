@@ -1,10 +1,11 @@
 import torch
 
+from equicast.graph.graph_provider import BaseGraphProvider
 
-class Forecaster(torch.nn.Module):
+
+class Forecaster:
     def __init__(self, model: torch.nn.Module):
-        super().__init__()
         self.model = model
 
-    def forward(self, batch: dict, steps) -> torch.Tensor:
-        pred = self.model(batch)
+    def forecast(self, batch, steps):
+        return

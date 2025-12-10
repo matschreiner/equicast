@@ -1,5 +1,6 @@
 import warnings
 from contextlib import contextmanager
+from typing import Callable
 
 import pytorch_lightning as pl
 import torch
@@ -8,9 +9,9 @@ import torch
 class Model(pl.LightningModule):
     def __init__(
         self,
-        backbone,
-        optimizer_factory=None,
-        scheduler_factory=None,
+        backbone: torch.nn.Module,
+        optimizer_factory: Callable | None = None,
+        scheduler_factory: Callable | None = None,
     ):
         super().__init__()
         with ignore_backbone_warning():
@@ -25,11 +26,20 @@ class Model(pl.LightningModule):
         return graph
 
     def training_step(self, graph, _):
-        graph = self.forward(graph)
-        target = graph["data"].target
-        pred = graph["data"].pred
+        pred = self.forward(graph)
+        target = graph["grid"].target
 
         loss = ((pred - target) ** 2).mean()
+
+        self.log_dict(
+            {"loss": loss},
+            logger=True,
+            prog_bar=True,
+            on_step=True,
+            on_epoch=False,
+            batch_size=graph.num_graphs,
+        )
+
         return loss
 
     def configure_optimizers(self):
@@ -52,3 +62,9 @@ def ignore_backbone_warning():
             message=r"Attribute 'backbone' is an instance of `nn\.Module`",
         )
         yield
+
+
+def get_lr(self):
+    opt = self.trainer.optimizers[0]
+    lr = opt.param_groups[0]["lr"]
+    return lr

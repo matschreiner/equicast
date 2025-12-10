@@ -5,7 +5,7 @@ from equicast.model.layers.mlp import MLP
 
 
 class Simple(torch.nn.Module):
-    def __init__(self, feature_config):
+    def __init__(self, feature_config, lr):
         super(Simple, self).__init__()
         in_dim = len(feature_config.forcing) + len(feature_config.prognostic)
         out_dim = len(feature_config.prognostic) + len(feature_config.diagnostic)
@@ -17,6 +17,7 @@ class Simple(torch.nn.Module):
         )
 
     def forward(self, graph):
-        pred = self.net(graph["data"].cond)
-        graph["data"].pred = pred
-        return graph
+        pred = self.net(graph["grid"].cond)
+        return pred
+        #  graph["grid"].pred = pred
+        #  return graph

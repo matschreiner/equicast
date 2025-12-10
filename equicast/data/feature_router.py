@@ -3,15 +3,7 @@ from anemoi.utils.config import DotDict
 
 
 class FeatureRouter:
-    @property
-    def in_dim(self):
-        return len(self.in_idxs)
-
-    @property
-    def out_dim(self):
-        return len(self.out_idxs)
-
-    def __init__(self, features, name_to_index):
+    def __init__(self, feature_config, name_to_index):
         self.features = features
         self.name_to_index = name_to_index
 

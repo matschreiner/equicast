@@ -1,5 +1,12 @@
 import hashlib
 
+from fiddle import graphviz
+
+
+def vis_config(config):
+    graph = graphviz.render(config)
+    graph.view()
+
 
 def cast_dict(x, target_type):
     if isinstance(x, dict):
@@ -13,7 +20,6 @@ def cast_dict(x, target_type):
 
 
 def hash_statedict(state_dict):
-
     hasher = hashlib.sha256()
     for key in sorted(state_dict.keys()):
         hasher.update(key.encode("utf-8"))
