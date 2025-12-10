@@ -1,3 +1,0 @@
-_target_: equicast.model.backbones.gnn.GNN
-features: ${features}
-hidden_dim: 64
