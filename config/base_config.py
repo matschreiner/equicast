@@ -20,19 +20,15 @@ def get_graph_provider(path: str = "./graph/aifs-single.pt"):
 
 def get_dataset(
     path: str = "/home/masc/storage/mini_aifs.zarr",
-    data_handler=None,
     graph_provider=None,
 ):
-    """Get dataset configuration with data handler and graph provider."""
-    if data_handler is None:
-        data_handler = get_data_handler(dataset_path=path)
+    """Get dataset configuration. Dataset returns raw data without preprocessing."""
     if graph_provider is None:
         graph_provider = get_graph_provider()
 
     return fdl.Config(
         AnemoiDataset,
         path=path,
-        data_handler=data_handler,
         graph_provider=graph_provider,
     )
 

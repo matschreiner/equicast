@@ -1,6 +1,5 @@
 import fiddle as fdl
 
-from config.base_config import get_data_handler, get_feature_config
 from equicast import experiments
 from equicast.checkpoint.checkpoint_provider import MLFlowCheckpointProvider
 from equicast.forecaster import Forecaster
@@ -22,14 +21,10 @@ def main():
         checkpoint_provider=checkpoint_provider,
     )
 
-    # Get shared base configurations
-    feature_config = get_feature_config()
-    data_handler = get_data_handler(feature_config=feature_config)
-
+    # Model already contains data_handler with preprocessing
     forecaster = fdl.Config(
         Forecaster,
         model=model,
-        data_handler=data_handler,
     )
 
     cfg = fdl.Config(

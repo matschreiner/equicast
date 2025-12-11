@@ -7,9 +7,17 @@ import torch
 
 
 class Model(pl.LightningModule):
+    """
+    Model that handles preprocessing (scaling, feature routing) internally.
+
+    This makes the model self-contained and ensures consistent preprocessing
+    between training and inference.
+    """
+
     def __init__(
         self,
         backbone: torch.nn.Module,
+        data_handler,
         optimizer_factory: Callable | None = None,
         scheduler_factory: Callable | None = None,
     ):
@@ -18,12 +26,37 @@ class Model(pl.LightningModule):
             self.save_hyperparameters()
 
         self.backbone = backbone
+        self.data_handler = data_handler
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
 
     def forward(self, graph):
-        graph = self.backbone(graph)
-        return graph
+        """
+        Forward pass with preprocessing.
+
+        Args:
+            graph: Graph with raw data in graph["grid"].input_state and
+                   graph["grid"].target_state
+
+        Returns:
+            Predictions in scaled space
+        """
+        # Preprocess: scale input and target
+        input_scaled = self.data_handler.scaler(graph["grid"].input_state)
+        target_scaled = self.data_handler.scaler(graph["grid"].target_state)
+
+        # Route features
+        cond = input_scaled[:, self.data_handler.in_idxs]
+        target = target_scaled[:, self.data_handler.out_idxs]
+
+        # Store processed data in graph for backbone
+        graph["grid"].cond = cond
+        graph["grid"].target = target
+
+        # Backbone forward pass
+        pred = self.backbone(graph)
+
+        return pred
 
     def training_step(self, graph, _):
         pred = self.forward(graph)

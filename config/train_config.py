@@ -25,18 +25,14 @@ def main():
     # Get shared base configurations
     feature_config = get_feature_config()
     data_handler = get_data_handler(feature_config=feature_config)
-    graph_provider = get_graph_provider()
-    dataset = get_dataset(
-        data_handler=data_handler,
-        graph_provider=graph_provider,
-    )
+    dataset = get_dataset()
 
     dataloader = fdl.Config(
         DataLoader,
         dataset,
         batch_size=1,
         shuffle=True,
-        num_workers=4,
+        #  num_workers=4,
     )
 
     backbone = fdl.Config(
@@ -64,6 +60,7 @@ def main():
     model = fdl.Config(
         Model,
         backbone=backbone,
+        data_handler=data_handler,
         optimizer_factory=optimizer_factory,
         scheduler_factory=scheduler_factory,
     )
