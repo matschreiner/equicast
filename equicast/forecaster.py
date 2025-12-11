@@ -48,7 +48,7 @@ class Forecaster:
                     ),
                 )
 
-        return predictions
+        return torch.stack(predictions, dim=0)  # [time, batch, nodes, features]
 
     def _prepare_next_state(self, current_graph, prediction, forcing=None):
         """
