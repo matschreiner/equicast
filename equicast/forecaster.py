@@ -62,7 +62,8 @@ class Forecaster:
         Returns:
             Graph ready for next model forward pass
         """
-        # TODO: Implement state preparation logic
-        # This will depend on your graph structure and how you want to
-        # separate prognostic/diagnostic outputs and combine with forcing
-        raise NotImplementedError("State preparation logic needs to be implemented")
+        raise NotImplementedError(
+            "State preparation logic needs to be implemented based on your "
+            "specific graph structure and how you want to separate prognostic/"
+            "diagnostic outputs and combine with forcing variables."
+        )
