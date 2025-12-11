@@ -1,9 +1,18 @@
 import hashlib
+from typing import Any, Callable
 
-from fiddle import graphviz
 
+def cast_dict(x: Any, target_type: Callable) -> Any:
+    """
+    Recursively cast values in nested dict/list/tuple structures.
 
-def cast_dict(x, target_type):
+    Args:
+        x: Input structure (dict, list, tuple, or scalar)
+        target_type: Callable to cast scalar values
+
+    Returns:
+        Structure with all scalar values cast to target_type
+    """
     if isinstance(x, dict):
         return {k: cast_dict(v, target_type) for k, v in x.items()}
     elif isinstance(x, list):
@@ -14,7 +23,16 @@ def cast_dict(x, target_type):
         return target_type(x)
 
 
-def hash_statedict(state_dict):
+def hash_statedict(state_dict: dict) -> str:
+    """
+    Compute SHA256 hash of a PyTorch state dict.
+
+    Args:
+        state_dict: PyTorch model state dictionary
+
+    Returns:
+        Hexadecimal hash string
+    """
     hasher = hashlib.sha256()
     for key in sorted(state_dict.keys()):
         hasher.update(key.encode("utf-8"))
