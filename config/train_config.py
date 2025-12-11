@@ -6,13 +6,18 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch_geometric.loader import DataLoader
 
-from config.base_config import get_dataset, get_feature_config, get_graph_provider
-from equicast import utils
+from config.base_config import (
+    get_data_handler,
+    get_dataset,
+    get_feature_config,
+    get_graph_provider,
+)
+from equicast import experiments
+from equicast.experiments import TrainConfig
 from equicast.logger.mlflow import MLFlowLogger
 from equicast.model.backbones.gnn import GNN
 from equicast.model.backbones.simple import Simple
 from equicast.model.model import Model
-from equicast.utils.config import TrainConfig
 
 torch.set_float32_matmul_precision("medium | high")
 
@@ -20,9 +25,10 @@ torch.set_float32_matmul_precision("medium | high")
 def main():
     # Get shared base configurations
     feature_config = get_feature_config()
+    data_handler = get_data_handler(feature_config=feature_config)
     graph_provider = get_graph_provider()
     dataset = get_dataset(
-        feature_config=feature_config,
+        data_handler=data_handler,
         graph_provider=graph_provider,
     )
 
@@ -92,7 +98,7 @@ def main():
         logger,
     )
 
-    utils.run_experiment(experiment_cfg)
+    experiments.run_experiment(experiment_cfg)
 
 
 if __name__ == "__main__":

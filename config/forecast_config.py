@@ -1,7 +1,7 @@
 import fiddle as fdl
 
 from config.base_config import get_data_handler, get_feature_config
-from equicast import utils
+from equicast import experiments
 from equicast.checkpoint.checkpoint_provider import MLFlowCheckpointProvider
 from equicast.forecaster import Forecaster
 from equicast.model import Model
@@ -33,11 +33,11 @@ def main():
     )
 
     cfg = fdl.Config(
-        utils.ForecastConfig,
+        experiments.ForecastConfig,
         forecaster=forecaster,
     )
 
-    utils.vis_config(cfg)
+    experiments.vis_config(cfg)
 
 
 if __name__ == "__main__":

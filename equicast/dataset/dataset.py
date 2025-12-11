@@ -2,39 +2,30 @@ import torch
 from anemoi.datasets import open_dataset
 from torch.utils.data import Dataset
 
-from equicast.data.scaler import Scaler
-from equicast.utils import utils
+from equicast.data.data_handler import DataHandler
 
 
 class AnemoiDataset(Dataset):
-    def __init__(self, path, graph_provider: int, feature_config):
+    def __init__(self, path, graph_provider, data_handler: DataHandler):
         super().__init__()
         self.data = open_dataset(path)
-        self.statistics = utils.cast_dict(self.data.statistics, torch.Tensor)
-        self.name_to_index = self.data.name_to_index
         self.graph_provider = graph_provider
-        self.scaler = Scaler(self.statistics)
+        self.data_handler = data_handler
 
-        __import__("pdb").set_trace()  # TODO delme
-        forcing_idxs = self._get_idxs(feature_config.forcing)
-        prognostic_idxs = self._get_idxs(feature_config.prognostic)
-        diagnostic_idxs = self._get_idxs(feature_config.diagnostic)
-
-        self.in_idxs = forcing_idxs + prognostic_idxs
-        self.out_idxs = prognostic_idxs + diagnostic_idxs
+        # Use shared scaler and indices from data_handler
+        self.scaler = data_handler.scaler
+        self.in_idxs = data_handler.in_idxs
+        self.out_idxs = data_handler.out_idxs
 
     def __len__(self):
         return len(self.data) - 1
-
-    def _get_idxs(self, names):
-        return [self.name_to_index[name] for name in names]
 
     def __getitem__(self, idx):
         data = torch.tensor(self.data[idx : idx + 2]).squeeze().permute(0, 2, 1)
         data = self.scaler(data)
 
-        cond = data[0][:, self.cond_idxs]
-        target = data[1][:, self.target_idxs]
+        cond = data[0][:, self.in_idxs]
+        target = data[1][:, self.out_idxs]
 
         graph = self.graph_provider.get_graph()
 
