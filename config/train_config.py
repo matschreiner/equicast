@@ -1,37 +1,27 @@
 import fiddle as fdl
 import torch
-from fiddle import graphviz
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers.logger import Logger
 from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch_geometric.loader import DataLoader
 
+from config.base_config import get_dataset, get_feature_config, get_graph_provider
 from equicast import utils
-from equicast.data import FeatureConfig
-from equicast.dataset import AnemoiDataset
-from equicast.graph.graph_provider import StaticGraphProvider
 from equicast.logger.mlflow import MLFlowLogger
+from equicast.model.backbones.gnn import GNN
 from equicast.model.backbones.simple import Simple
 from equicast.model.model import Model
+from equicast.utils.config import TrainConfig
 
 torch.set_float32_matmul_precision("medium | high")
 
-from dataclasses import dataclass
 
-
-def make_experiment_config():
-    feature_config = FeatureConfig.from_yaml("hydraconfig/features/base.yaml")
-
-    graph_provider = fdl.Config(
-        StaticGraphProvider,
-        path="./graph/aifs-single.pt",
-    )
-
-    dataset = fdl.Config(
-        AnemoiDataset,
-        path="/home/masc/storage/mini_aifs.zarr",
+def main():
+    # Get shared base configurations
+    feature_config = get_feature_config()
+    graph_provider = get_graph_provider()
+    dataset = get_dataset(
         feature_config=feature_config,
         graph_provider=graph_provider,
     )
@@ -45,7 +35,7 @@ def make_experiment_config():
     )
 
     backbone = fdl.Config(
-        Simple,
+        GNN,
         feature_config,
     )
 
@@ -94,42 +84,16 @@ def make_experiment_config():
         ],
     )
 
-    experiment = fdl.Config(
-        Experiment,
+    experiment_cfg = fdl.Config(
+        TrainConfig,
         model,
         trainer,
         dataloader,
         logger,
     )
 
-    return experiment
+    utils.run_experiment(experiment_cfg)
 
 
-@dataclass
-class Experiment:
-    model: Model
-    trainer: Trainer
-    dataloader: DataLoader
-    logger: Logger
-
-    def run(self):
-        self.trainer.fit(
-            self.model,
-            self.dataloader,
-        )
-
-
-def main():
-    config = make_experiment_config()
-
-    import pickle as pkl
-
-    with open("train_config.pkl", "wb") as f:
-        pkl.dump(config, f)
-
-    utils.vis_config(config)
-    experiment = fdl.build(config)
-    #  experiment.run()
-
-
-main()
+if __name__ == "__main__":
+    main()

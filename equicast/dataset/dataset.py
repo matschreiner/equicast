@@ -15,12 +15,13 @@ class AnemoiDataset(Dataset):
         self.graph_provider = graph_provider
         self.scaler = Scaler(self.statistics)
 
-        self.cond_idxs = self._get_idxs(feature_config.forcing) + self._get_idxs(
-            feature_config.prognostic
-        )
-        self.target_idxs = self._get_idxs(
-            feature_config.prognostic
-        ) + self._get_idxs(feature_config.diagnostic)
+        __import__("pdb").set_trace()  # TODO delme
+        forcing_idxs = self._get_idxs(feature_config.forcing)
+        prognostic_idxs = self._get_idxs(feature_config.prognostic)
+        diagnostic_idxs = self._get_idxs(feature_config.diagnostic)
+
+        self.in_idxs = forcing_idxs + prognostic_idxs
+        self.out_idxs = prognostic_idxs + diagnostic_idxs
 
     def __len__(self):
         return len(self.data) - 1

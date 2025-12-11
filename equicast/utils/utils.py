@@ -3,11 +3,6 @@ import hashlib
 from fiddle import graphviz
 
 
-def vis_config(config):
-    graph = graphviz.render(config)
-    graph.view()
-
-
 def cast_dict(x, target_type):
     if isinstance(x, dict):
         return {k: cast_dict(v, target_type) for k, v in x.items()}

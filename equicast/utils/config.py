@@ -1,0 +1,49 @@
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+
+import fiddle as fdl
+from fiddle import graphviz
+from pytorch_lightning import Trainer
+from pytorch_lightning.loggers.logger import Logger
+from torch.utils.data import DataLoader
+
+from equicast.forecaster import Forecaster
+from equicast.model import Model
+
+
+class ExperimentConfig(ABC):
+    @abstractmethod
+    def run(self): ...
+
+
+@dataclass
+class TrainConfig(ExperimentConfig):
+    model: Model
+    trainer: Trainer
+    dataloader: DataLoader
+    logger: Logger
+
+    def run(self):
+        self.trainer.fit(
+            self.model,
+            self.dataloader,
+        )
+
+
+@dataclass
+class ForecastConfig(ExperimentConfig):
+    forecaster: Forecaster
+
+    def run(self):
+        pass
+
+
+def vis_config(config):
+    graph = graphviz.render(config)
+    graph.view()
+
+
+def run_experiment(config: fdl.Config):
+    vis_config(config)
+    experiment = fdl.build(config)
+    experiment.run()
