@@ -3,6 +3,7 @@
 import torch
 from anemoi.datasets import open_dataset
 
+from equicast.data.feature_config import FeatureConfig
 from equicast.data.feature_router import FeatureRouter
 from equicast.data.scaler import Scaler
 from equicast.utils.utils import cast_dict
@@ -16,7 +17,7 @@ class DataHandler:
     without loading the full dataset into memory.
     """
 
-    def __init__(self, dataset_path: str, feature_config):
+    def __init__(self, dataset_path: str, feature_config: FeatureConfig):
         """
         Initialize DataHandler from dataset path and feature configuration.
 
@@ -29,8 +30,10 @@ class DataHandler:
 
         # Open dataset to extract metadata only
         data = open_dataset(dataset_path)
-        self.statistics = cast_dict(data.statistics, torch.Tensor)
-        self.name_to_index = data.name_to_index
+        self.statistics: dict[str, torch.Tensor] = cast_dict(
+            data.statistics, torch.Tensor
+        )
+        self.name_to_index: dict[str, int] = data.name_to_index
 
         # Initialize scaler and feature router
         self.scaler = Scaler(self.statistics)
@@ -40,11 +43,11 @@ class DataHandler:
         )
 
     @property
-    def in_idxs(self):
+    def in_idxs(self) -> list[int]:
         """Input feature indices (forcing + prognostic)."""
         return self.feature_router.in_idxs
 
     @property
-    def out_idxs(self):
+    def out_idxs(self) -> list[int]:
         """Output feature indices (prognostic + diagnostic)."""
         return self.feature_router.out_idxs
