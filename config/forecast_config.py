@@ -1,6 +1,6 @@
 import fiddle as fdl
 
-from config.base_config import get_dataset, get_feature_config, get_graph_provider
+from config.base_config import get_data_handler, get_feature_config
 from equicast import utils
 from equicast.checkpoint.checkpoint_provider import MLFlowCheckpointProvider
 from equicast.forecaster import Forecaster
@@ -24,15 +24,12 @@ def main():
 
     # Get shared base configurations
     feature_config = get_feature_config()
-    graph_provider = get_graph_provider()
-    dataset = get_dataset(
-        feature_config=feature_config,
-        graph_provider=graph_provider,
-    )
+    data_handler = get_data_handler(feature_config=feature_config)
 
     forecaster = fdl.Config(
         Forecaster,
         model=model,
+        data_handler=data_handler,
     )
 
     cfg = fdl.Config(
