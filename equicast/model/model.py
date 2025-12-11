@@ -35,23 +35,17 @@ class Model(pl.LightningModule):
         Forward pass with preprocessing.
 
         Args:
-            graph: Graph with raw data in graph["grid"].input_state and
-                   graph["grid"].target_state
+            graph: Graph with raw input data in graph["grid"].input_state
 
         Returns:
             Predictions in scaled space
         """
-        # Preprocess: scale input and target
+        # Preprocess: scale and route input
         input_scaled = self.data_handler.scaler(graph["grid"].input_state)
-        target_scaled = self.data_handler.scaler(graph["grid"].target_state)
-
-        # Route features
         cond = input_scaled[:, self.data_handler.in_idxs]
-        target = target_scaled[:, self.data_handler.out_idxs]
 
-        # Store processed data in graph for backbone
+        # Store processed input in graph for backbone
         graph["grid"].cond = cond
-        graph["grid"].target = target
 
         # Backbone forward pass
         pred = self.backbone(graph)
@@ -59,9 +53,14 @@ class Model(pl.LightningModule):
         return pred
 
     def training_step(self, graph, _):
+        # Get prediction from forward pass
         pred = self.forward(graph)
-        target = graph["grid"].target
 
+        # Process target separately (only needed for training)
+        target_scaled = self.data_handler.scaler(graph["grid"].target_state)
+        target = target_scaled[:, self.data_handler.out_idxs]
+
+        # Compute loss
         loss = ((pred - target) ** 2).mean()
 
         self.log_dict(

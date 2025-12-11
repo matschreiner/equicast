@@ -42,10 +42,10 @@ def test_forecaster_forecast_calls_eval(mock_model, sample_initial_state):
     """Test that forecast puts model in eval mode."""
     forecaster = Forecaster(mock_model)
 
-    try:
-        forecaster.forecast(sample_initial_state, steps=1)
-    except NotImplementedError:
-        pass  # Expected for _prepare_next_state
+    # Mock _prepare_next_state to avoid NotImplementedError
+    forecaster._prepare_next_state = Mock(return_value=sample_initial_state)
+
+    forecaster.forecast(sample_initial_state, steps=1)
 
     mock_model.eval.assert_called_once()
 
@@ -83,7 +83,7 @@ def test_forecaster_forecast_autoregressive(mock_model, sample_initial_state):
     # Track states passed to _prepare_next_state
     state_history = []
 
-    def prepare_next_state(pred, forcing):
+    def prepare_next_state(graph, pred, forcing):
         state_history.append(pred)
         return sample_initial_state
 
@@ -100,7 +100,7 @@ def test_forecaster_forecast_with_no_forcing(mock_model, sample_initial_state):
     forecaster = Forecaster(mock_model)
 
     calls = []
-    def prepare_next_state(pred, forcing):
+    def prepare_next_state(graph, pred, forcing):
         calls.append((pred, forcing))
         return sample_initial_state
 
@@ -120,7 +120,7 @@ def test_forecaster_forecast_with_forcing(mock_model, sample_initial_state):
     forcing_seq = [torch.randn(10, 2) for _ in range(3)]
     calls = []
 
-    def prepare_next_state(pred, forcing):
+    def prepare_next_state(graph, pred, forcing):
         calls.append((pred, forcing))
         return sample_initial_state
 
@@ -150,14 +150,56 @@ def test_forecaster_forecast_no_gradient(mock_model, sample_initial_state):
         assert not pred.requires_grad
 
 
-def test_forecaster_prepare_next_state_not_implemented():
-    """Test that _prepare_next_state raises NotImplementedError by default."""
-    forecaster = Forecaster(Mock())
+def test_forecaster_prepare_next_state_implementation():
+    """Test that _prepare_next_state properly reconstructs state."""
+    from equicast.data.data_handler import DataHandler
+    from equicast.data.feature_config import FeatureConfig
+    from unittest.mock import Mock
 
-    with pytest.raises(NotImplementedError) as exc_info:
-        forecaster._prepare_next_state(torch.randn(10, 3), None)
+    # Create mock model with data_handler
+    mock_model = Mock()
+    mock_data_handler = Mock()
 
-    assert "State preparation logic needs to be implemented" in str(exc_info.value)
+    # Setup mock scaler for inverse transform
+    mock_data_handler.scaler.inverse_transform = Mock(
+        side_effect=lambda x: x  # Pass through for simplicity
+    )
+
+    # Setup feature config
+    mock_data_handler.feature_router.feature_config.prognostic = ["temp", "humidity"]
+    mock_data_handler.feature_router.feature_config.forcing = ["solar"]
+
+    # Setup name_to_index with 4 total features
+    mock_data_handler.name_to_index = {"solar": 0, "temp": 1, "humidity": 2, "precip": 3}
+
+    # Setup _get_data_idxs
+    def get_data_idxs(names):
+        return [mock_data_handler.name_to_index[n] for n in names]
+    mock_data_handler.feature_router._get_data_idxs = get_data_idxs
+
+    mock_model.data_handler = mock_data_handler
+
+    forecaster = Forecaster(mock_model)
+
+    # Create sample graph and prediction
+    sample_graph = HeteroData()
+    sample_graph["grid"].input_state = torch.ones(5, 4)
+
+    # Prediction has [prognostic, diagnostic] = [temp, humidity, precip]
+    prediction = torch.tensor([[1.0, 2.0, 3.0]] * 5)  # 5 nodes, 3 outputs
+    forcing = torch.tensor([[0.5]] * 5)  # 5 nodes, 1 forcing variable
+
+    next_graph = forecaster._prepare_next_state(sample_graph, prediction, forcing)
+
+    # Check that next_state has correct shape
+    assert next_graph["grid"].input_state.shape == (5, 4)
+
+    # Check that prognostic values are placed correctly (temp at idx 1, humidity at idx 2)
+    assert torch.allclose(next_graph["grid"].input_state[:, 1], torch.tensor(1.0))
+    assert torch.allclose(next_graph["grid"].input_state[:, 2], torch.tensor(2.0))
+
+    # Check that forcing is placed correctly (solar at idx 0)
+    assert torch.allclose(next_graph["grid"].input_state[:, 0], torch.tensor(0.5))
 
 
 def test_forecaster_returns_list(mock_model, sample_initial_state):
