@@ -16,7 +16,6 @@ from equicast import experiments
 from equicast.experiments import TrainConfig
 from equicast.logger.mlflow import MLFlowLogger
 from equicast.model.backbones.gnn import GNN
-from equicast.model.backbones.simple import Simple
 from equicast.model.model import Model
 
 torch.set_float32_matmul_precision("medium | high")
