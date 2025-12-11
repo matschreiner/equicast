@@ -41,8 +41,7 @@ class Model(pl.LightningModule):
             Predictions in scaled space
         """
         # Preprocess: scale and route input
-        input_scaled = self.data_handler.scaler(graph["grid"].input_state)
-        cond = input_scaled[:, self.data_handler.in_idxs]
+        cond = self.data_handler.prepare_model_input(graph["grid"].input_state)
 
         # Store processed input in graph for backbone
         graph["grid"].cond = cond
@@ -57,8 +56,7 @@ class Model(pl.LightningModule):
         pred = self.forward(graph)
 
         # Process target separately (only needed for training)
-        target_scaled = self.data_handler.scaler(graph["grid"].target_state)
-        target = target_scaled[:, self.data_handler.out_idxs]
+        target = self.data_handler.prepare_model_target(graph["grid"].target_state)
 
         # Compute loss
         loss = ((pred - target) ** 2).mean()

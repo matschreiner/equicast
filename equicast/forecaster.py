@@ -54,8 +54,7 @@ class Forecaster:
         """
         Prepare the next state from model prediction.
 
-        Delegates to DataHandler for extracting prognostic variables and
-        reconstructing the full state.
+        Delegates to DataHandler for converting model output back to raw state.
 
         Args:
             current_graph: Current graph (used to clone structure)
@@ -67,11 +66,8 @@ class Forecaster:
         """
         data_handler = self.model.data_handler
 
-        # Extract prognostic variables (unscaled to physical space)
-        prognostic = data_handler.extract_prognostic(prediction)
-
-        # Reconstruct full feature vector
-        next_state = data_handler.reconstruct_state(prognostic, forcing)
+        # Convert model output to raw state (unscale + reconstruct)
+        next_state = data_handler.from_model_output(prediction, forcing)
 
         # Clone graph structure and update input_state
         next_graph = current_graph.clone()

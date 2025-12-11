@@ -52,6 +52,55 @@ class DataHandler:
         """Output feature indices (prognostic + diagnostic)."""
         return self.feature_router.out_idxs
 
+    def prepare_model_input(self, raw_state: torch.Tensor) -> torch.Tensor:
+        """
+        Convert raw state to model input.
+
+        Applies z-score normalization and routes to input features (forcing + prognostic).
+
+        Args:
+            raw_state: Raw data [nodes, all_features] in physical space
+
+        Returns:
+            Model input [nodes, input_features] in normalized space
+        """
+        scaled = self.scaler(raw_state)
+        return scaled[:, self.in_idxs]
+
+    def prepare_model_target(self, raw_state: torch.Tensor) -> torch.Tensor:
+        """
+        Convert raw state to model target.
+
+        Applies z-score normalization and routes to output features (prognostic + diagnostic).
+
+        Args:
+            raw_state: Raw data [nodes, all_features] in physical space
+
+        Returns:
+            Model target [nodes, output_features] in normalized space
+        """
+        scaled = self.scaler(raw_state)
+        return scaled[:, self.out_idxs]
+
+    def from_model_output(
+        self, model_output: torch.Tensor, forcing: torch.Tensor = None
+    ) -> torch.Tensor:
+        """
+        Convert model output back to raw state.
+
+        Unscales model output, extracts prognostic variables, and reconstructs
+        full feature vector by combining with forcing variables.
+
+        Args:
+            model_output: Model predictions [nodes, output_features] in normalized space
+            forcing: Forcing variables [nodes, n_forcing] in physical space (optional)
+
+        Returns:
+            Full state [nodes, all_features] in physical space
+        """
+        prognostic = self.extract_prognostic(model_output)
+        return self.reconstruct_state(prognostic, forcing)
+
     def extract_prognostic(self, prediction: torch.Tensor) -> torch.Tensor:
         """
         Extract prognostic variables from model prediction.
