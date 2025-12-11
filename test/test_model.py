@@ -1,11 +1,12 @@
-import pytest
-import torch
-from torch_geometric.data import HeteroData, Data
 from unittest.mock import Mock
 
-from equicast.model.model import Model
+import pytest
+import torch
+from torch_geometric.data import Data, HeteroData
+
 from equicast.data.data_handler import DataHandler
 from equicast.data.feature_config import FeatureConfig
+from equicast.model.model import Model
 
 
 @pytest.fixture
@@ -30,6 +31,7 @@ def mock_data_handler():
 @pytest.fixture
 def simple_backbone():
     """Create a simple backbone for testing."""
+
     class SimpleBackbone(torch.nn.Module):
         def __init__(self):
             super().__init__()
@@ -67,10 +69,14 @@ def test_model_initialization(simple_backbone, mock_data_handler):
     assert model.scheduler_factory is None
 
 
-def test_model_initialization_with_optimizers(simple_backbone, mock_data_handler):
+def test_model_initialization_with_optimizers(
+    simple_backbone, mock_data_handler
+):
     """Test Model initialization with optimizer factories."""
     opt_factory = lambda params: torch.optim.Adam(params, lr=0.001)
-    sched_factory = lambda opt: torch.optim.lr_scheduler.StepLR(opt, step_size=10)
+    sched_factory = lambda opt: torch.optim.lr_scheduler.StepLR(
+        opt, step_size=10
+    )
 
     model = Model(
         backbone=simple_backbone,
@@ -100,7 +106,9 @@ def test_model_forward(simple_backbone, mock_data_handler, sample_graph):
     assert isinstance(pred, torch.Tensor)
 
 
-def test_model_forward_processes_input_only(simple_backbone, mock_data_handler, sample_graph):
+def test_model_forward_processes_input_only(
+    simple_backbone, mock_data_handler, sample_graph
+):
     """Test that forward only processes input, not target."""
     model = Model(
         backbone=simple_backbone,
@@ -130,6 +138,7 @@ def test_model_training_step(simple_backbone, mock_data_handler, sample_graph):
     # Mock scaler to return scaled tensors
     def scaler_side_effect(data):
         return data  # Just return same shape for simplicity
+
     mock_data_handler.scaler = Mock(side_effect=scaler_side_effect)
 
     loss = model.training_step(sample_graph, 0)
@@ -140,7 +149,9 @@ def test_model_training_step(simple_backbone, mock_data_handler, sample_graph):
     assert loss.item() >= 0  # Loss should be non-negative
 
 
-def test_model_training_step_processes_target(simple_backbone, mock_data_handler, sample_graph):
+def test_model_training_step_processes_target(
+    simple_backbone, mock_data_handler, sample_graph
+):
     """Test that training_step processes both input and target."""
     model = Model(
         backbone=simple_backbone,
@@ -149,6 +160,7 @@ def test_model_training_step_processes_target(simple_backbone, mock_data_handler
 
     # Mock scaler to track calls
     call_count = 0
+
     def scaler_side_effect(data):
         nonlocal call_count
         call_count += 1
@@ -190,10 +202,14 @@ def test_model_configure_optimizers_custom(simple_backbone, mock_data_handler):
     assert isinstance(optimizer, torch.optim.SGD)
 
 
-def test_model_configure_optimizers_with_scheduler(simple_backbone, mock_data_handler):
+def test_model_configure_optimizers_with_scheduler(
+    simple_backbone, mock_data_handler
+):
     """Test optimizer configuration with scheduler."""
     opt_factory = lambda params: torch.optim.Adam(params, lr=0.001)
-    sched_factory = lambda opt: torch.optim.lr_scheduler.StepLR(opt, step_size=10)
+    sched_factory = lambda opt: torch.optim.lr_scheduler.StepLR(
+        opt, step_size=10
+    )
 
     model = Model(
         backbone=simple_backbone,
@@ -233,4 +249,4 @@ def test_model_saves_hyperparameters(simple_backbone, mock_data_handler):
     )
 
     # Should have hparams saved
-    assert hasattr(model, 'hparams')
+    assert hasattr(model, "hparams")

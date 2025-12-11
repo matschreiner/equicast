@@ -110,3 +110,68 @@ def test_data_handler_feature_router_works(sample_feature_config, mock_dataset):
 
         assert len(handler.in_idxs) == 4  # 2 forcing + 2 prognostic
         assert len(handler.out_idxs) == 3  # 2 prognostic + 1 diagnostic
+
+
+def test_data_handler_extract_prognostic(sample_feature_config, mock_dataset):
+    """Test extracting prognostic variables from prediction."""
+    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+        handler = DataHandler("fake_path.zarr", sample_feature_config)
+
+        # Prediction: [temp, humidity, precip] = [prognostic, prognostic, diagnostic]
+        # out_idxs = [2, 3, 4] (temp at idx 2, humidity at idx 3, precip at idx 4)
+        # mean = [0,1,2,3,4], std = [1,1,1,1,1]
+        # mean_out = [2, 3, 4], std_out = [1, 1, 1]
+        # Prediction in scaled space: [10, 19, 28]
+        prediction_scaled = torch.tensor([[10.0, 19.0, 28.0]] * 5)  # 5 nodes
+
+        prognostic = handler.extract_prognostic(prediction_scaled)
+
+        # Should extract only first 2 features (prognostic) and unscale them
+        assert prognostic.shape == (5, 2)
+        # After unscaling: pred * std_out + mean_out
+        # [10*1+2, 19*1+3, 28*1+4] = [12, 22, 32]
+        # Extract prognostic (first 2): [12, 22]
+        assert torch.allclose(prognostic[:, 0], torch.tensor(12.0))
+        assert torch.allclose(prognostic[:, 1], torch.tensor(22.0))
+
+
+def test_data_handler_reconstruct_state(sample_feature_config, mock_dataset):
+    """Test reconstructing full state from prognostic and forcing."""
+    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+        handler = DataHandler("fake_path.zarr", sample_feature_config)
+
+        # Prognostic: [temp, humidity] at indices [2, 3]
+        prognostic = torch.tensor([[10.0, 20.0]] * 5)
+
+        # Forcing: [solar, pressure] at indices [0, 1]
+        forcing = torch.tensor([[1.0, 2.0]] * 5)
+
+        state = handler.reconstruct_state(prognostic, forcing)
+
+        # Should have shape [5 nodes, 5 features]
+        assert state.shape == (5, 5)
+
+        # Check values are placed correctly
+        assert torch.allclose(state[:, 0], torch.tensor(1.0))  # solar
+        assert torch.allclose(state[:, 1], torch.tensor(2.0))  # pressure
+        assert torch.allclose(state[:, 2], torch.tensor(10.0))  # temp
+        assert torch.allclose(state[:, 3], torch.tensor(20.0))  # humidity
+        assert torch.allclose(state[:, 4], torch.tensor(0.0))  # precip (not provided)
+
+
+def test_data_handler_reconstruct_state_no_forcing(sample_feature_config, mock_dataset):
+    """Test reconstructing state without forcing variables."""
+    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+        handler = DataHandler("fake_path.zarr", sample_feature_config)
+
+        # Only prognostic
+        prognostic = torch.tensor([[10.0, 20.0]] * 5)
+
+        state = handler.reconstruct_state(prognostic, forcing=None)
+
+        # Prognostic should be placed correctly, forcing should be zeros
+        assert state.shape == (5, 5)
+        assert torch.allclose(state[:, 0], torch.tensor(0.0))  # solar (not provided)
+        assert torch.allclose(state[:, 1], torch.tensor(0.0))  # pressure (not provided)
+        assert torch.allclose(state[:, 2], torch.tensor(10.0))  # temp
+        assert torch.allclose(state[:, 3], torch.tensor(20.0))  # humidity

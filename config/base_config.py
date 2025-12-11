@@ -2,10 +2,14 @@
 
 import fiddle as fdl
 
+from equicast.checkpoint.checkpoint_provider import MLFlowCheckpointProvider
 from equicast.data import FeatureConfig
 from equicast.data.data_handler import DataHandler
 from equicast.dataset import AnemoiDataset
+from equicast.forecaster import Forecaster
 from equicast.graph.graph_provider import StaticGraphProvider
+from equicast.model import Model
+from equicast.model.from_checkpoint import from_checkpoint
 
 
 def get_feature_config(path: str = "hydraconfig/features/base.yaml"):
@@ -50,4 +54,53 @@ def get_data_handler(
         DataHandler,
         dataset_path=dataset_path,
         feature_config=feature_config,
+    )
+
+
+def get_checkpoint_provider(
+    tracking_uri: str = "https://mlflow.dmidev.org/",
+    run_id: str = None,
+    checkpoint_name: str = "latest",
+):
+    """Get MLFlow checkpoint provider configuration."""
+    return fdl.Config(
+        MLFlowCheckpointProvider,
+        tracking_uri=tracking_uri,
+        run_id=run_id,
+        checkpoint_name=checkpoint_name,
+    )
+
+
+def get_model_from_checkpoint(checkpoint_provider=None):
+    """Get model loaded from checkpoint."""
+    if checkpoint_provider is None:
+        checkpoint_provider = get_checkpoint_provider()
+
+    return fdl.Config(
+        from_checkpoint,
+        model_cls=Model,
+        checkpoint_provider=checkpoint_provider,
+    )
+
+
+def get_fresh_model(backbone, data_handler=None):
+    """Get fresh untrained model (useful for debugging)."""
+    if data_handler is None:
+        data_handler = get_data_handler()
+
+    return fdl.Config(
+        Model,
+        backbone=backbone,
+        data_handler=data_handler,
+    )
+
+
+def get_forecaster(model=None):
+    """Get forecaster configuration."""
+    if model is None:
+        model = get_model_from_checkpoint()
+
+    return fdl.Config(
+        Forecaster,
+        model=model,
     )

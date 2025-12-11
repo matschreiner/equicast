@@ -51,3 +51,68 @@ class DataHandler:
     def out_idxs(self) -> list[int]:
         """Output feature indices (prognostic + diagnostic)."""
         return self.feature_router.out_idxs
+
+    def extract_prognostic(self, prediction: torch.Tensor) -> torch.Tensor:
+        """
+        Extract prognostic variables from model prediction.
+
+        Prediction contains [prognostic, diagnostic] variables in scaled space.
+        This method unscales and extracts only the prognostic variables.
+
+        Args:
+            prediction: Model output [prognostic, diagnostic] in scaled space
+
+        Returns:
+            Prognostic variables only, in physical space
+        """
+        # Get indices for output features (prognostic + diagnostic)
+        out_idxs = self.out_idxs
+
+        # Get mean/std for output features only
+        mean_out = self.scaler.mean[out_idxs]
+        std_out = self.scaler.std[out_idxs]
+
+        # Unscale prediction to physical space
+        pred_unscaled = prediction * std_out + mean_out
+
+        # Extract prognostic (first N features)
+        n_prognostic = len(self.feature_router.feature_config.prognostic)
+        prognostic = pred_unscaled[:, :n_prognostic]
+
+        return prognostic
+
+    def reconstruct_state(
+        self, prognostic: torch.Tensor, forcing: torch.Tensor = None
+    ) -> torch.Tensor:
+        """
+        Reconstruct full feature vector from prognostic and forcing variables.
+
+        Creates a full feature vector with all features in their correct positions.
+        Non-provided features (e.g., diagnostic) are left as zeros.
+
+        Args:
+            prognostic: Prognostic variables in physical space
+            forcing: Forcing variables in physical space (optional)
+
+        Returns:
+            Full feature vector [n_nodes, n_features] in physical space
+        """
+        n_features = len(self.name_to_index)
+        state = torch.zeros(prognostic.shape[0], n_features, device=prognostic.device)
+
+        # Place prognostic variables at their correct indices
+        prog_idxs = self.feature_router._get_data_idxs(
+            self.feature_router.feature_config.prognostic
+        )
+        for i, idx in enumerate(prog_idxs):
+            state[:, idx] = prognostic[:, i]
+
+        # Place forcing variables at their correct indices
+        if forcing is not None:
+            forcing_idxs = self.feature_router._get_data_idxs(
+                self.feature_router.feature_config.forcing
+            )
+            for i, idx in enumerate(forcing_idxs):
+                state[:, idx] = forcing[:, i]
+
+        return state

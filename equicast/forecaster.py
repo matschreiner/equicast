@@ -1,5 +1,7 @@
 import torch
 
+from equicast.model.model import Model
+
 
 class Forecaster:
     """
@@ -9,7 +11,7 @@ class Forecaster:
     forecaster just manages the autoregressive loop.
     """
 
-    def __init__(self, model: torch.nn.Module):
+    def __init__(self, model: Model):
         self.model = model
 
     def forecast(self, initial_state, steps, forcing_sequence=None):
@@ -52,12 +54,8 @@ class Forecaster:
         """
         Prepare the next state from model prediction.
 
-        The prediction from the model contains [prognostic, diagnostic] variables
-        in scaled space. We need to:
-        1. Unscale the prediction
-        2. Extract prognostic variables
-        3. Combine with forcing data
-        4. Create full feature vector for next timestep
+        Delegates to DataHandler for extracting prognostic variables and
+        reconstructing the full state.
 
         Args:
             current_graph: Current graph (used to clone structure)
@@ -69,33 +67,11 @@ class Forecaster:
         """
         data_handler = self.model.data_handler
 
-        # Unscale prediction from normalized space to physical space
-        pred_unscaled = data_handler.scaler.inverse_transform(prediction)
+        # Extract prognostic variables (unscaled to physical space)
+        prognostic = data_handler.extract_prognostic(prediction)
 
-        # Split prediction: first N features are prognostic, rest are diagnostic
-        n_prognostic = len(data_handler.feature_router.feature_config.prognostic)
-        prognostic = pred_unscaled[:, :n_prognostic]
-
-        # Create full feature vector for next timestep
-        n_features = len(data_handler.name_to_index)
-        next_state = torch.zeros(
-            prognostic.shape[0], n_features, device=prediction.device
-        )
-
-        # Place prognostic variables at their correct indices
-        prog_idxs = data_handler.feature_router._get_data_idxs(
-            data_handler.feature_router.feature_config.prognostic
-        )
-        for i, idx in enumerate(prog_idxs):
-            next_state[:, idx] = prognostic[:, i]
-
-        # Place forcing variables at their correct indices
-        if forcing is not None:
-            forcing_idxs = data_handler.feature_router._get_data_idxs(
-                data_handler.feature_router.feature_config.forcing
-            )
-            for i, idx in enumerate(forcing_idxs):
-                next_state[:, idx] = forcing[:, i]
+        # Reconstruct full feature vector
+        next_state = data_handler.reconstruct_state(prognostic, forcing)
 
         # Clone graph structure and update input_state
         next_graph = current_graph.clone()

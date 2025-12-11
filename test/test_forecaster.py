@@ -151,31 +151,20 @@ def test_forecaster_forecast_no_gradient(mock_model, sample_initial_state):
 
 
 def test_forecaster_prepare_next_state_implementation():
-    """Test that _prepare_next_state properly reconstructs state."""
-    from equicast.data.data_handler import DataHandler
-    from equicast.data.feature_config import FeatureConfig
+    """Test that _prepare_next_state delegates to DataHandler correctly."""
     from unittest.mock import Mock
 
     # Create mock model with data_handler
     mock_model = Mock()
     mock_data_handler = Mock()
 
-    # Setup mock scaler for inverse transform
-    mock_data_handler.scaler.inverse_transform = Mock(
-        side_effect=lambda x: x  # Pass through for simplicity
-    )
+    # Mock extract_prognostic to return prognostic variables
+    mock_prognostic = torch.tensor([[1.0, 2.0]] * 5)  # 5 nodes, 2 prognostic vars
+    mock_data_handler.extract_prognostic = Mock(return_value=mock_prognostic)
 
-    # Setup feature config
-    mock_data_handler.feature_router.feature_config.prognostic = ["temp", "humidity"]
-    mock_data_handler.feature_router.feature_config.forcing = ["solar"]
-
-    # Setup name_to_index with 4 total features
-    mock_data_handler.name_to_index = {"solar": 0, "temp": 1, "humidity": 2, "precip": 3}
-
-    # Setup _get_data_idxs
-    def get_data_idxs(names):
-        return [mock_data_handler.name_to_index[n] for n in names]
-    mock_data_handler.feature_router._get_data_idxs = get_data_idxs
+    # Mock reconstruct_state to return full state
+    mock_full_state = torch.tensor([[0.5, 1.0, 2.0, 0.0]] * 5)  # 5 nodes, 4 features
+    mock_data_handler.reconstruct_state = Mock(return_value=mock_full_state)
 
     mock_model.data_handler = mock_data_handler
 
@@ -191,15 +180,20 @@ def test_forecaster_prepare_next_state_implementation():
 
     next_graph = forecaster._prepare_next_state(sample_graph, prediction, forcing)
 
-    # Check that next_state has correct shape
-    assert next_graph["grid"].input_state.shape == (5, 4)
+    # Check that extract_prognostic was called with prediction
+    mock_data_handler.extract_prognostic.assert_called_once()
+    assert torch.equal(
+        mock_data_handler.extract_prognostic.call_args[0][0], prediction
+    )
 
-    # Check that prognostic values are placed correctly (temp at idx 1, humidity at idx 2)
-    assert torch.allclose(next_graph["grid"].input_state[:, 1], torch.tensor(1.0))
-    assert torch.allclose(next_graph["grid"].input_state[:, 2], torch.tensor(2.0))
+    # Check that reconstruct_state was called with prognostic and forcing
+    mock_data_handler.reconstruct_state.assert_called_once()
+    call_args = mock_data_handler.reconstruct_state.call_args
+    assert torch.equal(call_args[0][0], mock_prognostic)
+    assert torch.equal(call_args[0][1], forcing)
 
-    # Check that forcing is placed correctly (solar at idx 0)
-    assert torch.allclose(next_graph["grid"].input_state[:, 0], torch.tensor(0.5))
+    # Check that next_state was set correctly
+    assert torch.equal(next_graph["grid"].input_state, mock_full_state)
 
 
 def test_forecaster_returns_list(mock_model, sample_initial_state):
