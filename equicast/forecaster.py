@@ -33,11 +33,8 @@ class Forecaster:
 
         with torch.no_grad():
             for step in range(steps):
-                # Model handles all preprocessing internally
                 pred = self.model(current_state)
                 predictions.append(pred)
-
-                # Prepare next state for autoregressive loop
                 current_state = self._prepare_next_state(
                     current_state,
                     pred,
@@ -65,11 +62,9 @@ class Forecaster:
             Graph ready for next model forward pass
         """
         data_handler = self.model.data_handler
-
-        # Convert model output to raw state (unscale + reconstruct)
-        next_state = data_handler.from_model_output(prediction, forcing)
-
-        # Clone graph structure and update input_state
+        next_state = data_handler.reconstruct_state(
+            prediction=prediction, forcing=forcing
+        )
         next_graph = current_graph.clone()
         next_graph["grid"].input_state = next_state
 
