@@ -180,28 +180,22 @@ def test_forecaster_prepare_next_state_implementation():
 
     next_graph = forecaster._prepare_next_state(sample_graph, prediction, forcing)
 
-    # Check that extract_prognostic was called with prediction
-    mock_data_handler.extract_prognostic.assert_called_once()
-    assert torch.equal(
-        mock_data_handler.extract_prognostic.call_args[0][0], prediction
-    )
-
-    # Check that reconstruct_state was called with prognostic and forcing
+    # Check that reconstruct_state was called with named arguments
     mock_data_handler.reconstruct_state.assert_called_once()
-    call_args = mock_data_handler.reconstruct_state.call_args
-    assert torch.equal(call_args[0][0], mock_prognostic)
-    assert torch.equal(call_args[0][1], forcing)
+    call_kwargs = mock_data_handler.reconstruct_state.call_args.kwargs
+    assert torch.equal(call_kwargs["prediction"], prediction)
+    assert torch.equal(call_kwargs["forcing"], forcing)
 
     # Check that next_state was set correctly
     assert torch.equal(next_graph["grid"].input_state, mock_full_state)
 
 
-def test_forecaster_returns_list(mock_model, sample_initial_state):
-    """Test that forecast returns a list of predictions."""
+def test_forecaster_returns_stacked_tensor(mock_model, sample_initial_state):
+    """Test that forecast returns a stacked tensor."""
     forecaster = Forecaster(mock_model)
     forecaster._prepare_next_state = Mock(return_value=sample_initial_state)
 
     predictions = forecaster.forecast(sample_initial_state, steps=3)
 
-    assert isinstance(predictions, list)
-    assert len(predictions) == 3
+    assert isinstance(predictions, torch.Tensor)
+    assert predictions.shape[0] == 3  # First dimension is time

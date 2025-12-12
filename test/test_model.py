@@ -25,6 +25,18 @@ def mock_data_handler():
     handler.in_idxs = [0, 1, 2]  # 3 input features
     handler.out_idxs = [2, 3]  # 2 output features
 
+    # Mock the new transformation methods
+    def prepare_model_input_side_effect(raw_state):
+        # Scale and route to input features
+        return raw_state[:, handler.in_idxs]
+
+    def prepare_model_target_side_effect(raw_state):
+        # Scale and route to output features
+        return raw_state[:, handler.out_idxs]
+
+    handler.prepare_model_input = Mock(side_effect=prepare_model_input_side_effect)
+    handler.prepare_model_target = Mock(side_effect=prepare_model_target_side_effect)
+
     return handler
 
 
@@ -98,8 +110,8 @@ def test_model_forward(simple_backbone, mock_data_handler, sample_graph):
 
     pred = model.forward(sample_graph)
 
-    # Should call scaler on input_state
-    mock_data_handler.scaler.assert_called()
+    # Should call prepare_model_input on input_state
+    mock_data_handler.prepare_model_input.assert_called()
 
     # Should return a prediction
     assert pred is not None
@@ -115,16 +127,13 @@ def test_model_forward_processes_input_only(
         data_handler=mock_data_handler,
     )
 
-    # Mock scaler to track calls
-    mock_data_handler.scaler = Mock(return_value=torch.randn(10, 5))
-
     pred = model.forward(sample_graph)
 
-    # Should only call scaler once (for input)
-    assert mock_data_handler.scaler.call_count == 1
+    # Should only call prepare_model_input once (for input)
+    assert mock_data_handler.prepare_model_input.call_count == 1
 
     # Should be called with input_state
-    call_args = mock_data_handler.scaler.call_args[0][0]
+    call_args = mock_data_handler.prepare_model_input.call_args[0][0]
     assert torch.equal(call_args, sample_graph["grid"].input_state)
 
 
@@ -158,20 +167,11 @@ def test_model_training_step_processes_target(
         data_handler=mock_data_handler,
     )
 
-    # Mock scaler to track calls
-    call_count = 0
-
-    def scaler_side_effect(data):
-        nonlocal call_count
-        call_count += 1
-        return data
-
-    mock_data_handler.scaler = Mock(side_effect=scaler_side_effect)
-
     model.training_step(sample_graph, 0)
 
-    # Should call scaler twice: once for input (in forward), once for target
-    assert call_count == 2
+    # Should call prepare_model_input once (in forward) and prepare_model_target once
+    assert mock_data_handler.prepare_model_input.call_count == 1
+    assert mock_data_handler.prepare_model_target.call_count == 1
 
 
 def test_model_configure_optimizers_default(simple_backbone, mock_data_handler):
