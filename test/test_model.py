@@ -25,17 +25,13 @@ def mock_data_handler():
     handler.in_idxs = [0, 1, 2]  # 3 input features
     handler.out_idxs = [2, 3]  # 2 output features
 
-    # Mock the new transformation methods
-    def prepare_model_input_side_effect(raw_state):
-        # Scale and route to input features
-        return raw_state[:, handler.in_idxs]
+    # Mock the new transformation method
+    def raw_to_model_side_effect(raw_state, *, target=False):
+        # Scale and route to appropriate features
+        idxs = handler.out_idxs if target else handler.in_idxs
+        return raw_state[:, idxs]
 
-    def prepare_model_target_side_effect(raw_state):
-        # Scale and route to output features
-        return raw_state[:, handler.out_idxs]
-
-    handler.prepare_model_input = Mock(side_effect=prepare_model_input_side_effect)
-    handler.prepare_model_target = Mock(side_effect=prepare_model_target_side_effect)
+    handler.raw_to_model = Mock(side_effect=raw_to_model_side_effect)
 
     return handler
 
@@ -110,8 +106,9 @@ def test_model_forward(simple_backbone, mock_data_handler, sample_graph):
 
     pred = model.forward(sample_graph)
 
-    # Should call prepare_model_input on input_state
-    mock_data_handler.prepare_model_input.assert_called()
+    # Should call raw_to_model on input_state with target=False
+    mock_data_handler.raw_to_model.assert_called()
+    assert mock_data_handler.raw_to_model.call_args.kwargs["target"] == False
 
     # Should return a prediction
     assert pred is not None
