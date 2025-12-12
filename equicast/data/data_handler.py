@@ -82,24 +82,6 @@ class DataHandler:
         scaled = self.scaler(raw_state)
         return scaled[:, self.out_idxs]
 
-    def from_model_output(
-        self, model_output: torch.Tensor, forcing: torch.Tensor = None
-    ) -> torch.Tensor:
-        """
-        Convert model output back to raw state.
-
-        Unscales model output, extracts prognostic variables, and reconstructs
-        full feature vector by combining with forcing variables.
-
-        Args:
-            model_output: Model predictions [nodes, output_features] in normalized space
-            forcing: Forcing variables [nodes, n_forcing] in physical space (optional)
-
-        Returns:
-            Full state [nodes, all_features] in physical space
-        """
-        prognostic = self.extract_prognostic(model_output)
-        return self.reconstruct_state(prognostic, forcing)
 
     def extract_prognostic(self, prediction: torch.Tensor) -> torch.Tensor:
         """
@@ -131,37 +113,86 @@ class DataHandler:
         return prognostic
 
     def reconstruct_state(
-        self, prognostic: torch.Tensor, forcing: torch.Tensor = None
+        self,
+        *,
+        prognostic: torch.Tensor = None,
+        forcing: torch.Tensor = None,
+        diagnostic: torch.Tensor = None,
+        prediction: torch.Tensor = None,
     ) -> torch.Tensor:
         """
-        Reconstruct full feature vector from prognostic and forcing variables.
+        Reconstruct full feature vector from any combination of components.
 
-        Creates a full feature vector with all features in their correct positions.
-        Non-provided features (e.g., diagnostic) are left as zeros.
+        Uses keyword-only arguments for flexibility - provide any combination of
+        prognostic, forcing, diagnostic, or prediction (which will be processed
+        to extract prognostic automatically).
 
         Args:
-            prognostic: Prognostic variables in physical space
-            forcing: Forcing variables in physical space (optional)
+            prognostic: Prognostic variables in physical space [nodes, n_prog]
+            forcing: Forcing variables in physical space [nodes, n_forcing]
+            diagnostic: Diagnostic variables in physical space [nodes, n_diag]
+            prediction: Model prediction in scaled space (will extract prognostic automatically)
 
         Returns:
-            Full feature vector [n_nodes, n_features] in physical space
+            Full state [nodes, all_features] in physical space
+
+        Examples:
+            >>> # From model prediction + forcing
+            >>> state = reconstruct_state(prediction=pred, forcing=forcing)
+
+            >>> # From prognostic only
+            >>> state = reconstruct_state(prognostic=prog_vars)
+
+            >>> # From prognostic + forcing + diagnostic
+            >>> state = reconstruct_state(prognostic=p, forcing=f, diagnostic=d)
         """
         n_features = len(self.name_to_index)
-        state = torch.zeros(prognostic.shape[0], n_features, device=prognostic.device)
 
-        # Place prognostic variables at their correct indices
-        prog_idxs = self.feature_router._get_data_idxs(
-            self.feature_router.feature_config.prognostic
-        )
-        for i, idx in enumerate(prog_idxs):
-            state[:, idx] = prognostic[:, i]
+        # Determine device from any provided tensor
+        device = None
+        for tensor in [prognostic, forcing, diagnostic, prediction]:
+            if tensor is not None:
+                device = tensor.device
+                break
+        if device is None:
+            device = torch.device("cpu")
 
-        # Place forcing variables at their correct indices
+        # Get number of nodes from any provided tensor
+        n_nodes = None
+        for tensor in [prognostic, forcing, diagnostic, prediction]:
+            if tensor is not None:
+                n_nodes = tensor.shape[0]
+                break
+
+        if n_nodes is None:
+            raise ValueError("At least one argument must be provided")
+
+        state = torch.zeros(n_nodes, n_features, device=device)
+
+        # If prediction provided, extract prognostic from it
+        if prediction is not None:
+            prognostic = self.extract_prognostic(prediction)
+
+        # Place each component at its correct indices
+        if prognostic is not None:
+            prog_idxs = self.feature_router._get_data_idxs(
+                self.feature_router.feature_config.prognostic
+            )
+            for i, idx in enumerate(prog_idxs):
+                state[:, idx] = prognostic[:, i]
+
         if forcing is not None:
             forcing_idxs = self.feature_router._get_data_idxs(
                 self.feature_router.feature_config.forcing
             )
             for i, idx in enumerate(forcing_idxs):
                 state[:, idx] = forcing[:, i]
+
+        if diagnostic is not None:
+            diag_idxs = self.feature_router._get_data_idxs(
+                self.feature_router.feature_config.diagnostic
+            )
+            for i, idx in enumerate(diag_idxs):
+                state[:, idx] = diagnostic[:, i]
 
         return state
