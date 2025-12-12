@@ -42,33 +42,13 @@ class ForecastConfig(ExperimentConfig):
         import torch
         from anemoi.datasets import open_dataset
 
-        # Open dataset and load timeseries
         data = open_dataset(self.dataset_path)
         timeseries = (
             torch.tensor(data[self.start_idx : self.start_idx + 1 + self.steps])
             .squeeze()
             .permute(0, 2, 1)
-        )  # [time, nodes, features]
-
-        # Create initial state graph from first timestep
-        initial_graph = self.graph_provider.get_graph()
-        initial_graph["grid"].input_state = timeseries[0]
-
-        # Extract forcing sequence for timesteps 1 to steps
-        data_handler = self.forecaster.model.data_handler
-        forcing_idxs = data_handler.feature_router._get_data_idxs(
-            data_handler.feature_router.feature_config.forcing
         )
-        forcing_sequence = [
-            timeseries[i][:, forcing_idxs] for i in range(1, self.steps + 1)
-        ]
-
-        # Run forecast
-        predictions = self.forecaster.forecast(
-            initial_graph,
-            steps=self.steps,
-            forcing_sequence=forcing_sequence,
-        )
+        graph = self.graph_provider.get_graph()
 
         return predictions
 
