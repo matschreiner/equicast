@@ -2,12 +2,16 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import fiddle as fdl
+import torch
+from anemoi.datasets import open_dataset
 from fiddle import graphviz
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.logger import Logger
 from torch.utils.data import DataLoader
+from torch_geometric.data import Data
 
 from equicast.forecaster import Forecaster
+from equicast.graph.graph_provider import BaseGraphProvider
 from equicast.model import Model
 
 
@@ -33,24 +37,15 @@ class TrainConfig(ExperimentConfig):
 @dataclass
 class ForecastConfig(ExperimentConfig):
     forecaster: Forecaster
-    dataset_path: str
-    graph_provider: any  # BaseGraphProvider
-    start_idx: int
-    steps: int
+    timeseries: torch.Tensor
+    graph: Data
 
     def run(self):
-        import torch
-        from anemoi.datasets import open_dataset
-
-        data = open_dataset(self.dataset_path)
-        timeseries = (
-            torch.tensor(data[self.start_idx : self.start_idx + 1 + self.steps])
-            .squeeze()
-            .permute(0, 2, 1)
+        self.forecaster.forecast(
+            timeseries=self.timeseries,
+            graph=self.graph,
+            steps=5,
         )
-        graph = self.graph_provider.get_graph()
-
-        return predictions
 
 
 def vis_config(config):

@@ -5,6 +5,8 @@ from typing import Callable
 import pytorch_lightning as pl
 import torch
 
+from equicast.data.data_handler import DataHandler
+
 
 class Model(pl.LightningModule):
     """
@@ -17,7 +19,7 @@ class Model(pl.LightningModule):
     def __init__(
         self,
         backbone: torch.nn.Module,
-        data_handler,
+        data_handler: DataHandler,
         optimizer_factory: Callable | None = None,
         scheduler_factory: Callable | None = None,
     ):

@@ -64,7 +64,7 @@ class DataHandler:
         Returns:
             Model input [nodes, input_features] in normalized space
         """
-        scaled = self.scaler(raw_state)
+        scaled = self.scaler.transform(raw_state)
         return scaled[:, self.in_idxs]
 
     def prepare_model_target(self, raw_state: torch.Tensor) -> torch.Tensor:
@@ -79,120 +79,37 @@ class DataHandler:
         Returns:
             Model target [nodes, output_features] in normalized space
         """
-        scaled = self.scaler(raw_state)
+        scaled = self.scaler.transform(raw_state)
         return scaled[:, self.out_idxs]
 
-
-    def extract_prognostic(self, prediction: torch.Tensor) -> torch.Tensor:
-        """
-        Extract prognostic variables from model prediction.
-
-        Prediction contains [prognostic, diagnostic] variables in scaled space.
-        This method unscales and extracts only the prognostic variables.
-
-        Args:
-            prediction: Model output [prognostic, diagnostic] in scaled space
-
-        Returns:
-            Prognostic variables only, in physical space
-        """
-        # Get indices for output features (prognostic + diagnostic)
-        out_idxs = self.out_idxs
-
-        # Get mean/std for output features only
-        mean_out = self.scaler.mean[out_idxs]
-        std_out = self.scaler.std[out_idxs]
-
-        # Unscale prediction to physical space
-        pred_unscaled = prediction * std_out + mean_out
-
-        # Extract prognostic (first N features)
-        n_prognostic = len(self.feature_router.feature_config.prognostic)
-        prognostic = pred_unscaled[:, :n_prognostic]
-
-        return prognostic
-
-    def reconstruct_state(
+    def update_state_with_prediction(
         self,
-        *,
-        prognostic: torch.Tensor = None,
-        forcing: torch.Tensor = None,
-        diagnostic: torch.Tensor = None,
-        prediction: torch.Tensor = None,
+        state: torch.Tensor,
+        prediction: torch.Tensor,
     ) -> torch.Tensor:
         """
-        Reconstruct full feature vector from any combination of components.
+        Update state with new prediction.
 
-        Uses keyword-only arguments for flexibility - provide any combination of
-        prognostic, forcing, diagnostic, or prediction (which will be processed
-        to extract prognostic automatically).
+        Takes current state and model prediction, extracts prognostic from prediction,
+        and updates the state. Useful for autoregressive forecasting.
 
         Args:
-            prognostic: Prognostic variables in physical space [nodes, n_prog]
-            forcing: Forcing variables in physical space [nodes, n_forcing]
-            diagnostic: Diagnostic variables in physical space [nodes, n_diag]
-            prediction: Model prediction in scaled space (will extract prognostic automatically)
+            state: Current state [nodes, all_features] in physical space
+            prediction: Model prediction [nodes, output_features] in scaled space
+            forcing: Optional updated forcing [nodes, n_forcing]. If None, keeps current forcing
 
         Returns:
-            Full state [nodes, all_features] in physical space
+            Updated state [nodes, all_features] in physical space
 
         Examples:
-            >>> # From model prediction + forcing
-            >>> state = reconstruct_state(prediction=pred, forcing=forcing)
+            >>> # Update with prediction, keep same forcing
+            >>> new_state = handler.update_state_with_prediction(state, model_pred)
 
-            >>> # From prognostic only
-            >>> state = reconstruct_state(prognostic=prog_vars)
-
-            >>> # From prognostic + forcing + diagnostic
-            >>> state = reconstruct_state(prognostic=p, forcing=f, diagnostic=d)
+            >>> # Update with prediction and new forcing
+            >>> new_state = handler.update_state_with_prediction(state, model_pred, new_forcing)
         """
-        n_features = len(self.name_to_index)
 
-        # Determine device from any provided tensor
-        device = None
-        for tensor in [prognostic, forcing, diagnostic, prediction]:
-            if tensor is not None:
-                device = tensor.device
-                break
-        if device is None:
-            device = torch.device("cpu")
-
-        # Get number of nodes from any provided tensor
-        n_nodes = None
-        for tensor in [prognostic, forcing, diagnostic, prediction]:
-            if tensor is not None:
-                n_nodes = tensor.shape[0]
-                break
-
-        if n_nodes is None:
-            raise ValueError("At least one argument must be provided")
-
-        state = torch.zeros(n_nodes, n_features, device=device)
-
-        # If prediction provided, extract prognostic from it
-        if prediction is not None:
-            prognostic = self.extract_prognostic(prediction)
-
-        # Place each component at its correct indices
-        if prognostic is not None:
-            prog_idxs = self.feature_router._get_data_idxs(
-                self.feature_router.feature_config.prognostic
-            )
-            for i, idx in enumerate(prog_idxs):
-                state[:, idx] = prognostic[:, i]
-
-        if forcing is not None:
-            forcing_idxs = self.feature_router._get_data_idxs(
-                self.feature_router.feature_config.forcing
-            )
-            for i, idx in enumerate(forcing_idxs):
-                state[:, idx] = forcing[:, i]
-
-        if diagnostic is not None:
-            diag_idxs = self.feature_router._get_data_idxs(
-                self.feature_router.feature_config.diagnostic
-            )
-            for i, idx in enumerate(diag_idxs):
-                state[:, idx] = diagnostic[:, i]
-
-        return state
+        new_state = state.clone()
+        new_state = self.scaler(new_state)
+        new_state[:, self.out_idxs] = prediction
+        return self.scaler.inverse_transform(new_state)
