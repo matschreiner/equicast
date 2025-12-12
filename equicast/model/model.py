@@ -40,35 +40,21 @@ class Model(pl.LightningModule):
         Returns:
             Predictions in scaled space
         """
-        # Preprocess: scale and route input
+
         cond = self.data_handler.prepare_model_input(graph["grid"].input_state)
-
-        # Store processed input in graph for backbone
         graph["grid"].cond = cond
-
-        # Backbone forward pass
         pred = self.backbone(graph)
 
         return pred
 
     def training_step(self, graph, _):
-        # Get prediction from forward pass
         pred = self.forward(graph)
-
-        # Process target separately (only needed for training)
-        target = self.data_handler.prepare_model_target(graph["grid"].target_state)
-
-        # Compute loss
-        loss = ((pred - target) ** 2).mean()
-
-        self.log_dict(
-            {"loss": loss},
-            logger=True,
-            prog_bar=True,
-            on_step=True,
-            on_epoch=False,
-            batch_size=graph.num_graphs,
+        target = self.data_handler.prepare_model_target(
+            graph["grid"].target_state
         )
+
+        loss = ((pred - target) ** 2).mean()
+        self.log_loss(loss, graph.num_graphs)
 
         return loss
 
@@ -82,6 +68,16 @@ class Model(pl.LightningModule):
             scheduler = self.scheduler_factory(optimizer)
             return [optimizer], [scheduler]
         return optimizer
+
+    def log_loss(self, loss, batch_size):
+        self.log_dict(
+            {"loss": loss},
+            logger=True,
+            prog_bar=True,
+            on_step=True,
+            on_epoch=False,
+            batch_size=batch_size,
+        )
 
 
 @contextmanager
