@@ -5,7 +5,7 @@ from equicast.model.model import Model
 
 class Forecaster:
     """
-    Simplified forecaster that delegates all preprocessing to the Model.
+    Forecaster that delegates all preprocessing to the Model.
 
     The model handles scaling and feature routing internally, so the
     forecaster just manages the autoregressive loop.
@@ -14,31 +14,36 @@ class Forecaster:
     def __init__(self, model: Model):
         self.model = model
 
-    def forecast(self, time_series, graph, steps):
+    def forecast(self, timeseries, graph, steps):
         """
         Autoregressively forecast for a given number of steps.
 
         Args:
-            initial_state: Graph with raw initial conditions
-            steps: Number of forecast steps
-            forcing_sequence: Optional tensor of forcing variables for each step
+            timeseries: Tensor of shape (steps + 1, num_nodes, num_features)
+            graph: Graph data structure
+            steps: Number of steps to forecast
 
         Returns:
             List of predictions (model handles scaling internally)
         """
         self.model.eval()
         predictions = []
-        current_state = time_series[0]
+        current_state = timeseries[0]
 
         with torch.no_grad():
             for step in range(steps):
-                pred = self.model(current_state)
+                _graph = graph.clone()
+                _graph["grid"].input_state = current_state
+
+                pred = self.model(_graph)
                 predictions.append(pred)
                 current_state = (
                     self.model.data_handler.update_state_with_prediction(
-                        time_series[step + 1],
+                        timeseries[step + 1],
                         pred,
                     )
                 )
 
-        return torch.stack(predictions, dim=0)  # [time, batch, nodes, features]
+        preds = torch.stack(predictions, dim=0)
+        __import__("pdb").set_trace()  # TODO delme
+        return preds
