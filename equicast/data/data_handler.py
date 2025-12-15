@@ -1,6 +1,7 @@
 """DataHandler for managing scaling and feature routing metadata."""
 
 from abc import ABC, abstractmethod
+
 import torch
 from anemoi.datasets import open_dataset
 
@@ -79,32 +80,10 @@ class DataHandler(BaseDataHandler):
         return self.feature_router.out_idxs
 
     def prepare_model_input(self, raw_state: torch.Tensor) -> torch.Tensor:
-        """
-        Convert raw state to model input.
-
-        Applies z-score normalization and routes to input features (forcing + prognostic).
-
-        Args:
-            raw_state: Raw data [nodes, all_features] in physical space
-
-        Returns:
-            Model input [nodes, input_features] in normalized space
-        """
         scaled = self.scaler.transform(raw_state)
         return scaled[..., self.in_idxs]
 
     def prepare_model_target(self, raw_state: torch.Tensor) -> torch.Tensor:
-        """
-        Convert raw state to model target.
-
-        Applies z-score normalization and routes to output features (prognostic + diagnostic).
-
-        Args:
-            raw_state: Raw data [nodes, all_features] in physical space
-
-        Returns:
-            Model target [nodes, output_features] in normalized space
-        """
         scaled = self.scaler.transform(raw_state)
         return scaled[..., self.out_idxs]
 
@@ -113,30 +92,6 @@ class DataHandler(BaseDataHandler):
         state: torch.Tensor,
         prediction: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Update state with new prediction.
-
-        Takes current state and model prediction, extracts prognostic from prediction,
-        and updates the state. Useful for autoregressive forecasting.
-
-        Args:
-            state: Current state [nodes, all_features] in physical space
-            prediction: Model prediction [nodes, output_features] in scaled space
-
-        Returns:
-            Updated state [nodes, all_features] in physical space
-
-        Examples:
-            >>> # Update with prediction, keep same forcing
-            >>> new_state = handler.update_state_with_prediction(state, model_pred)
-        """
-        new_state = state.clone()
-        new_state = self.scaler(new_state)
-        new_state[..., self.out_idxs] = prediction
-        return self.scaler.inverse_transform(new_state)
-
-        """
-
         new_state = state.clone()
         new_state = self.scaler(new_state)
         new_state[..., self.out_idxs] = prediction
