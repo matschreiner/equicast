@@ -72,8 +72,11 @@ class Model(pl.LightningModule):
         return optimizer
 
     def log_loss(self, loss, batch_size):
+        lr = get_lr(self)
+        log_dict = {"loss": loss, "lr": lr}
+
         self.log_dict(
-            {"loss": loss},
+            log_dict,
             logger=True,
             prog_bar=True,
             on_step=True,
