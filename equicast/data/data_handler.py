@@ -65,7 +65,7 @@ class DataHandler:
             Model input [nodes, input_features] in normalized space
         """
         scaled = self.scaler.transform(raw_state)
-        return scaled[:, self.in_idxs]
+        return scaled[..., self.in_idxs]
 
     def prepare_model_target(self, raw_state: torch.Tensor) -> torch.Tensor:
         """
@@ -80,7 +80,7 @@ class DataHandler:
             Model target [nodes, output_features] in normalized space
         """
         scaled = self.scaler.transform(raw_state)
-        return scaled[:, self.out_idxs]
+        return scaled[..., self.out_idxs]
 
     def update_state_with_prediction(
         self,
@@ -111,5 +111,5 @@ class DataHandler:
 
         new_state = state.clone()
         new_state = self.scaler(new_state)
-        new_state[:, self.out_idxs] = prediction
+        new_state[..., self.out_idxs] = prediction
         return self.scaler.inverse_transform(new_state)
