@@ -13,6 +13,7 @@ from config.base_config import (
 from equicast import experiments
 from equicast.model import Model
 from equicast.model.backbones.gnn import GNN
+from equicast.utils.mlflow_loader import load_model_from_mlflow
 
 
 def get_graph_from_provider(graph_provider, idx):
@@ -37,18 +38,11 @@ def get_timeseries(
 
 
 def main():
-    feature_config = get_feature_config()
-    data_handler = get_data_handler(feature_config=feature_config)
-
     timeseries = fdl.Config(
         get_timeseries,
         dataset_path="/home/masc/storage/mini_aifs.zarr",
         start_idx=0,
         steps=10,
-    )
-    backbone = fdl.Config(
-        GNN,
-        feature_config,
     )
 
     graph_provider = base_config.get_graph_provider()
@@ -58,13 +52,29 @@ def main():
         idx=None,
     )
 
+    #  Commented out: instantiating new model
+    #
+    #  feature_config = get_feature_config()
+    #  data_handler = get_data_handler(feature_config=feature_config)
+    #  backbone = fdl.Config(
+    #      GNN,
+    #      feature_config,
+    #  )
+    #
+    # model = fdl.Config(
+    #     Model,
+    #     backbone=backbone,
+    #     data_handler=data_handler,
+    #     optimizer_factory=None,
+    #     scheduler_factory=None,
+    # )
+
     model = fdl.Config(
-        Model,
-        backbone=backbone,
-        data_handler=data_handler,
-        optimizer_factory=None,
-        scheduler_factory=None,
+        load_model_from_mlflow,
+        run_id="ed5d0337880c4c6684ba4991ff36d5c9",
+        checkpoint_name=None,
     )
+
     forecaster = get_forecaster(model)
 
     cfg = fdl.Config(

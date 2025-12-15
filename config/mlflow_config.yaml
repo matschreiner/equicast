@@ -1,0 +1,4 @@
+mlflow:
+  tracking_uri: "https://mlflow.dmidev.org/"
+  experiment_name: "masc"
+  default_checkpoint_name: "latest"
