@@ -44,7 +44,6 @@ class ForecastConfig(ExperimentConfig):
         self.forecaster.forecast(
             timeseries=self.timeseries,
             graph=self.graph,
-            #  steps=5,
         )
 
 
