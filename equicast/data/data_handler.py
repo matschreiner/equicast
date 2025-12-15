@@ -71,12 +71,10 @@ class DataHandler(BaseDataHandler):
 
     @property
     def in_idxs(self) -> list[int]:
-        """Input feature indices (forcing + prognostic)."""
         return self.feature_router.in_idxs
 
     @property
     def out_idxs(self) -> list[int]:
-        """Output feature indices (prognostic + diagnostic)."""
         return self.feature_router.out_idxs
 
     def prepare_model_input(self, raw_state: torch.Tensor) -> torch.Tensor:
