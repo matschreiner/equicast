@@ -87,7 +87,7 @@ def ignore_backbone_warning():
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
-            message=r"Attribute 'backbone' is an instance of `nn\.Module`",
+            message=r"Attribute '(backbone|data_handler)' is an instance of `nn\.Module`",
         )
         yield
 
