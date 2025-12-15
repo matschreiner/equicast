@@ -1,69 +1,392 @@
-import tempfile
-import webbrowser
-
+import cartopy.crs as ccrs
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
 import numpy as np
-import plotly.graph_objects as go
+from matplotlib.animation import FuncAnimation
 
 
-def plot_field_interactive(field, coords, n_lat=256, n_lon=512, center_lon=90, center_lat=0):
-    field = field.detach()
-    lon = ((coords[:, 1].numpy() * 180 / np.pi + 180) % 360) - 180
-    lat = np.clip(coords[:, 0].numpy() * 180 / np.pi, -90, 90)
-    val = field.numpy()
+def plot_field(
+    field,
+    latlon,
+    ax=None,
+    title=None,
+    vmin=None,
+    vmax=None,
+    cmap="viridis",
+    **kwargs,
+):
+    """
+    Plot a field on a map using lat/lon coordinates.
 
-    lon_edges = np.linspace(-180, 180, n_lon)
-    lat_edges = np.linspace(-90, 90, n_lat)
+    Parameters
+    ----------
+    field : array-like
+        Field values to plot
+    latlon : array-like, shape (n_points, 2)
+        Latitude and longitude coordinates in radians or degrees
+        If radians: lat in [-π/2, π/2], lon in [0, 2π) or [-π, π]
+        If degrees: lat in [-90, 90], lon in [0, 360) or [-180, 180]
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on. If None, creates a new figure with PlateCarree projection
+    title : str, optional
+        Title for the plot
+    vmin, vmax : float, optional
+        Min/max values for colormap scaling
+    cmap : str, optional
+        Matplotlib colormap name (default: "viridis")
+    **kwargs : dict
+        Additional keyword arguments passed to tripcolor
 
-    H, _, _ = np.histogram2d(lat, lon, bins=(lat_edges, lon_edges), weights=val)
-    C, _, _ = np.histogram2d(lat, lon, bins=(lat_edges, lon_edges))
-    Z = np.divide(H, C, out=np.full_like(H, np.nan, dtype=float), where=C > 0)
-    Z = np.nan_to_num(Z, nan=np.nanmean(Z))
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        The axes used for plotting
+    im : matplotlib.collections.TriMesh
+        The image object (useful for adding colorbars)
+    """
+    field = np.asarray(field)
+    latlon = np.asarray(latlon)
 
-    lon_c = 0.5 * (lon_edges[:-1] + lon_edges[1:])
-    lat_c = 0.5 * (lat_edges[:-1] + lat_edges[1:])
-    Lon, Lat = np.meshgrid(lon_c, lat_c)
+    lat = latlon[:, 0]
+    lon = latlon[:, 1]
 
-    Lon = np.hstack((Lon, Lon[:, [0]] + 360))
-    Lat = np.hstack((Lat, Lat[:, [0]]))
-    Z = np.hstack((Z, Z[:, [0]]))
+    # Convert radians to degrees if needed
+    if np.abs(lat).max() <= np.pi / 2 + 0.1:
+        lat = lat * 180 / np.pi
+        lon = lon * 180 / np.pi
 
-    Lon_r = np.radians(Lon)
-    Lat_r = np.radians(Lat)
-    x = np.cos(Lat_r) * np.cos(Lon_r)
-    y = np.cos(Lat_r) * np.sin(Lon_r)
-    z = np.sin(Lat_r)
+    # Normalize longitude to [-180, 180]
+    lon = ((lon + 180) % 360) - 180
 
-    fig = go.Figure(
-        go.Surface(
-            x=x,
-            y=y,
-            z=z,
-            surfacecolor=Z,
-            colorscale="Viridis",
-            cmin=np.nanmin(Z),
-            cmax=np.nanmax(Z),
-            showscale=True,
+    # Create axis if not provided
+    if ax is None:
+        _, ax = plt.subplots(
+            figsize=(12, 6), subplot_kw=dict(projection=ccrs.PlateCarree())
         )
+
+    # Create triangulation and plot
+    triang = tri.Triangulation(lon, lat)
+    im = ax.tripcolor(
+        triang,
+        field,
+        shading="gouraud",
+        vmin=vmin,
+        vmax=vmax,
+        transform=ccrs.PlateCarree(),
+        cmap=cmap,
+        **kwargs,
     )
 
-    lon_rad = np.radians(center_lon)
-    lat_rad = np.radians(center_lat)
-    cx = np.cos(lat_rad) * np.cos(lon_rad)
-    cy = np.cos(lat_rad) * np.sin(lon_rad)
-    cz = np.sin(lat_rad)
+    # Add map features
+    ax.coastlines()  # type: ignore
+    ax.set_global()  # type: ignore
+    ax.gridlines(draw_labels=True)  # type: ignore
 
-    fig.update_layout(
-        scene=dict(
-            xaxis=dict(visible=False),
-            yaxis=dict(visible=False),
-            zaxis=dict(visible=False),
-            aspectmode="data",
-            camera=dict(eye=dict(x=cx * 2, y=cy * 2, z=cz * 2)),
-        ),
-        margin=dict(l=0, r=0, t=30, b=0),
-        title="Interactive Spherical Heatmap",
+    if title:
+        ax.set_title(title)
+
+    return ax, im
+
+
+def make_video(
+    fields,
+    latlon,
+    output_path=None,
+    ax=None,
+    fps=10,
+    title_template="Frame {frame}",
+    vmin=None,
+    vmax=None,
+    cmap="viridis",
+    figsize=(12, 6),
+    dpi=100,
+    add_colorbar=True,
+    **kwargs,
+):
+    """
+    Create a video from a sequence of field predictions.
+
+    Parameters
+    ----------
+    fields : list or array-like, shape (n_frames, n_points)
+        List of field values for each timestep
+    latlon : array-like, shape (n_points, 2)
+        Latitude and longitude coordinates (same for all frames)
+    output_path : str, optional
+        Output video file path (e.g., "output.mp4", "output.gif")
+        If None and ax is provided, returns animation without saving
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on. If None, creates a new figure with PlateCarree projection
+        Useful for multi-panel videos
+    fps : int, optional
+        Frames per second (default: 10)
+    title_template : str or callable, optional
+        Title template with {frame} placeholder, or callable that takes frame index
+        Examples: "Timestep {frame}", "Hour {frame}", lambda i: f"T+{i*6}h"
+    vmin, vmax : float, optional
+        Min/max values for colormap. If None, uses global min/max across all frames
+    cmap : str, optional
+        Matplotlib colormap name (default: "viridis")
+    figsize : tuple, optional
+        Figure size (default: (12, 6)). Ignored if ax is provided
+    dpi : int, optional
+        Resolution for video frames (default: 100)
+    add_colorbar : bool, optional
+        Whether to add a colorbar (default: True). Only used if ax is None
+    **kwargs : dict
+        Additional keyword arguments passed to plot_field
+
+    Returns
+    -------
+    animation : matplotlib.animation.FuncAnimation
+        The animation object. If output_path is provided, also saves to file
+    """
+    fields = np.asarray(fields)
+
+    # Calculate global vmin/vmax if not provided (ensures consistent colormap)
+    if vmin is None:
+        vmin = fields.min()
+    if vmax is None:
+        vmax = fields.max()
+
+    # Setup figure and axis if not provided
+    own_fig = ax is None
+    if own_fig:
+        fig, ax = plt.subplots(
+            figsize=figsize, subplot_kw=dict(projection=ccrs.PlateCarree())
+        )
+    else:
+        fig = ax.get_figure()
+
+    # Initialize plot with first frame using plot_field
+    initial_title = (
+        title_template(0)
+        if callable(title_template)
+        else title_template.format(frame=0)
     )
 
-    with tempfile.NamedTemporaryFile("w", suffix=".html", delete=False) as f:
-        fig.write_html(f.name, include_plotlyjs="cdn")
-        webbrowser.open(f.name)
+    # Remove 'title' from kwargs if present to avoid conflict
+    plot_kwargs = {k: v for k, v in kwargs.items() if k != "title"}
+
+    ax, im = plot_field(
+        fields[0],
+        latlon,
+        ax=ax,
+        title=initial_title,
+        vmin=vmin,
+        vmax=vmax,
+        cmap=cmap,
+        **plot_kwargs,
+    )
+
+    # Convert latlon once for all frames
+    latlon_arr = np.asarray(latlon)
+    lat = latlon_arr[:, 0]
+    lon = latlon_arr[:, 1]
+    if np.abs(lat).max() <= np.pi / 2 + 0.1:
+        lat = lat * 180 / np.pi
+        lon = lon * 180 / np.pi
+    lon = ((lon + 180) % 360) - 180
+    triang = tri.Triangulation(lon, lat)
+
+    # Add colorbar only if we created our own figure
+    if own_fig and add_colorbar:
+        plt.colorbar(im, ax=ax, orientation="horizontal", pad=0.05, aspect=40)
+
+    def update(frame_idx):
+        im.set_array(fields[frame_idx])
+
+        # Update title
+        if callable(title_template):
+            title = title_template(frame_idx)
+        else:
+            title = title_template.format(frame=frame_idx)
+        ax.set_title(title)
+
+        return (im,)
+
+    # Create animation
+    anim = FuncAnimation(
+        fig, update, frames=len(fields), interval=1000 / fps, blit=False
+    )
+
+    # Save video if output path provided
+    if output_path is not None:
+        if output_path.endswith(".gif"):
+            anim.save(output_path, writer="pillow", fps=fps, dpi=dpi)
+        else:
+            anim.save(output_path, writer="ffmpeg", fps=fps, dpi=dpi)
+
+        # Close figure only if we created it
+        if own_fig:
+            plt.close(fig)
+
+    return anim
+
+
+def make_comparison_video(
+    predictions,
+    targets,
+    latlon,
+    output_path,
+    fps=10,
+    title_template="Frame {frame}",
+    vmin=None,
+    vmax=None,
+    cmap="viridis",
+    figsize=(16, 18),
+    dpi=100,
+    show_error=True,
+    **kwargs,
+):
+    """
+    Create a comparison video showing predictions vs ground truth.
+
+    Parameters
+    ----------
+    predictions : array-like, shape (n_frames, n_points)
+        Predicted field values for each timestep
+    targets : array-like, shape (n_frames, n_points)
+        Ground truth field values for each timestep
+    latlon : array-like, shape (n_points, 2)
+        Latitude and longitude coordinates
+    output_path : str
+        Output video file path (e.g., "comparison.mp4", "comparison.gif")
+    fps : int, optional
+        Frames per second (default: 10)
+    title_template : str or callable, optional
+        Title template with {frame} placeholder for frame number
+    vmin, vmax : float, optional
+        Min/max values for colormap. If None, uses global min/max across predictions and targets
+    cmap : str, optional
+        Matplotlib colormap name (default: "viridis")
+    figsize : tuple, optional
+        Figure size (default: (16, 18) for 3 panels, (16, 12) for 2 panels)
+    dpi : int, optional
+        Resolution for video frames (default: 100)
+    show_error : bool, optional
+        Whether to show error panel (prediction - target) (default: True)
+    **kwargs : dict
+        Additional keyword arguments passed to tripcolor
+
+    Returns
+    -------
+    animation : matplotlib.animation.FuncAnimation
+        The animation object
+    """
+    predictions = np.asarray(predictions)
+    targets = np.asarray(targets)
+    latlon_arr = np.asarray(latlon)
+
+    # Calculate global vmin/vmax if not provided
+    if vmin is None:
+        vmin = min(predictions.min(), targets.min())
+    if vmax is None:
+        vmax = max(predictions.max(), targets.max())
+
+    # Prepare coordinates and triangulation
+    lat = latlon_arr[:, 0]
+    lon = latlon_arr[:, 1]
+    if np.abs(lat).max() <= np.pi / 2 + 0.1:
+        lat = lat * 180 / np.pi
+        lon = lon * 180 / np.pi
+    lon = ((lon + 180) % 360) - 180
+    triang = tri.Triangulation(lon, lat)
+
+    # Remove 'title' from kwargs if present
+    plot_kwargs = {k: v for k, v in kwargs.items() if k != "title"}
+
+    # Create figure with subplots
+    n_panels = 3 if show_error else 2
+    if figsize == (16, 18) and not show_error:
+        figsize = (16, 12)
+
+    fig, axes = plt.subplots(
+        n_panels, 1, figsize=figsize, subplot_kw=dict(projection=ccrs.PlateCarree())
+    )
+
+    if n_panels == 2:
+        axes = list(axes)
+
+    # Initialize all panels with first frame
+    for ax in axes:
+        ax.coastlines()  # type: ignore
+        ax.set_global()  # type: ignore
+        ax.gridlines(draw_labels=True)  # type: ignore
+
+    def update(frame_idx):
+        """Update function for animation - updates all panels"""
+        # Generate frame title
+        if callable(title_template):
+            frame_title = title_template(frame_idx)
+        else:
+            frame_title = title_template.format(frame=frame_idx)
+
+        # Clear and update prediction panel
+        axes[0].clear()
+        axes[0].coastlines()  # type: ignore
+        axes[0].set_global()  # type: ignore
+        axes[0].gridlines(draw_labels=True)  # type: ignore
+        axes[0].tripcolor(
+            triang,
+            predictions[frame_idx],
+            shading="gouraud",
+            vmin=vmin,
+            vmax=vmax,
+            transform=ccrs.PlateCarree(),
+            cmap=cmap,
+            **plot_kwargs,
+        )
+        axes[0].set_title(f"Prediction - {frame_title}")
+
+        # Clear and update target panel
+        axes[1].clear()
+        axes[1].coastlines()  # type: ignore
+        axes[1].set_global()  # type: ignore
+        axes[1].gridlines(draw_labels=True)  # type: ignore
+        axes[1].tripcolor(
+            triang,
+            targets[frame_idx],
+            shading="gouraud",
+            vmin=vmin,
+            vmax=vmax,
+            transform=ccrs.PlateCarree(),
+            cmap=cmap,
+            **plot_kwargs,
+        )
+        axes[1].set_title(f"Ground Truth - {frame_title}")
+
+        # Clear and update error panel if requested
+        if show_error:
+            axes[2].clear()
+            axes[2].coastlines()  # type: ignore
+            axes[2].set_global()  # type: ignore
+            axes[2].gridlines(draw_labels=True)  # type: ignore
+            error = predictions[frame_idx] - targets[frame_idx]
+            axes[2].tripcolor(
+                triang,
+                error,
+                shading="gouraud",
+                transform=ccrs.PlateCarree(),
+                cmap="RdBu_r",
+                **plot_kwargs,
+            )
+            axes[2].set_title(f"Error (Pred - Truth) - {frame_title}")
+
+        return axes
+
+    # Create animation
+    anim = FuncAnimation(
+        fig, update, frames=len(predictions), interval=1000 / fps, blit=False
+    )
+
+    # Save video
+    plt.tight_layout()
+    if output_path.endswith(".gif"):
+        anim.save(output_path, writer="pillow", fps=fps, dpi=dpi)
+    else:
+        anim.save(output_path, writer="ffmpeg", fps=fps, dpi=dpi)
+
+    plt.close(fig)
+
+    return anim
