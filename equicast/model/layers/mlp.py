@@ -17,13 +17,16 @@ class MLP(torch.nn.Module):
         if hidden_dim is None:
             hidden_dim = out_dim
 
+        # Save the original out_dim before it gets shadowed in the loop
+        final_out_dim = out_dim
+
         layers = []
         for i in range(num_layers):
-            in_dim = in_dim if i == 0 else hidden_dim
-            out_dim = out_dim if i == num_layers - 1 else hidden_dim
-            layers.append(torch.nn.Linear(in_dim, out_dim))
+            layer_in_dim = in_dim if i == 0 else hidden_dim
+            layer_out_dim = final_out_dim if i == num_layers - 1 else hidden_dim
+            layers.append(torch.nn.Linear(layer_in_dim, layer_out_dim))
             if i != num_layers - 1:
-                layers.append(norm(out_dim))
+                layers.append(norm(layer_out_dim))
                 layers.append(activation)
         self.network = torch.nn.Sequential(*layers)
 
