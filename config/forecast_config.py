@@ -15,6 +15,12 @@ from equicast.model import Model
 from equicast.model.backbones.gnn import GNN
 
 
+def get_graph_from_provider(graph_provider, idx):
+    """Get graph data from graph provider."""
+    graph = graph_provider.get_graph(idx)
+    return graph
+
+
 def get_timeseries(
     dataset_path: str,
     start_idx,
@@ -46,9 +52,10 @@ def main():
     )
 
     graph_provider = base_config.get_graph_provider()
-
     graph = fdl.Config(
-        graph_provider.get_graph(),
+        get_graph_from_provider,
+        graph_provider=graph_provider,
+        idx=None,
     )
 
     model = fdl.Config(
