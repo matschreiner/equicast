@@ -1,13 +1,15 @@
 import torch
 
 
-class Scaler:
+class Scaler(torch.nn.Module):
     """Z-score normalization scaler for weather data."""
 
     def __init__(self, statistics: dict[str, torch.Tensor]):
+        super().__init__()
         self.statistics = statistics
-        self.std = self.statistics["stdev"]
-        self.mean = self.statistics["mean"]
+        # Register as buffers so they move with .to(device)
+        self.register_buffer("mean", self.statistics["mean"])
+        self.register_buffer("std", self.statistics["stdev"])
 
     def transform(self, data: torch.Tensor) -> torch.Tensor:
         """Scale data to normalized space (z-score normalization)."""
@@ -17,5 +19,5 @@ class Scaler:
         """Unscale data back to physical units."""
         return data * self.std + self.mean
 
-    def __call__(self, data: torch.Tensor) -> torch.Tensor:
+    def forward(self, data: torch.Tensor) -> torch.Tensor:
         return self.transform(data)

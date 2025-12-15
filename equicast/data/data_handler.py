@@ -9,22 +9,9 @@ from equicast.data.scaler import Scaler
 from equicast.utils.utils import cast_dict
 
 
-class DataHandler:
-    """
-    Lightweight handler for dataset metadata (statistics, feature mappings).
-
-    Extracts only the metadata needed for scaling and feature routing,
-    without loading the full dataset into memory.
-    """
-
+class DataHandler(torch.nn.Module):
     def __init__(self, dataset_path: str, feature_config: FeatureConfig):
-        """
-        Initialize DataHandler from dataset path and feature configuration.
-
-        Args:
-            dataset_path: Path to the anemoi dataset (zarr file)
-            feature_config: FeatureConfig with forcing, prognostic, diagnostic fields
-        """
+        super().__init__()
         self.dataset_path = dataset_path
         self.feature_config = feature_config
 

@@ -29,6 +29,11 @@ class Forecaster:
         if steps == -1:
             steps = len(timeseries) - 1
 
+        # Ensure timeseries and graph are on the same device as model
+        device = next(self.model.parameters()).device
+        timeseries = timeseries.to(device)
+        graph = graph.to(device)
+
         self.model.eval()
         predictions = []
         current_state = timeseries[0]
