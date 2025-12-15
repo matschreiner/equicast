@@ -48,8 +48,11 @@ class ForecastConfig(ExperimentConfig):
 
 
 def vis_config(config):
-    graph = graphviz.render(config)
-    graph.view()
+    try:
+        graph = graphviz.render(config)
+        graph.view()
+    except Exception as _:
+        pass
 
 
 def run_experiment(config: fdl.Config):
