@@ -22,7 +22,6 @@ torch.set_float32_matmul_precision("medium | high")
 
 
 def main():
-    # Get shared base configurations
     feature_config = get_feature_config()
     data_handler = get_data_handler(feature_config=feature_config)
     dataset = get_dataset()
@@ -32,7 +31,6 @@ def main():
         dataset,
         batch_size=1,
         shuffle=True,
-        #  num_workers=4,
     )
 
     backbone = fdl.Config(
