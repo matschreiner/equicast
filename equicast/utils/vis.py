@@ -239,148 +239,100 @@ def make_comparison_video(
     show_error=True,
     **kwargs,
 ):
-    """
-    Create a comparison video showing predictions vs ground truth.
-
-    Parameters
-    ----------
-    predictions : array-like, shape (n_frames, n_points)
-        Predicted field values for each timestep
-    targets : array-like, shape (n_frames, n_points)
-        Ground truth field values for each timestep
-    latlon : array-like, shape (n_points, 2)
-        Latitude and longitude coordinates
-    output_path : str
-        Output video file path (e.g., "comparison.mp4", "comparison.gif")
-    fps : int, optional
-        Frames per second (default: 10)
-    title_template : str or callable, optional
-        Title template with {frame} placeholder for frame number
-    vmin, vmax : float, optional
-        Min/max values for colormap. If None, uses global min/max across predictions and targets
-    cmap : str, optional
-        Matplotlib colormap name (default: "viridis")
-    figsize : tuple, optional
-        Figure size (default: (16, 18) for 3 panels, (16, 12) for 2 panels)
-    dpi : int, optional
-        Resolution for video frames (default: 100)
-    show_error : bool, optional
-        Whether to show error panel (prediction - target) (default: True)
-    **kwargs : dict
-        Additional keyword arguments passed to tripcolor
-
-    Returns
-    -------
-    animation : matplotlib.animation.FuncAnimation
-        The animation object
-    """
     predictions = np.asarray(predictions)
     targets = np.asarray(targets)
-    latlon_arr = np.asarray(latlon)
 
-    # Calculate global vmin/vmax if not provided
+    # Compute colormap range if needed
     if vmin is None:
         vmin = min(predictions.min(), targets.min())
     if vmax is None:
         vmax = max(predictions.max(), targets.max())
 
-    # Prepare coordinates and triangulation
-    lat = latlon_arr[:, 0]
-    lon = latlon_arr[:, 1]
-    if np.abs(lat).max() <= np.pi / 2 + 0.1:
-        lat = lat * 180 / np.pi
-        lon = lon * 180 / np.pi
-    lon = ((lon + 180) % 360) - 180
-    triang = tri.Triangulation(lon, lat)
-
-    # Remove 'title' from kwargs if present
-    plot_kwargs = {k: v for k, v in kwargs.items() if k != "title"}
-
-    # Create figure with subplots
+    # ------- Create figure -------
     n_panels = 3 if show_error else 2
     if figsize == (16, 18) and not show_error:
         figsize = (16, 12)
 
     fig, axes = plt.subplots(
-        n_panels, 1, figsize=figsize, subplot_kw=dict(projection=ccrs.PlateCarree())
+        n_panels,
+        1,
+        figsize=figsize,
+        subplot_kw=dict(projection=ccrs.PlateCarree()),
     )
 
     if n_panels == 2:
         axes = list(axes)
 
-    # Initialize all panels with first frame
-    for ax in axes:
-        ax.coastlines()  # type: ignore
-        ax.set_global()  # type: ignore
-        ax.gridlines(draw_labels=True)  # type: ignore
-
-    def update(frame_idx):
-        """Update function for animation - updates all panels"""
-        # Generate frame title
-        if callable(title_template):
-            frame_title = title_template(frame_idx)
-        else:
-            frame_title = title_template.format(frame=frame_idx)
-
-        # Clear and update prediction panel
-        axes[0].clear()
-        axes[0].coastlines()  # type: ignore
-        axes[0].set_global()  # type: ignore
-        axes[0].gridlines(draw_labels=True)  # type: ignore
-        axes[0].tripcolor(
-            triang,
-            predictions[frame_idx],
-            shading="gouraud",
-            vmin=vmin,
-            vmax=vmax,
-            transform=ccrs.PlateCarree(),
-            cmap=cmap,
-            **plot_kwargs,
-        )
-        axes[0].set_title(f"Prediction - {frame_title}")
-
-        # Clear and update target panel
-        axes[1].clear()
-        axes[1].coastlines()  # type: ignore
-        axes[1].set_global()  # type: ignore
-        axes[1].gridlines(draw_labels=True)  # type: ignore
-        axes[1].tripcolor(
-            triang,
-            targets[frame_idx],
-            shading="gouraud",
-            vmin=vmin,
-            vmax=vmax,
-            transform=ccrs.PlateCarree(),
-            cmap=cmap,
-            **plot_kwargs,
-        )
-        axes[1].set_title(f"Ground Truth - {frame_title}")
-
-        # Clear and update error panel if requested
-        if show_error:
-            axes[2].clear()
-            axes[2].coastlines()  # type: ignore
-            axes[2].set_global()  # type: ignore
-            axes[2].gridlines(draw_labels=True)  # type: ignore
-            error = predictions[frame_idx] - targets[frame_idx]
-            axes[2].tripcolor(
-                triang,
-                error,
-                shading="gouraud",
-                transform=ccrs.PlateCarree(),
-                cmap="RdBu_r",
-                **plot_kwargs,
-            )
-            axes[2].set_title(f"Error (Pred - Truth) - {frame_title}")
-
-        return axes
-
-    # Create animation
-    anim = FuncAnimation(
-        fig, update, frames=len(predictions), interval=1000 / fps, blit=False
+    # ------- Use plot_field() for all initial images -------
+    # Prediction panel
+    _, im_pred = plot_field(
+        predictions[0],
+        latlon,
+        ax=axes[0],
+        title="Prediction",
+        vmin=vmin,
+        vmax=vmax,
+        cmap=cmap,
     )
 
-    # Save video
+    # Target panel
+    _, im_tgt = plot_field(
+        targets[0],
+        latlon,
+        ax=axes[1],
+        title="Ground Truth",
+        vmin=vmin,
+        vmax=vmax,
+        cmap=cmap,
+    )
+
+    # Error panel (optional)
+    if show_error:
+        _, im_err = plot_field(
+            predictions[0] - targets[0],
+            latlon,
+            ax=axes[2],
+            title="Error (Pred - Truth)",
+            cmap=cmap,
+        )
+    else:
+        im_err = None
+
+    lat = latlon[:, 0]
+    lon = latlon[:, 1]
+    if np.abs(lat).max() <= np.pi / 2 + 0.1:
+        lat = lat * 180 / np.pi
+        lon = lon * 180 / np.pi
+    lon = ((lon + 180) % 360) - 180
+
+    def update(frame_idx):
+        im_pred.set_array(predictions[frame_idx])
+        im_tgt.set_array(targets[frame_idx])
+        if show_error:
+            im_err.set_array(predictions[frame_idx] - targets[frame_idx])
+
+        if callable(title_template):
+            title = title_template(frame_idx)
+        else:
+            title = title_template.format(frame=frame_idx)
+
+        axes[0].set_title(f"Prediction – {title}")
+        axes[1].set_title(f"Ground Truth – {title}")
+        if show_error:
+            axes[2].set_title(f"Error – {title}")
+
+        return ()
+
+    # ------- Create animation -------
+    anim = FuncAnimation(
+        fig,
+        update,
+        frames=len(predictions),
+        interval=1000 / fps,
+        blit=False,
+    )
+
+    # ------- Save -------
     plt.tight_layout()
     if output_path.endswith(".gif"):
         anim.save(output_path, writer="pillow", fps=fps, dpi=dpi)
@@ -388,5 +340,4 @@ def make_comparison_video(
         anim.save(output_path, writer="ffmpeg", fps=fps, dpi=dpi)
 
     plt.close(fig)
-
     return anim
