@@ -14,7 +14,7 @@ class Forecaster:
     def __init__(self, model: Model):
         self.model = model
 
-    def forecast(self, timeseries, graph, steps):
+    def forecast(self, timeseries, graph, steps=-1):
         """
         Autoregressively forecast for a given number of steps.
 
@@ -26,6 +26,9 @@ class Forecaster:
         Returns:
             List of predictions (model handles scaling internally)
         """
+        if steps == -1:
+            steps = len(timeseries) - 1
+
         self.model.eval()
         predictions = []
         current_state = timeseries[0]
@@ -44,6 +47,24 @@ class Forecaster:
                     )
                 )
 
-        preds = torch.stack(predictions, dim=0)
-        __import__("pdb").set_trace()  # TODO delme
+        field = 1
+
+        import matplotlib.pyplot as plt
+
+        from equicast.utils.vis import make_comparison_video
+
+        preds = torch.stack(predictions)
+        targets = self.model.data_handler.prepare_model_target(timeseries)
+        fields = preds[:, :, field]
+        print("prediction done")
+
+        v = make_comparison_video(
+            fields.cpu().numpy(),
+            targets[:, :, field].cpu().numpy(),
+            _graph["grid"].x.cpu().numpy(),
+            title="Forecasted field",
+            output_path="forecast.mp4",
+            fps=1,
+        )
+
         return preds
