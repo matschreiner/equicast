@@ -56,7 +56,7 @@ class Forecaster:
 
         import matplotlib.pyplot as plt
 
-        from equicast.utils.vis import make_comparison_video
+        from equicast.visualization import make_comparison_video
 
         preds = torch.stack(predictions)
         targets = self.model.data_handler.prepare_model_target(timeseries)
