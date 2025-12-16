@@ -2,6 +2,7 @@ import warnings
 from contextlib import contextmanager
 from typing import Callable
 
+import numpy as np
 import pytorch_lightning as pl
 import torch
 
@@ -73,14 +74,15 @@ class Model(pl.LightningModule):
 
     def log_loss(self, loss, batch_size):
         lr = get_lr(self)
-        log_dict = {"loss": loss, "lr": lr}
+        ln_step = np.log(self.global_step + 1)
+        log_dict = {"loss": loss, "lr": lr, "log_step": ln_step}
 
         self.log_dict(
             log_dict,
             logger=True,
             prog_bar=True,
             on_step=True,
-            on_epoch=False,
+            on_epoch=True,
             batch_size=batch_size,
         )
 
