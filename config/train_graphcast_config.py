@@ -59,11 +59,7 @@ def main():
         lr=1e-4,  # Lower LR for larger model
     )
 
-    #  scheduler_factory = fdl.Partial(
-    #      StepLR,
-    #      step_size=100,  # Drop LR less frequently
-    #      gamma=0.5,  # Less aggressive LR reduction
-    #  )
+    scheduler_factory = None
 
     logger = fdl.Config(
         MLFlowLogger,
@@ -76,7 +72,7 @@ def main():
         backbone=backbone,
         data_handler=data_handler,
         optimizer_factory=optimizer_factory,
-        #  scheduler_factory=scheduler_factory,
+        scheduler_factory=scheduler_factory,
     )
 
     trainer = fdl.Config(

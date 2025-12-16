@@ -1,11 +1,11 @@
 """Forecast from a trained model checkpoint."""
 
-import base_config
 import fiddle as fdl
 import torch
 from anemoi.datasets import open_dataset
 
-from equicast import experiments
+from equicast import data, experiments
+from equicast.forecaster import Forecaster
 from equicast.model import Model
 from equicast.model.backbones.gnn import GNN
 from equicast.utils.mlflow_loader import load_model_from_mlflow
@@ -40,7 +40,10 @@ def main():
         steps=10,
     )
 
-    graph_provider = base_config.get_graph_provider()
+    graph_provider = fdl.Config(
+        data.StaticGraphProvider,
+        path="./graph/aifs-single.pt",
+    )
     graph = fdl.Config(
         get_graph_from_provider,
         graph_provider=graph_provider,
@@ -70,7 +73,10 @@ def main():
         checkpoint_name=None,
     )
 
-    forecaster = get_forecaster(model)
+    forecaster = fdl.Config(
+        Forecaster,
+        model=model,
+    )
 
     cfg = fdl.Config(
         experiments.ForecastConfig,
