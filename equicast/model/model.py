@@ -34,31 +34,31 @@ class Model(pl.LightningModule):
 
     def forward(self, graph):
         """
-        Forward pass with preprocessing.
+        Forward pass with input preprocessing (inference-ready).
 
         Args:
-            graph: Graph with raw input data in graph["grid"].input_state
+            graph: Graph with raw input data in graph["grid"].data
 
         Returns:
             Predictions in scaled space
         """
 
-        cond = self.data_handler.prepare_model_input(graph["grid"].input_state)
-        graph["grid"].cond = cond
+        graph = self.data_handler.prepare_input(graph)
         pred = self.backbone(graph)
 
         return pred
 
     def training_step(self, graph, _):
         pred = self.forward(graph)
-        target = self.data_handler.prepare_model_target(
-            graph["grid"].target_state
-        )
+        target = self.data_handler.get_target(graph)
 
-        loss = ((pred - target) ** 2).mean()
+        loss = self.loss(pred, target)
         self.log_loss(loss, graph.num_graphs)
 
         return loss
+
+    def loss(self, pred, target):
+        return torch.nn.functional.mse_loss(pred, target)
 
     def configure_optimizers(self):
         if self.optimizer_factory is None:

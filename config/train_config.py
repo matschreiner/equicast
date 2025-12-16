@@ -6,13 +6,7 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import StepLR
 from torch_geometric.loader import DataLoader
 
-from config.base_config import (
-    get_data_handler,
-    get_dataset,
-    get_feature_config,
-    get_graph_provider,
-)
-from equicast import experiments
+from equicast import data, experiments
 from equicast.experiments import TrainConfig
 from equicast.logger.mlflow import MLFlowLogger
 from equicast.model.backbones.gnn import GNN
@@ -22,9 +16,29 @@ torch.set_float32_matmul_precision("medium | high")
 
 
 def main():
-    feature_config = get_feature_config()
-    data_handler = get_data_handler(feature_config=feature_config)
-    dataset = get_dataset()
+    dataset_path = "/home/masc/storage/mini_aifs.zarr"
+
+    feature_config = fdl.Config(
+        data.FeatureConfig.from_yaml,
+        path="hydraconfig/features/base.yaml",
+    )
+
+    data_handler = fdl.Config(
+        data.DataHandler,
+        feature_config=feature_config,
+        dataset_path=dataset_path,
+    )
+
+    graph_provider = fdl.Config(
+        data.StaticGraphProvider,
+        path="graph/aifs-single.pt",
+    )
+
+    dataset = fdl.Config(
+        data.AnemoiDataset,
+        dataset_path=dataset_path,
+        graph_provider=graph_provider,
+    )
 
     dataloader = fdl.Config(
         DataLoader,

@@ -10,8 +10,8 @@ from pytorch_lightning.loggers.logger import Logger
 from torch.utils.data import DataLoader
 from torch_geometric.data import Data
 
+from equicast.data.graph_provider import BaseGraphProvider
 from equicast.forecaster import Forecaster
-from equicast.graph.graph_provider import BaseGraphProvider
 from equicast.model import Model
 
 

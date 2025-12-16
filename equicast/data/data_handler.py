@@ -1,9 +1,11 @@
 """DataHandler for managing scaling and feature routing metadata."""
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 import torch
 from anemoi.datasets import open_dataset
+from torch_geometric.data import Data
 
 from equicast.data.feature_config import FeatureConfig
 from equicast.data.feature_router import FeatureRouter
@@ -26,25 +28,13 @@ class BaseDataHandler(torch.nn.Module, ABC):
         )
         self.name_to_index: dict[str, int] = data.name_to_index
 
-    @property
     @abstractmethod
-    def in_idxs(self) -> list[int]:
-        """Input feature indices."""
-        pass
-
-    @property
-    @abstractmethod
-    def out_idxs(self) -> list[int]:
-        """Output feature indices."""
-        pass
-
-    @abstractmethod
-    def prepare_model_input(self, raw_state: torch.Tensor) -> torch.Tensor:
+    def prepare_input(self, data: Any) -> Any:
         """Convert raw state to model input."""
         pass
 
     @abstractmethod
-    def prepare_model_target(self, raw_state: torch.Tensor) -> torch.Tensor:
+    def get_target(self, data: Any) -> Any:
         """Convert raw state to model target."""
         pass
 
@@ -77,14 +67,6 @@ class DataHandler(BaseDataHandler):
     def out_idxs(self) -> list[int]:
         return self.feature_router.out_idxs
 
-    def prepare_model_input(self, raw_state: torch.Tensor) -> torch.Tensor:
-        scaled = self.scaler.transform(raw_state)
-        return scaled[..., self.in_idxs]
-
-    def prepare_model_target(self, raw_state: torch.Tensor) -> torch.Tensor:
-        scaled = self.scaler.transform(raw_state)
-        return scaled[..., self.out_idxs]
-
     def update_state_with_prediction(
         self,
         state: torch.Tensor,
@@ -94,3 +76,16 @@ class DataHandler(BaseDataHandler):
         new_state = self.scaler(new_state)
         new_state[..., self.out_idxs] = prediction
         return self.scaler.inverse_transform(new_state)
+
+    def prepare_input(self, data: Data) -> Data:
+        graph = data
+        raw = graph["grid"].data[0]
+        scaled = self.scaler.transform(raw)
+        graph["grid"].input = scaled[:, self.in_idxs]
+        graph["grid"].residual = scaled[:, self.out_idxs]
+        return graph
+
+    def get_target(self, data: Data) -> torch.Tensor:
+        raw = data["grid"].data[1]
+        scaled = self.scaler.transform(raw)
+        return scaled[:, self.out_idxs]

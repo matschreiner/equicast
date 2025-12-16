@@ -17,12 +17,13 @@ class GNN(torch.nn.Module):
         self.grid_nodes = grid_nodes
 
     def forward(self, graph):
+        residual = graph[self.grid_nodes].residual
         x = self.conv(
-            graph[self.grid_nodes].cond,
+            graph[self.grid_nodes].input,
             graph[self.grid_nodes, "to", self.grid_nodes],
         )
 
-        return x
+        return x + residual
 
 
 class GraphConv(MessagePassing):

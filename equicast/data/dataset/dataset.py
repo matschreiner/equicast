@@ -12,20 +12,22 @@ class AnemoiDataset(Dataset):
     Preprocessing (scaling, feature routing) is handled by the Model.
     """
 
-    def __init__(self, path: str, graph_provider: BaseGraphProvider):
+    def __init__(self, path: str, graph_provider: BaseGraphProvider, len=None):
         super().__init__()
         self.data = open_dataset(path)
         self.graph_provider = graph_provider
+        self.len = len
 
     def __len__(self):
+        if self.len:
+            return max(len(self.data) - 1, self.len - 1)
+
         return len(self.data) - 1
 
     def __getitem__(self, idx):
         data = torch.tensor(self.data[idx : idx + 2]).squeeze().permute(0, 2, 1)
 
         graph = self.graph_provider.get_graph(idx)
-
-        graph["grid"].input_state = data[0]
-        graph["grid"].target_state = data[1]
+        graph["grid"].data = data
 
         return graph
