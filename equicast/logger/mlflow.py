@@ -10,7 +10,10 @@ class MLFlowLogger(MLFlowLoggerParent):
         local_path = os.path.join(
             checkpoint_callback.dirpath, checkpoint_callback.filename + ".ckpt"
         )
-        self.log_artifact(local_path, artifact_path=CHECKPOINT_PATH)
+        try:
+            self.log_artifact(local_path, artifact_path=CHECKPOINT_PATH)
+        except Exception as e:
+            print(f"Warning: Could not upload checkpoint to MLflow: {e}")
 
     def log_artifact(self, local_path, artifact_path, *args, **kwargs):
         self.experiment.log_artifact(

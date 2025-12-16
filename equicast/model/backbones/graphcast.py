@@ -8,7 +8,7 @@ from torch_geometric.nn.conv import MessagePassing
 from equicast.model.layers.mlp import MLP
 
 
-class EncProcDec(torch.nn.Module):
+class Graphcast(torch.nn.Module):
     """
     Encoder-Processor-Decoder architecture for graph-based weather forecasting.
 
@@ -78,7 +78,7 @@ class EncProcDec(torch.nn.Module):
         """
         # Encode: Grid -> Mesh
         mesh_features = self.encoder(
-            grid_features=graph[self.grid_nodes].cond,
+            grid_features=graph[self.grid_nodes].input,
             edge_storage=graph[self.grid_nodes, "to", self.mesh_nodes],
         )
 
@@ -95,7 +95,7 @@ class EncProcDec(torch.nn.Module):
             edge_storage=graph[self.mesh_nodes, "to", self.grid_nodes],
         )
 
-        return grid_pred + graph[self.grid_nodes].cond
+        return grid_pred + graph[self.grid_nodes].residual
 
 
 class GridToMeshEncoder(MessagePassing):

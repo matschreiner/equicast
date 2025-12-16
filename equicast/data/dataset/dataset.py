@@ -2,7 +2,7 @@ import torch
 from anemoi.datasets import open_dataset
 from torch.utils.data import Dataset
 
-from equicast.graph.graph_provider import BaseGraphProvider
+from equicast.data.graph_provider import BaseGraphProvider
 
 
 class AnemoiDataset(Dataset):

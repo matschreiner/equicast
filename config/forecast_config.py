@@ -5,11 +5,6 @@ import fiddle as fdl
 import torch
 from anemoi.datasets import open_dataset
 
-from config.base_config import (
-    get_data_handler,
-    get_feature_config,
-    get_forecaster,
-)
 from equicast import experiments
 from equicast.model import Model
 from equicast.model.backbones.gnn import GNN

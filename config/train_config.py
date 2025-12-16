@@ -17,10 +17,12 @@ torch.set_float32_matmul_precision("medium | high")
 
 def main():
     dataset_path = "/home/masc/storage/mini_aifs.zarr"
+    graph_path = "graph/aifs-single.pt"
+    feature_config_path = "hydraconfig/features/base.yaml"
 
     feature_config = fdl.Config(
         data.FeatureConfig.from_yaml,
-        path="hydraconfig/features/base.yaml",
+        path=feature_config_path,
     )
 
     data_handler = fdl.Config(
@@ -31,12 +33,12 @@ def main():
 
     graph_provider = fdl.Config(
         data.StaticGraphProvider,
-        path="graph/aifs-single.pt",
+        path=graph_path,
     )
 
     dataset = fdl.Config(
         data.AnemoiDataset,
-        dataset_path=dataset_path,
+        path=dataset_path,
         graph_provider=graph_provider,
     )
 
@@ -80,6 +82,7 @@ def main():
     trainer = fdl.Config(
         Trainer,
         logger=logger,
+        log_every_n_steps=1,
         callbacks=[
             fdl.Config(
                 ModelCheckpoint,
