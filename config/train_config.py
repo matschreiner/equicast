@@ -59,13 +59,13 @@ def main():
         lr=1e-4,  # Match GraphCast LR
     )
 
-    scheduler_factory = fdl.Partial(
-        WarmupCosineAnnealingLR,
-        warmup_steps=1000,
-        total_steps=10000,
-        eta_min=1e-7,
-        start_factor=0.01,
-    )
+    #  scheduler_factory = fdl.Partial(
+    #      WarmupCosineAnnealingLR,
+    #      warmup_steps=1000,
+    #      total_steps=10000,
+    #      eta_min=1e-7,
+    #      start_factor=0.01,
+    #  )
 
     logger = fdl.Config(
         MLFlowLogger,

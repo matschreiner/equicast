@@ -73,7 +73,7 @@ class Model(pl.LightningModule):
             scheduler_config = {
                 "scheduler": scheduler,
                 "interval": "step",  # Update at every training step
-                "frequency": 1,      # Update every step
+                "frequency": 1,  # Update every step
             }
             return {"optimizer": optimizer, "lr_scheduler": scheduler_config}
         return optimizer
