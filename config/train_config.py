@@ -59,6 +59,7 @@ def main():
         lr=1e-4,  # Match GraphCast LR
     )
 
+    scheduler_factory = None
     #  scheduler_factory = fdl.Partial(
     #      WarmupCosineAnnealingLR,
     #      warmup_steps=1000,
