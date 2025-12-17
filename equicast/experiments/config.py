@@ -73,24 +73,28 @@ def vis_config(config):
 def run_experiment(config: fdl.Config):
     vis_config(config)
     experiment = fdl.build(config)
-    metadata = get_metadata()
-    experiment.logger.log_hyperparams(metadata)
-
-    experiment.run()
-
-
-def get_metadata():
     git_info = get_git_info()
-    run_name = cute()
-    timestamp = datetime.now()
+    experiment.logger.log_hyperparams(git_info)
 
-    metadata = {
-        "run_name": run_name,
-        "timestamp": timestamp.isoformat(),
-        "git_hash": git_info.get("hash"),
-        "git_short_hash": git_info.get("short_hash"),
-        "git_branch": git_info.get("branch"),
-        "git_dirty": git_info.get("dirty"),
-    }
+    with experiment_error_handler(experiment.logger):
+        experiment.run()
 
-    return metadata
+
+@contextmanager
+def experiment_error_handler(logger: BaseLogger):
+    logger.log_hyperparams({"status": "started"})
+    try:
+        yield
+        logger.log_hyperparams({"status": "completed"})
+    except KeyboardInterrupt:
+        logger.log_hyperparams({"status": "interrupted"})
+        raise
+    except Exception as e:
+        logger.log_hyperparams(
+            {
+                "status": "failed",
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            }
+        )
+        raise
