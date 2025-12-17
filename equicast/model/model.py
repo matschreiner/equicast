@@ -45,6 +45,8 @@ class Model(pl.LightningModule):
         """
 
         graph = self.data_handler.prepare_input(graph)
+        __import__("pdb").set_trace()  # TODO delme
+
         pred = self.backbone(graph)
 
         return pred

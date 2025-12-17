@@ -37,3 +37,19 @@ class Scaler(BaseScaler):
     def inverse_transform(self, data: torch.Tensor) -> torch.Tensor:
         """Unscale data back to physical units."""
         return data * self.std + self.mean  # type: ignore
+
+    def transform_indices(
+        self, data: torch.Tensor, indices: list[int]
+    ) -> torch.Tensor:
+        """Scale data using statistics for specific feature indices."""
+        mean = self.mean[indices]
+        std = self.std[indices]
+        return (data - mean) / std
+
+    def inverse_transform_indices(
+        self, data: torch.Tensor, indices: list[int]
+    ) -> torch.Tensor:
+        """Unscale data using statistics for specific feature indices."""
+        mean = self.mean[indices]
+        std = self.std[indices]
+        return data * std + mean

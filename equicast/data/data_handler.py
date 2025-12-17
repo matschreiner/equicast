@@ -8,90 +8,76 @@ from anemoi.datasets import open_dataset
 from torch_geometric.data import Data
 
 from equicast.data.feature_config import FeatureConfig
-from equicast.data.feature_router import FeatureRouter
+from equicast.data.feature_indices import FeatureIndices
 from equicast.data.scaler import Scaler
 from equicast.utils.utils import cast_dict
 
 
 class BaseDataHandler(torch.nn.Module, ABC):
-    """Abstract base class for data handlers."""
-
-    def __init__(self, dataset_path: str, feature_config: FeatureConfig):
-        super().__init__()
-        self.dataset_path = dataset_path
-        self.feature_config = feature_config
-
-        # Open dataset to extract metadata
-        data = open_dataset(dataset_path)
-        self.statistics: dict[str, torch.Tensor] = cast_dict(
-            data.statistics, torch.Tensor
-        )
-        self.name_to_index: dict[str, int] = data.name_to_index
-
-    @abstractmethod
-    def prepare_input(self, data: Any) -> Any:
-        """Convert raw state to model input."""
-        pass
-
-    @abstractmethod
-    def get_target(self, data: Any) -> Any:
-        """Convert raw state to model target."""
-        pass
-
-    @abstractmethod
-    def update_state_with_prediction(
-        self, state: torch.Tensor, prediction: torch.Tensor
-    ) -> torch.Tensor:
-        """Update state with new prediction."""
-        pass
-
-    @abstractmethod
-    def pad_input_features(self, input_features: torch.Tensor) -> torch.Tensor:
-        """Pad input features to full feature set."""
-        pass
-
-    @abstractmethod
-    def pad_output_features(self, output_features: torch.Tensor) -> torch.Tensor:
-        """Pad output features to full feature set."""
-        pass
-
-
-class DataHandler(BaseDataHandler):
     """Standard DataHandler with z-score normalization."""
 
     def __init__(self, dataset_path: str, feature_config: FeatureConfig):
-        super().__init__(dataset_path, feature_config)
-        self.scaler = Scaler(self.statistics)
-        self.feature_router = FeatureRouter(
+        super().__init__()
+        data = open_dataset(dataset_path)
+        statistics: dict[str, torch.Tensor] = cast_dict(
+            data.statistics, torch.Tensor
+        )
+
+        self.name_to_index: dict[str, int] = data.name_to_index
+
+        self.scaler = Scaler(statistics)
+        self.feature_indices = FeatureIndices(
             feature_config=feature_config,
             name_to_index=self.name_to_index,
         )
 
     @property
     def in_idxs(self) -> list[int]:
-        return self.feature_router.in_idxs
+        return self.feature_indices.in_idxs
 
     @property
     def out_idxs(self) -> list[int]:
-        return self.feature_router.out_idxs
+        return self.feature_indices.out_idxs
 
-    def update_state_with_prediction(
-        self,
-        state: torch.Tensor,
-        prediction: torch.Tensor,
+    @abstractmethod
+    def prepare_input(self, data: Data) -> Data: ...
+
+    @abstractmethod
+    def get_target(self, data: Data) -> torch.Tensor: ...
+
+    def scale_input_features(self, input_features: torch.Tensor) -> torch.Tensor:
+        """Scale input features using only input feature statistics."""
+        return self.scaler.transform_indices(input_features, self.in_idxs)
+
+    def inverse_scale_input_features(
+        self, input_features: torch.Tensor
     ) -> torch.Tensor:
-        new_state = state.clone()
-        new_state = self.scaler.transform(new_state)
-        new_state[..., self.out_idxs] = prediction
-        return self.scaler.inverse_transform(new_state)
+        """Inverse scale input features using only input feature statistics."""
+        return self.scaler.inverse_transform_indices(
+            input_features, self.in_idxs
+        )
 
-    def prepare_input(self, data: Data) -> Data:
-        graph = data
-        raw = graph["grid"].data[0]
-        scaled = self.scaler.transform(raw)
-        graph["grid"].input = self.get_input_features(scaled)
-        graph["grid"].residual = self.get_output_features(scaled)
-        return graph
+    def scale_output_features(
+        self, output_features: torch.Tensor
+    ) -> torch.Tensor:
+        """Scale output features using only output feature statistics."""
+        return self.scaler.transform_indices(output_features, self.out_idxs)
+
+    def inverse_scale_output_features(
+        self, output_features: torch.Tensor
+    ) -> torch.Tensor:
+        """Inverse scale output features using only output feature statistics."""
+        return self.scaler.inverse_transform_indices(
+            output_features, self.out_idxs
+        )
+
+    def scale_features(self, features: torch.Tensor) -> torch.Tensor:
+        """Scale features using all feature statistics."""
+        return self.scaler.transform(features)
+
+    def inverse_scale_features(self, features: torch.Tensor) -> torch.Tensor:
+        """Inverse scale features using all feature statistics."""
+        return self.scaler.inverse_transform(features)
 
     def get_input_features(self, tensor: torch.Tensor) -> torch.Tensor:
         return tensor[..., self.in_idxs]
@@ -124,8 +110,3 @@ class DataHandler(BaseDataHandler):
         )
         padded[..., self.out_idxs] = output_features
         return padded
-
-    def get_target(self, data: Data) -> torch.Tensor:
-        raw = data["grid"].data[1]
-        scaled = self.scaler.transform(raw)
-        return self.get_output_features(scaled)
