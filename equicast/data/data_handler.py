@@ -51,8 +51,6 @@ class DataHandler(BaseDataHandler):
 
     def __init__(self, dataset_path: str, feature_config: FeatureConfig):
         super().__init__(dataset_path, feature_config)
-
-        # Initialize scaler and feature router
         self.scaler = Scaler(self.statistics)
         self.feature_router = FeatureRouter(
             feature_config=feature_config,
@@ -73,7 +71,7 @@ class DataHandler(BaseDataHandler):
         prediction: torch.Tensor,
     ) -> torch.Tensor:
         new_state = state.clone()
-        new_state = self.scaler(new_state)
+        new_state = self.scaler.transform(new_state)
         new_state[..., self.out_idxs] = prediction
         return self.scaler.inverse_transform(new_state)
 
@@ -81,11 +79,17 @@ class DataHandler(BaseDataHandler):
         graph = data
         raw = graph["grid"].data[0]
         scaled = self.scaler.transform(raw)
-        graph["grid"].input = scaled[:, self.in_idxs]
-        graph["grid"].residual = scaled[:, self.out_idxs]
+        graph["grid"].input = self.get_input_features(scaled)
+        graph["grid"].residual = self.get_output_features(scaled)
         return graph
+
+    def get_input_features(self, tensor: torch.Tensor) -> torch.Tensor:
+        return tensor[..., self.in_idxs]
+
+    def get_output_features(self, tensor: torch.Tensor) -> torch.Tensor:
+        return tensor[..., self.out_idxs]
 
     def get_target(self, data: Data) -> torch.Tensor:
         raw = data["grid"].data[1]
         scaled = self.scaler.transform(raw)
-        return scaled[:, self.out_idxs]
+        return self.get_output_features(scaled)
