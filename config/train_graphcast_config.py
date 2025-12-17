@@ -3,7 +3,6 @@ import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.optim import Adam
-from torch.optim.lr_scheduler import StepLR
 from torch_geometric.loader import DataLoader
 
 from equicast import data, experiments
@@ -11,6 +10,7 @@ from equicast.experiments import TrainConfig
 from equicast.logger.mlflow import MLFlowLogger
 from equicast.model.backbones.graphcast import Graphcast
 from equicast.model.model import Model
+from equicast.model.schedulers import WarmupCosineAnnealingLR
 
 torch.set_float32_matmul_precision("medium | high")
 
@@ -56,10 +56,16 @@ def main():
 
     optimizer_factory = fdl.Partial(
         Adam,
-        lr=1e-4,  # Lower LR for larger model
+        lr=1e-3,
     )
 
-    scheduler_factory = None
+    scheduler_factory = fdl.Partial(
+        WarmupCosineAnnealingLR,
+        warmup_steps=10000,
+        total_steps=100000,
+        eta_min=1e-7,
+        start_factor=0.01,
+    )
 
     logger = fdl.Config(
         MLFlowLogger,
