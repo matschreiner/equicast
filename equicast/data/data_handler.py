@@ -45,6 +45,16 @@ class BaseDataHandler(torch.nn.Module, ABC):
         """Update state with new prediction."""
         pass
 
+    @abstractmethod
+    def pad_input_features(self, input_features: torch.Tensor) -> torch.Tensor:
+        """Pad input features to full feature set."""
+        pass
+
+    @abstractmethod
+    def pad_output_features(self, output_features: torch.Tensor) -> torch.Tensor:
+        """Pad output features to full feature set."""
+        pass
+
 
 class DataHandler(BaseDataHandler):
     """Standard DataHandler with z-score normalization."""
@@ -88,6 +98,32 @@ class DataHandler(BaseDataHandler):
 
     def get_output_features(self, tensor: torch.Tensor) -> torch.Tensor:
         return tensor[..., self.out_idxs]
+
+    def pad_input_features(self, input_features: torch.Tensor) -> torch.Tensor:
+        *batch_dims, _ = input_features.shape
+        total_features = len(self.name_to_index)
+
+        padded = torch.zeros(
+            *batch_dims,
+            total_features,
+            device=input_features.device,
+            dtype=input_features.dtype,
+        )
+        padded[..., self.in_idxs] = input_features
+        return padded
+
+    def pad_output_features(self, output_features: torch.Tensor) -> torch.Tensor:
+        *batch_dims, _ = output_features.shape
+        total_features = len(self.name_to_index)
+
+        padded = torch.zeros(
+            *batch_dims,
+            total_features,
+            device=output_features.device,
+            dtype=output_features.dtype,
+        )
+        padded[..., self.out_idxs] = output_features
+        return padded
 
     def get_target(self, data: Data) -> torch.Tensor:
         raw = data["grid"].data[1]
