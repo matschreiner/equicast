@@ -5,10 +5,11 @@ import torch
 from anemoi.datasets import open_dataset
 
 from equicast import data, experiments
+from equicast.checkpoint import RemoteCheckpointProvider
 from equicast.forecaster import Forecaster
 from equicast.model import Model
 from equicast.model.backbones.gnn import GNN
-from equicast.utils.mlflow_loader import load_model_from_mlflow
+from equicast.model.from_checkpoint import from_checkpoint
 
 
 def get_graph_from_provider(graph_provider, idx):
@@ -37,12 +38,12 @@ def main():
         get_timeseries,
         dataset_path="/home/masc/storage/mini_aifs.zarr",
         start_idx=0,
-        steps=10,
+        steps=100,
     )
 
     graph_provider = fdl.Config(
         data.StaticGraphProvider,
-        path="./graph/aifs-single.pt",
+        path="./graph/aifs-graphcast.pt",
     )
     graph = fdl.Config(
         get_graph_from_provider,
@@ -50,27 +51,16 @@ def main():
         idx=None,
     )
 
-    #  Commented out: instantiating new model
-    #
-    #  feature_config = get_feature_config()
-    #  data_handler = get_data_handler(feature_config=feature_config)
-    #  backbone = fdl.Config(
-    #      GNN,
-    #      feature_config,
-    #  )
-    #
-    # model = fdl.Config(
-    #     Model,
-    #     backbone=backbone,
-    #     data_handler=data_handler,
-    #     optimizer_factory=None,
-    #     scheduler_factory=None,
-    # )
+    checkpoint_provider = fdl.Config(
+        RemoteCheckpointProvider,
+        remote_path="/vf/masc/programming/equicast/26/ad5bc3e47a4046d0b98db1bd527cf00b/checkpoints/latest.ckpt",
+        host="ohm",
+    )
 
     model = fdl.Config(
-        load_model_from_mlflow,
-        run_id="ed5d0337880c4c6684ba4991ff36d5c9",
-        checkpoint_name=None,
+        from_checkpoint,
+        model_cls=Model,
+        checkpoint_provider=checkpoint_provider,
     )
 
     forecaster = fdl.Config(
