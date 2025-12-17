@@ -15,7 +15,7 @@ class Forecaster:
     def __init__(self, model: Model):
         self.model = model
 
-    def forecast(self, timeseries, graph, steps=-1):
+    def forecast(self, timeseries, graph, steps=-1, output_dir="."):
         """
         Autoregressively forecast for a given number of steps.
 
@@ -23,6 +23,7 @@ class Forecaster:
             timeseries: Tensor of shape (steps + 1, num_nodes, num_features)
             graph: Graph data structure
             steps: Number of steps to forecast
+            output_dir: Directory where forecast outputs will be saved
 
         Returns:
             List of predictions (model handles scaling internally)
@@ -57,6 +58,7 @@ class Forecaster:
         field = 1
 
         import matplotlib.pyplot as plt
+        from pathlib import Path
 
         from equicast.visualization import make_comparison_video
 
@@ -67,12 +69,13 @@ class Forecaster:
         targets = self.model.data_handler.get_output_features(timeseries)
         fields = preds[:, :, field]
 
+        output_path = Path(output_dir) / "forecast.mp4"
         v = make_comparison_video(
             fields.cpu().numpy(),
             targets[:, :, field].cpu().numpy(),
             graph["grid"].x.cpu().numpy(),
             title="Forecasted field",
-            output_path="forecast.mp4",
+            output_path=str(output_path),
             fps=1,
         )
 
