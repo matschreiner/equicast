@@ -1,7 +1,11 @@
+import os
+
 import torch
 from tqdm import tqdm
 
+from equicast.logger import BaseLogger
 from equicast.model.model import Model
+from equicast.visualization import make_comparison_video
 
 
 class Forecaster:
@@ -12,8 +16,9 @@ class Forecaster:
     forecaster just manages the autoregressive loop.
     """
 
-    def __init__(self, model: Model):
+    def __init__(self, model: Model, logger: BaseLogger | None = None):
         self.model = model
+        self.logger = logger
 
     def forecast(self, timeseries, graph, steps=-1, output_dir="."):
         """
@@ -31,8 +36,7 @@ class Forecaster:
         if steps == -1:
             steps = len(timeseries) - 1
 
-        # Ensure timeseries and graph are on the same device as model
-
+        steps = 2
         device = next(self.model.parameters()).device
         timeseries = timeseries.to(device)
         graph = graph.to(device)
@@ -56,27 +60,23 @@ class Forecaster:
                 )
 
         field = 1
-
-        import matplotlib.pyplot as plt
-        from pathlib import Path
-
-        from equicast.visualization import make_comparison_video
-
         preds = torch.stack(predictions)
-
-        graph["grid"]
+        preds_path = os.path.join(output_dir, "predictions.pt")
+        torch.save(preds, preds_path)
         timeseries = self.model.data_handler.scaler.transform(timeseries)
         targets = self.model.data_handler.get_output_features(timeseries)
         fields = preds[:, :, field]
-
-        output_path = Path(output_dir) / "forecast.mp4"
-        v = make_comparison_video(
+        mp4_path = os.path.join(output_dir, "forecast.mp4")
+        make_comparison_video(
             fields.cpu().numpy(),
             targets[:, :, field].cpu().numpy(),
             graph["grid"].x.cpu().numpy(),
             title="Forecasted field",
-            output_path=str(output_path),
+            output_path=str(mp4_path),
             fps=1,
         )
+        if self.logger:
+            self.logger.log_artifact(mp4_path)
+            self.logger.log_artifact(preds_path)
 
         return preds
