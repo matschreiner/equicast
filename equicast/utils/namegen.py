@@ -47,6 +47,17 @@ ADJECTIVES = [
     "noble", "fair", "sweet", "spicy", "zesty", "merry", "chipper", "peppy",
     "snappy", "zippy", "bouncy", "fluffy", "fuzzy", "cozy", "snug", "dapper",
     "fancy", "glowing", "shiny", "sparkly", "misty", "cloudy", "sunny", "starry",
+    # Additional adjectives for more combinations
+    "agile", "amber", "ancient", "azure", "breezy", "bronze", "bustling", "charming",
+    "crimson", "crystal", "dancing", "daring", "dashing", "divine", "dreamy", "eager",
+    "elegant", "emerald", "epic", "fearless", "fierce", "flaming", "flying", "frosty",
+    "gilded", "gleaming", "golden", "graceful", "hardy", "honest", "humble", "icy",
+    "ivory", "jade", "jovial", "joyful", "lively", "lucky", "lunar", "lusty",
+    "majestic", "mighty", "modest", "mystic", "nimble", "onyx", "pearl", "playful",
+    "plucky", "radiant", "rapid", "regal", "robust", "rosy", "royal", "ruby",
+    "rustic", "sacred", "scarlet", "serene", "shadow", "silver", "sleek", "smooth",
+    "soaring", "solar", "solid", "sonic", "cosmic", "stellar", "sturdy", "subtle",
+    "tender", "topaz", "tranquil", "trusty", "turbo", "vibrant", "vivid", "whimsy",
 ]
 
 NOUNS = [
@@ -57,6 +68,21 @@ NOUNS = [
     "rabbit", "hare", "squirrel", "chipmunk", "beaver", "badger", "mole", "shrew",
     "mountain", "river", "lake", "ocean", "forest", "meadow", "valley", "peak",
     "cloud", "storm", "breeze", "gale", "wave", "tide", "current", "stream",
+    # Additional nouns for more combinations
+    "albatross", "alpaca", "antelope", "armadillo", "barracuda", "bison", "buffalo", "butterfly",
+    "cardinal", "caribou", "catfish", "chameleon", "condor", "coyote", "cricket", "dragonfly",
+    "elk", "ferret", "finch", "firefly", "flamingo", "gazelle", "giraffe", "groundhog",
+    "hamster", "hedgehog", "heron", "hornet", "hummingbird", "iguana", "impala", "jackal",
+    "kangaroo", "kingfisher", "koala", "lemur", "llama", "lobster", "macaw", "mallard",
+    "manta", "marlin", "meerkat", "mongoose", "moose", "narwhal", "nautilus", "nightingale",
+    "ocelot", "octopus", "oriole", "osprey", "ostrich", "pelican", "phoenix", "puffin",
+    "quail", "raccoon", "raptor", "rattlesnake", "reindeer", "rhino", "salamander", "salmon",
+    "scorpion", "seagull", "seahorse", "shark", "sparrow", "starfish", "stingray", "swallow",
+    "swordfish", "toucan", "trout", "vulture", "walrus", "warthog", "weasel", "woodpecker",
+    "zebra", "canyon", "cliff", "comet", "crater", "desert", "dune", "fjord",
+    "glacier", "harbor", "horizon", "island", "lagoon", "meteor", "nebula", "oasis",
+    "planet", "prairie", "quasar", "reef", "ridge", "savanna", "summit", "tundra",
+    "vortex", "waterfall", "willow", "zenith",
 ]
 
 
