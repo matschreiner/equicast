@@ -3,7 +3,7 @@ import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.optim import Adam
-from torch.optim.lr_scheduler import StepLR
+from equicast.model.schedulers import WarmupCosineAnnealingLR
 from torch_geometric.loader import DataLoader
 
 from equicast import data, experiments
@@ -56,13 +56,15 @@ def main():
 
     optimizer_factory = fdl.Partial(
         Adam,
-        lr=1e-3,
+        lr=1e-4,  # Match GraphCast LR
     )
 
     scheduler_factory = fdl.Partial(
-        StepLR,
-        step_size=10,
-        gamma=0.1,
+        WarmupCosineAnnealingLR,
+        warmup_steps=1000,
+        total_steps=10000,
+        eta_min=1e-7,
+        start_factor=0.01,
     )
 
     logger = fdl.Config(
@@ -83,6 +85,7 @@ def main():
         Trainer,
         logger=logger,
         log_every_n_steps=1,
+        gradient_clip_val=1.0,
         callbacks=[
             fdl.Config(
                 ModelCheckpoint,
