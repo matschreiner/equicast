@@ -29,6 +29,7 @@ def main():
         data.DataHandler,
         feature_config=feature_config,
         dataset_path=dataset_path,
+        num_input_steps=2,  # GraphCast uses 2 previous timesteps
     )
 
     graph_provider = fdl.Config(
@@ -40,6 +41,7 @@ def main():
         data.AnemoiDataset,
         path=dataset_path,
         graph_provider=graph_provider,
+        num_input_steps=2,  # Load 3 timesteps: [t-1, t, t+1]
     )
 
     dataloader = fdl.Config(
@@ -52,6 +54,7 @@ def main():
     backbone = fdl.Config(
         Graphcast,
         feature_config,
+        num_input_steps=2,  # Match DataHandler
     )
 
     optimizer_factory = fdl.Partial(
