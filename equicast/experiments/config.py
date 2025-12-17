@@ -47,9 +47,6 @@ class TrainConfig(ExperimentConfig):
         )
 
 
-__import__("pdb").set_trace()  # TODO delme
-
-
 @dataclass
 class ForecastConfig(ExperimentConfig):
     forecaster: Forecaster
@@ -76,4 +73,24 @@ def vis_config(config):
 def run_experiment(config: fdl.Config):
     vis_config(config)
     experiment = fdl.build(config)
+    metadata = get_metadata()
+    experiment.logger.log_hyperparams(metadata)
+
     experiment.run()
+
+
+def get_metadata():
+    git_info = get_git_info()
+    run_name = cute()
+    timestamp = datetime.now()
+
+    metadata = {
+        "run_name": run_name,
+        "timestamp": timestamp.isoformat(),
+        "git_hash": git_info.get("hash"),
+        "git_short_hash": git_info.get("short_hash"),
+        "git_branch": git_info.get("branch"),
+        "git_dirty": git_info.get("dirty"),
+    }
+
+    return metadata
