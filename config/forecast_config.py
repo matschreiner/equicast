@@ -4,9 +4,10 @@ import fiddle as fdl
 import torch
 from anemoi.datasets import open_dataset
 
-from equicast import data, experiments
+from equicast import cute, data, experiments
 from equicast.checkpoint import RemoteCheckpointProvider
 from equicast.forecaster import Forecaster
+from equicast.logger import CSVLogger
 from equicast.model import Model
 from equicast.model.backbones.gnn import GNN
 from equicast.model.from_checkpoint import from_checkpoint
@@ -41,6 +42,13 @@ def main():
         steps=100,
     )
 
+    logger = fdl.Config(
+        CSVLogger,
+        save_dir="masc/",
+        name="forecast",
+        version=cute(),
+    )
+
     graph_provider = fdl.Config(
         data.StaticGraphProvider,
         path="./graph/aifs-graphcast.pt",
@@ -66,6 +74,7 @@ def main():
     forecaster = fdl.Config(
         Forecaster,
         model=model,
+        logger=logger,
     )
 
     cfg = fdl.Config(
@@ -73,6 +82,7 @@ def main():
         forecaster=forecaster,
         graph=graph,
         timeseries=timeseries,
+        logger=logger,
     )
 
     experiments.run_experiment(cfg)
