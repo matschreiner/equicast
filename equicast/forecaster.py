@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 
 from equicast.model.model import Model
 
@@ -30,25 +31,26 @@ class Forecaster:
             steps = len(timeseries) - 1
 
         # Ensure timeseries and graph are on the same device as model
+
         device = next(self.model.parameters()).device
         timeseries = timeseries.to(device)
         graph = graph.to(device)
+        predictions = []
 
         self.model.eval()
-        predictions = []
-        current_state = timeseries[0]
+        current_state = timeseries[0].unsqueeze(0)
 
         with torch.no_grad():
-            for step in range(steps):
+            for step in tqdm(range(steps), desc="Forecasting"):
                 _graph = graph.clone()
-                _graph["grid"].input_state = current_state
+                _graph["grid"].data = current_state
 
-                pred = self.model(_graph)
-                predictions.append(pred)
+                prediction = self.model(_graph)
+                predictions.append(prediction)
                 current_state = (
                     self.model.data_handler.update_state_with_prediction(
-                        timeseries[step + 1],
-                        pred,
+                        timeseries[step + 1].unsqueeze(0),
+                        prediction,
                     )
                 )
 
@@ -59,14 +61,16 @@ class Forecaster:
         from equicast.visualization import make_comparison_video
 
         preds = torch.stack(predictions)
-        targets = self.model.data_handler.prepare_model_target(timeseries)
+
+        graph["grid"]
+        timeseries = self.model.data_handler.scaler.transform(timeseries)
+        targets = self.model.data_handler.get_output_features(timeseries)
         fields = preds[:, :, field]
-        print("prediction done")
 
         v = make_comparison_video(
             fields.cpu().numpy(),
             targets[:, :, field].cpu().numpy(),
-            _graph["grid"].x.cpu().numpy(),
+            graph["grid"].x.cpu().numpy(),
             title="Forecasted field",
             output_path="forecast.mp4",
             fps=1,
