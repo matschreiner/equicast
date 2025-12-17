@@ -293,6 +293,8 @@ def make_comparison_video(
             latlon,
             ax=axes[2],
             title="Error (Pred - Truth)",
+            vmin=vmin,
+            vmax=vmax,
             cmap=cmap,
         )
     else:
