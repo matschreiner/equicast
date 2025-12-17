@@ -69,7 +69,13 @@ class Model(pl.LightningModule):
         optimizer = self.optimizer_factory(self.parameters())
         if self.scheduler_factory is not None:
             scheduler = self.scheduler_factory(optimizer)
-            return [optimizer], [scheduler]
+            # Configure scheduler to step every training step, not every epoch
+            scheduler_config = {
+                "scheduler": scheduler,
+                "interval": "step",  # Update at every training step
+                "frequency": 1,      # Update every step
+            }
+            return {"optimizer": optimizer, "lr_scheduler": scheduler_config}
         return optimizer
 
     def log_loss(self, loss, batch_size):
