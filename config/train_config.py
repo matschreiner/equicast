@@ -3,14 +3,14 @@ import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.optim import Adam
-from equicast.model.schedulers import WarmupCosineAnnealingLR
 from torch_geometric.loader import DataLoader
 
 from equicast import data, experiments
 from equicast.experiments import TrainConfig
-from equicast.logger.mlflow import MLFlowLogger
+from equicast.logger import CSVLogger, MLFlowLogger
 from equicast.model.backbones.gnn import GNN
 from equicast.model.model import Model
+from equicast.model.schedulers import WarmupCosineAnnealingLR
 
 torch.set_float32_matmul_precision("medium | high")
 
@@ -67,10 +67,15 @@ def main():
         start_factor=0.01,
     )
 
+    #  logger = fdl.Config(
+    #      MLFlowLogger,
+    #      experiment_name="masc",
+    #      tracking_uri="https://mlflow.dmidev.org/",
+    #  )
+
     logger = fdl.Config(
-        MLFlowLogger,
-        experiment_name="masc",
-        tracking_uri="https://mlflow.dmidev.org/",
+        CSVLogger,
+        save_dir="logs/",
     )
 
     model = fdl.Config(
@@ -89,13 +94,13 @@ def main():
         callbacks=[
             fdl.Config(
                 ModelCheckpoint,
-                every_n_epochs=1,
+                every_n_train_steps=500,
                 save_top_k=1,
                 filename="latest",
             ),
             fdl.Config(
                 ModelCheckpoint,
-                every_n_epochs=1,
+                every_n_train_steps=500,
                 save_top_k=1,
                 mode="min",
                 monitor="loss",
