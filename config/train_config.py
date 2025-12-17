@@ -67,15 +67,10 @@ def main():
         start_factor=0.01,
     )
 
-    #  logger = fdl.Config(
-    #      MLFlowLogger,
-    #      experiment_name="masc",
-    #      tracking_uri="https://mlflow.dmidev.org/",
-    #  )
-
     logger = fdl.Config(
-        CSVLogger,
-        save_dir="logs/",
+        MLFlowLogger,
+        experiment_name="masc",
+        tracking_uri="https://mlflow.dmidev.org/",
     )
 
     model = fdl.Config(

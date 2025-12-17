@@ -4,10 +4,10 @@ import fiddle as fdl
 import torch
 from anemoi.datasets import open_dataset
 
-from equicast import cute, data, experiments
+from equicast import data, experiments
 from equicast.checkpoint import RemoteCheckpointProvider
 from equicast.forecaster import Forecaster
-from equicast.logger import CSVLogger
+from equicast.logger import CSVLogger, MLFlowLogger
 from equicast.model import Model
 from equicast.model.backbones.gnn import GNN
 from equicast.model.from_checkpoint import from_checkpoint
@@ -43,10 +43,9 @@ def main():
     )
 
     logger = fdl.Config(
-        CSVLogger,
-        save_dir="masc/",
-        name="forecast",
-        version=cute(),
+        MLFlowLogger,
+        experiment_name="masc",
+        tracking_uri="https://mlflow.dmidev.org/",
     )
 
     graph_provider = fdl.Config(
