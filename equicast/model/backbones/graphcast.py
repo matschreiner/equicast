@@ -25,6 +25,7 @@ class Graphcast(torch.nn.Module):
         feature_config,
         hidden_dim: int = 256,
         num_processor_layers: int = 16,
+        num_input_steps: int = 2,
         grid_nodes: str = "grid",
         mesh_nodes: str = "mesh",
         grid2mesh_edge_dim: int = 0,
@@ -34,7 +35,10 @@ class Graphcast(torch.nn.Module):
         super().__init__()
 
         # Calculate input/output dimensions from feature config
-        in_dim = len(feature_config.forcing) + len(feature_config.prognostic)
+        # Input: num_input_steps timesteps concatenated (GraphCast uses 2 steps)
+        in_dim = num_input_steps * (
+            len(feature_config.forcing) + len(feature_config.prognostic)
+        )
         out_dim = len(feature_config.prognostic) + len(feature_config.diagnostic)
 
         self.grid_nodes = grid_nodes
