@@ -9,8 +9,32 @@ from torch_geometric.data import Data
 
 from equicast.data.feature_config import FeatureConfig
 from equicast.data.feature_indices import FeatureIndices
-from equicast.data.scaler import Scaler
+from equicast.data.normalizer import Normalizer
 from equicast.utils.utils import cast_dict
+
+
+class GraphDataHandler(BaseDataHandler):
+    """DataHandler for graph data."""
+
+    def prepare_input(self, data: Data) -> Data:
+        features = data["grid"].data
+        features = self.scale_features(features)
+
+        input_features = self.get_input_features(data["grid"].data[0])
+        residual = self.get_output_features(data["grid"].data[0])
+        output_features = self.get_output_features(data["grid"].data[1])
+
+        data["grid"]["input"] = input_features
+        data["grid"]["residual"] = residual
+        data["grid"]["output"] = output_features
+
+        return data
+
+    def get_target(self, data: Data) -> torch.Tensor:
+        features = data["grid"].data[1]
+        target = self.get_output_features(features)
+        target = self.scale_output_features(target)
+        return target
 
 
 class BaseDataHandler(torch.nn.Module, ABC):
@@ -25,7 +49,7 @@ class BaseDataHandler(torch.nn.Module, ABC):
 
         self.name_to_index: dict[str, int] = data.name_to_index
 
-        self.scaler = Scaler(statistics)
+        self.normalizer = Normalizer(statistics)
         self.feature_indices = FeatureIndices(
             feature_config=feature_config,
             name_to_index=self.name_to_index,
@@ -47,13 +71,13 @@ class BaseDataHandler(torch.nn.Module, ABC):
 
     def scale_input_features(self, input_features: torch.Tensor) -> torch.Tensor:
         """Scale input features using only input feature statistics."""
-        return self.scaler.transform_indices(input_features, self.in_idxs)
+        return self.normalizer.transform_indices(input_features, self.in_idxs)
 
     def inverse_scale_input_features(
         self, input_features: torch.Tensor
     ) -> torch.Tensor:
         """Inverse scale input features using only input feature statistics."""
-        return self.scaler.inverse_transform_indices(
+        return self.normalizer.inverse_transform_indices(
             input_features, self.in_idxs
         )
 
@@ -61,23 +85,23 @@ class BaseDataHandler(torch.nn.Module, ABC):
         self, output_features: torch.Tensor
     ) -> torch.Tensor:
         """Scale output features using only output feature statistics."""
-        return self.scaler.transform_indices(output_features, self.out_idxs)
+        return self.normalizer.transform_indices(output_features, self.out_idxs)
 
     def inverse_scale_output_features(
         self, output_features: torch.Tensor
     ) -> torch.Tensor:
         """Inverse scale output features using only output feature statistics."""
-        return self.scaler.inverse_transform_indices(
+        return self.normalizer.inverse_transform_indices(
             output_features, self.out_idxs
         )
 
     def scale_features(self, features: torch.Tensor) -> torch.Tensor:
         """Scale features using all feature statistics."""
-        return self.scaler.transform(features)
+        return self.normalizer.transform(features)
 
     def inverse_scale_features(self, features: torch.Tensor) -> torch.Tensor:
         """Inverse scale features using all feature statistics."""
-        return self.scaler.inverse_transform(features)
+        return self.normalizer.inverse_transform(features)
 
     def get_input_features(self, tensor: torch.Tensor) -> torch.Tensor:
         return tensor[..., self.in_idxs]

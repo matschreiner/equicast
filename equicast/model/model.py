@@ -6,7 +6,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 
-from equicast.data.data_handler import DataHandler
+from equicast.data.data_handler import BaseDataHandler
 
 
 class Model(pl.LightningModule):
@@ -20,7 +20,7 @@ class Model(pl.LightningModule):
     def __init__(
         self,
         backbone: torch.nn.Module,
-        data_handler: DataHandler,
+        data_handler: BaseDataHandler,
         optimizer_factory: Callable | None = None,
         scheduler_factory: Callable | None = None,
     ):
@@ -45,8 +45,6 @@ class Model(pl.LightningModule):
         """
 
         graph = self.data_handler.prepare_input(graph)
-        __import__("pdb").set_trace()  # TODO delme
-
         pred = self.backbone(graph)
 
         return pred
