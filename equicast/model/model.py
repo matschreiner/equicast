@@ -36,34 +36,21 @@ class Model(pl.LightningModule):
         self.scheduler_factory = scheduler_factory
         self.metrics_tracker = metrics_tracker
 
-    def forward(self, graph):
-        """
-        Forward pass with input preprocessing (inference-ready).
+    @property
+    def device(self):
+        return next(self.parameters()).device
 
-        Args:
-            graph: Graph with raw input data in graph["grid"].data
-
-        Returns:
-            Predictions in scaled space
-        """
-
-        graph = self.data_handler.prepare_input(graph)
-        pred = self.backbone(graph)
-
-        return pred
-
-    def predict(self, data):
+    def forward(self, data):
         data = self.data_handler.prepare_input(data)
-        pred = self.forward(data)
+        pred = self.backbone.forward(data)
         pred = self.data_handler.inverse_normalize_output_features(pred)
-
         return pred
 
     def training_step(self, graph, _):
         graph = self.data_handler.prepare_input(graph)
-        pred = self.forward(graph)
-        target = self.data_handler.get_target(graph)
+        pred = self.backbone.forward(graph)
 
+        target = self.data_handler.get_target(graph)
         loss = self.loss(pred, target)
 
         self.log_loss(loss, graph.num_graphs)
