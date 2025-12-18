@@ -50,7 +50,9 @@ class Model(pl.LightningModule):
         return pred
 
     def training_step(self, graph, _):
-        pred = self.forward(graph)
+        graph = self.data_handler.prepare_input(graph)
+
+        #  pred = self.forward(graph)
         target = self.data_handler.get_target(graph)
 
         loss = self.loss(pred, target)

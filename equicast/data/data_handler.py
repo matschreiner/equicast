@@ -13,30 +13,6 @@ from equicast.data.normalizer import Normalizer
 from equicast.utils.utils import cast_dict
 
 
-class GraphDataHandler(BaseDataHandler):
-    """DataHandler for graph data."""
-
-    def prepare_input(self, data: Data) -> Data:
-        features = data["grid"].data
-        features = self.scale_features(features)
-
-        input_features = self.get_input_features(data["grid"].data[0])
-        residual = self.get_output_features(data["grid"].data[0])
-        output_features = self.get_output_features(data["grid"].data[1])
-
-        data["grid"]["input"] = input_features
-        data["grid"]["residual"] = residual
-        data["grid"]["output"] = output_features
-
-        return data
-
-    def get_target(self, data: Data) -> torch.Tensor:
-        features = data["grid"].data[1]
-        target = self.get_output_features(features)
-        target = self.scale_output_features(target)
-        return target
-
-
 class BaseDataHandler(torch.nn.Module, ABC):
     """Standard DataHandler with z-score normalization."""
 
@@ -69,38 +45,40 @@ class BaseDataHandler(torch.nn.Module, ABC):
     @abstractmethod
     def get_target(self, data: Data) -> torch.Tensor: ...
 
-    def scale_input_features(self, input_features: torch.Tensor) -> torch.Tensor:
+    def normalize_input_features(
+        self, input_features: torch.Tensor
+    ) -> torch.Tensor:
         """Scale input features using only input feature statistics."""
         return self.normalizer.transform_indices(input_features, self.in_idxs)
 
-    def inverse_scale_input_features(
+    def inverse_normalize_input_features(
         self, input_features: torch.Tensor
     ) -> torch.Tensor:
-        """Inverse scale input features using only input feature statistics."""
+        """Inverse normalize input features using only input feature statistics."""
         return self.normalizer.inverse_transform_indices(
             input_features, self.in_idxs
         )
 
-    def scale_output_features(
+    def normalize_output_features(
         self, output_features: torch.Tensor
     ) -> torch.Tensor:
         """Scale output features using only output feature statistics."""
         return self.normalizer.transform_indices(output_features, self.out_idxs)
 
-    def inverse_scale_output_features(
+    def inverse_normalize_output_features(
         self, output_features: torch.Tensor
     ) -> torch.Tensor:
-        """Inverse scale output features using only output feature statistics."""
+        """Inverse normalize output features using only output feature statistics."""
         return self.normalizer.inverse_transform_indices(
             output_features, self.out_idxs
         )
 
-    def scale_features(self, features: torch.Tensor) -> torch.Tensor:
+    def normalize_features(self, features: torch.Tensor) -> torch.Tensor:
         """Scale features using all feature statistics."""
         return self.normalizer.transform(features)
 
-    def inverse_scale_features(self, features: torch.Tensor) -> torch.Tensor:
-        """Inverse scale features using all feature statistics."""
+    def inverse_normalize_features(self, features: torch.Tensor) -> torch.Tensor:
+        """Inverse normalize features using all feature statistics."""
         return self.normalizer.inverse_transform(features)
 
     def get_input_features(self, tensor: torch.Tensor) -> torch.Tensor:
@@ -134,3 +112,27 @@ class BaseDataHandler(torch.nn.Module, ABC):
         )
         padded[..., self.out_idxs] = output_features
         return padded
+
+
+class GraphDataHandler(BaseDataHandler):
+    """DataHandler for graph data."""
+
+    def prepare_input(self, data: Data) -> Data:
+        features = data["grid"].data
+        features = self.normalize_features(features)
+
+        input_features = self.get_input_features(features[0])
+        residual = self.get_output_features(features[0])
+        output_features = self.get_output_features(features[0])
+
+        data["grid"]["input"] = input_features
+        data["grid"]["residual"] = residual
+        data["grid"]["output"] = output_features
+
+        return data
+
+    def get_target(self, data: Data) -> torch.Tensor:
+        features = data["grid"].data[1]
+        target = self.get_output_features(features)
+        target = self.normalize_output_features(target)
+        return target
