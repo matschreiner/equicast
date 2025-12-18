@@ -7,6 +7,7 @@ import pytorch_lightning as pl
 import torch
 
 from equicast.data.data_handler import BaseDataHandler
+from equicast.metrics import BaseMetricsTracker
 
 
 class Model(pl.LightningModule):
@@ -23,6 +24,7 @@ class Model(pl.LightningModule):
         data_handler: BaseDataHandler,
         optimizer_factory: Callable | None = None,
         scheduler_factory: Callable | None = None,
+        metrics_tracker: BaseMetricsTracker | None = None,
     ):
         super().__init__()
         with ignore_backbone_warning():
@@ -32,6 +34,7 @@ class Model(pl.LightningModule):
         self.data_handler = data_handler
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
+        self.metrics_tracker = metrics_tracker
 
     def forward(self, graph):
         """
@@ -62,7 +65,9 @@ class Model(pl.LightningModule):
         target = self.data_handler.get_target(graph)
 
         loss = self.loss(pred, target)
+
         self.log_loss(loss, graph.num_graphs)
+        self.log_metrics(pred, target, graph.num_graphs)
 
         return loss
 
@@ -86,14 +91,31 @@ class Model(pl.LightningModule):
         return optimizer
 
     def log_loss(self, loss, batch_size):
+        """Log loss to progress bar and logger."""
+        self.log(
+            "loss",
+            loss,
+            logger=True,
+            prog_bar=True,
+            on_step=True,
+            on_epoch=True,
+            batch_size=batch_size,
+        )
+
+    def log_metrics(self, pred, target, batch_size):
+        """Log all metrics (lr, log_step, model metrics) to logger only."""
         lr = get_lr(self)
         ln_step = np.log(self.global_step + 1)
-        log_dict = {"loss": loss, "lr": lr, "log_step": ln_step}
+        log_dict = {"lr": lr, "log_step": ln_step}
+
+        if self.metrics_tracker is not None:
+            metrics = self.metrics_tracker.compute_metrics(pred, target)
+            log_dict.update(metrics)
 
         self.log_dict(
             log_dict,
             logger=True,
-            prog_bar=True,
+            prog_bar=False,
             on_step=True,
             on_epoch=True,
             batch_size=batch_size,
