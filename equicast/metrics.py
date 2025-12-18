@@ -57,7 +57,6 @@ class MetricsTracker(BaseMetricsTracker):
         Returns:
             Dictionary of metric names to values
         """
-        # Compute errors for all features at once
         error = pred - target
 
         # Compute bias across all dimensions except the last (features)
@@ -73,7 +72,7 @@ class MetricsTracker(BaseMetricsTracker):
         metrics = {}
         for i, idx in enumerate(self.out_idxs):
             var_name = self.index_to_name[idx]
-            metrics[f"bias/{var_name}"] = bias[i]
-            metrics[f"variance/{var_name}"] = variance[i]
+            metrics[f"metrics/{var_name}_bias"] = bias[i]
+            metrics[f"metrics/{var_name}_variance"] = variance[i]
 
         return metrics
