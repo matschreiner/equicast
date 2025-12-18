@@ -40,10 +40,10 @@ class BaseDataHandler(torch.nn.Module, ABC):
         return self.feature_indices.out_idxs
 
     @abstractmethod
-    def prepare_input(self, data: Data) -> Data: ...
+    def prepare_input(self, data: Any) -> Any: ...
 
     @abstractmethod
-    def get_target(self, data: Data) -> torch.Tensor: ...
+    def get_target(self, data: Any) -> torch.Tensor: ...
 
     def normalize_input_features(
         self, input_features: torch.Tensor
@@ -87,31 +87,55 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def get_output_features(self, tensor: torch.Tensor) -> torch.Tensor:
         return tensor[..., self.out_idxs]
 
-    def pad_input_features(self, input_features: torch.Tensor) -> torch.Tensor:
-        *batch_dims, _ = input_features.shape
+    def get_forcing_features(self, tensor: torch.Tensor) -> torch.Tensor:
+        """Extract forcing features from full state."""
+        return tensor[..., self.feature_indices.forcing_idxs]
+
+    def get_prognostic_features(self, tensor: torch.Tensor) -> torch.Tensor:
+        """Extract prognostic features from full state."""
+        return tensor[..., self.feature_indices.prognostic_idxs]
+
+    def update_state_with_prediction(
+        self,
+        prediction: torch.Tensor,
+        forcing: torch.Tensor,
+    ) -> torch.Tensor:
+        """
+        Create next state by combining prediction with forcing.
+
+        Args:
+            prediction: Output features (prognostic + diagnostic) in normalized space
+                       Shape: [..., len(out_idxs)]
+            forcing: Forcing features in normalized space
+                    Shape: [..., len(forcing_idxs)]
+
+        Returns:
+            Next state with all features (normalized)
+            Shape: [..., total_features]
+        """
+        *batch_dims, _ = prediction.shape
         total_features = len(self.name_to_index)
 
-        padded = torch.zeros(
+        # Create new state tensor
+        new_state = torch.zeros(
             *batch_dims,
             total_features,
-            device=input_features.device,
-            dtype=input_features.dtype,
+            device=prediction.device,
+            dtype=prediction.dtype,
         )
-        padded[..., self.in_idxs] = input_features
-        return padded
 
-    def pad_output_features(self, output_features: torch.Tensor) -> torch.Tensor:
-        *batch_dims, _ = output_features.shape
-        total_features = len(self.name_to_index)
+        # Place forcing variables
+        new_state[..., self.feature_indices.forcing_idxs] = forcing
 
-        padded = torch.zeros(
-            *batch_dims,
-            total_features,
-            device=output_features.device,
-            dtype=output_features.dtype,
-        )
-        padded[..., self.out_idxs] = output_features
-        return padded
+        # Extract and place prognostic from prediction
+        # Prediction contains [prognostic, diagnostic], we only need prognostic
+        num_prognostic = len(self.feature_indices.prognostic_idxs)
+        prognostic = prediction[..., :num_prognostic]
+        new_state[..., self.feature_indices.prognostic_idxs] = prognostic
+
+        # Diagnostic variables remain zero (not carried forward)
+
+        return new_state
 
 
 class GraphDataHandler(BaseDataHandler):
@@ -123,11 +147,9 @@ class GraphDataHandler(BaseDataHandler):
 
         input_features = self.get_input_features(features[0])
         residual = self.get_output_features(features[0])
-        output_features = self.get_output_features(features[0])
 
         data["grid"]["input"] = input_features
         data["grid"]["residual"] = residual
-        data["grid"]["output"] = output_features
 
         return data
 

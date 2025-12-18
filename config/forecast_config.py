@@ -20,24 +20,35 @@ def get_graph_from_provider(graph_provider, idx):
 
 
 def get_timeseries(
-    dataset_path: str,
+    dataset,
     start_idx,
     steps,
-) -> torch.Tensor:
+):
     """Get timeseries data from dataset for forecasting."""
-    data = open_dataset(dataset_path)
-    timeseries = (
-        torch.tensor(data[start_idx : start_idx + 1 + steps])
-        .squeeze()
-        .permute(0, 2, 1)
-    )
+
+    timeseries = [
+        dataset[idx] for idx in range(start_idx, start_idx + steps + 1)
+    ]
     return timeseries
 
 
 def main():
+    dataset_path = "/home/masc/storage/mini_aifs.zarr"
+    graph_path = "graph/aifs-single.pt"
+
+    graph_provider = fdl.Config(
+        data.StaticGraphProvider,
+        path=graph_path,
+    )
+    dataset = fdl.Config(
+        data.AnemoiDataset,
+        path=dataset_path,
+        graph_provider=graph_provider,
+    )
+
     timeseries = fdl.Config(
         get_timeseries,
-        dataset_path="/home/masc/storage/mini_aifs.zarr",
+        dataset=dataset,
         start_idx=0,
         steps=109,
     )
@@ -47,16 +58,15 @@ def main():
         experiment_name="masc",
         tracking_uri="https://mlflow.dmidev.org/",
     )
-
-    graph_provider = fdl.Config(
-        data.StaticGraphProvider,
-        path="./graph/aifs-single.pt",
-    )
-    graph = fdl.Config(
-        get_graph_from_provider,
-        graph_provider=graph_provider,
-        idx=None,
-    )
+    #  graph_provider = fdl.Config(
+    #      data.StaticGraphProvider,
+    #      path="./graph/aifs-single.pt",
+    #  )
+    #  graph = fdl.Config(
+    #      get_graph_from_provider,
+    #      graph_provider=graph_provider,
+    #      idx=None,
+    #  )
 
     #  checkpoint_provider = fdl.Config(
     #      RemoteCheckpointProvider,
@@ -80,7 +90,7 @@ def main():
     cfg = fdl.Config(
         experiments.ForecastConfig,
         forecaster=forecaster,
-        graph=graph,
+        #  graph=graph,
         timeseries=timeseries,
         logger=logger,
     )

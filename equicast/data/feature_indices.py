@@ -12,12 +12,12 @@ class FeatureIndices:
         self.feature_config = feature_config
         self.name_to_index = name_to_index
 
-        forcing_idxs = self._get_data_idxs(feature_config.forcing)
-        prognostic_idxs = self._get_data_idxs(feature_config.prognostic)
-        diagnostic_idxs = self._get_data_idxs(feature_config.diagnostic)
+        self.forcing_idxs = self._get_data_idxs(feature_config.forcing)
+        self.prognostic_idxs = self._get_data_idxs(feature_config.prognostic)
+        self.diagnostic_idxs = self._get_data_idxs(feature_config.diagnostic)
 
-        self.in_idxs: list[int] = forcing_idxs + prognostic_idxs
-        self.out_idxs: list[int] = prognostic_idxs + diagnostic_idxs
+        self.in_idxs: list[int] = self.forcing_idxs + self.prognostic_idxs
+        self.out_idxs: list[int] = self.prognostic_idxs + self.diagnostic_idxs
 
     def _get_data_idxs(self, names: list[str]) -> list[int]:
         return [self.name_to_index[name] for name in names]

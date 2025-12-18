@@ -50,14 +50,12 @@ class TrainConfig(ExperimentConfig):
 class ForecastConfig(ExperimentConfig):
     forecaster: Forecaster
     timeseries: torch.Tensor
-    graph: Data
     logger: BaseLogger
     experiment_name: str = "forecast"
 
     def run(self):
         self.forecaster.forecast(
             timeseries=self.timeseries,
-            graph=self.graph,
         )
 
 
