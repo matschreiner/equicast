@@ -87,56 +87,6 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def get_output_features(self, tensor: torch.Tensor) -> torch.Tensor:
         return tensor[..., self.out_idxs]
 
-    def get_forcing_features(self, tensor: torch.Tensor) -> torch.Tensor:
-        """Extract forcing features from full state."""
-        return tensor[..., self.feature_indices.forcing_idxs]
-
-    def get_prognostic_features(self, tensor: torch.Tensor) -> torch.Tensor:
-        """Extract prognostic features from full state."""
-        return tensor[..., self.feature_indices.prognostic_idxs]
-
-    def update_state_with_prediction(
-        self,
-        prediction: torch.Tensor,
-        forcing: torch.Tensor,
-    ) -> torch.Tensor:
-        """
-        Create next state by combining prediction with forcing.
-
-        Args:
-            prediction: Output features (prognostic + diagnostic) in normalized space
-                       Shape: [..., len(out_idxs)]
-            forcing: Forcing features in normalized space
-                    Shape: [..., len(forcing_idxs)]
-
-        Returns:
-            Next state with all features (normalized)
-            Shape: [..., total_features]
-        """
-        *batch_dims, _ = prediction.shape
-        total_features = len(self.name_to_index)
-
-        # Create new state tensor
-        new_state = torch.zeros(
-            *batch_dims,
-            total_features,
-            device=prediction.device,
-            dtype=prediction.dtype,
-        )
-
-        # Place forcing variables
-        new_state[..., self.feature_indices.forcing_idxs] = forcing
-
-        # Extract and place prognostic from prediction
-        # Prediction contains [prognostic, diagnostic], we only need prognostic
-        num_prognostic = len(self.feature_indices.prognostic_idxs)
-        prognostic = prediction[..., :num_prognostic]
-        new_state[..., self.feature_indices.prognostic_idxs] = prognostic
-
-        # Diagnostic variables remain zero (not carried forward)
-
-        return new_state
-
 
 class GraphDataHandler(BaseDataHandler):
     """DataHandler for graph data."""
