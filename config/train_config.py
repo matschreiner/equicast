@@ -5,7 +5,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from torch.optim import Adam
 from torch_geometric.loader import DataLoader
 
-from equicast import data, experiments
+from equicast import data, experiments, metrics
 from equicast.experiments import TrainConfig
 from equicast.logger import CSVLogger, MLFlowLogger
 from equicast.model.backbones.gnn import GNN
@@ -56,7 +56,7 @@ def main():
 
     optimizer_factory = fdl.Partial(
         Adam,
-        lr=1e-3,
+        lr=1e-3,  # Match GraphCast LR
     )
 
     scheduler_factory = None
@@ -67,10 +67,14 @@ def main():
     #      eta_min=1e-7,
     #      start_factor=0.01,
     #  )
+    metrics_tracker = fdl.Config(
+        metrics.MetricsTracker,
+        data_handler=data_handler,
+    )
 
     logger = fdl.Config(
         MLFlowLogger,
-        experiment_name="masc",
+        experiment_name="masc1",
         tracking_uri="https://mlflow.dmidev.org/",
     )
 
@@ -80,6 +84,7 @@ def main():
         data_handler=data_handler,
         optimizer_factory=optimizer_factory,
         scheduler_factory=scheduler_factory,
+        metrics_tracker=metrics_tracker,
     )
 
     trainer = fdl.Config(
