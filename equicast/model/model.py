@@ -49,10 +49,16 @@ class Model(pl.LightningModule):
 
         return pred
 
+    def predict(self, data):
+        data = self.data_handler.prepare_input(data)
+        pred = self.forward(data)
+        pred = self.data_handler.inverse_normalize_output_features(pred)
+
+        return pred
+
     def training_step(self, graph, _):
         graph = self.data_handler.prepare_input(graph)
-
-        #  pred = self.forward(graph)
+        pred = self.forward(graph)
         target = self.data_handler.get_target(graph)
 
         loss = self.loss(pred, target)
@@ -71,11 +77,10 @@ class Model(pl.LightningModule):
         optimizer = self.optimizer_factory(self.parameters())
         if self.scheduler_factory is not None:
             scheduler = self.scheduler_factory(optimizer)
-            # Configure scheduler to step every training step, not every epoch
             scheduler_config = {
                 "scheduler": scheduler,
-                "interval": "step",  # Update at every training step
-                "frequency": 1,  # Update every step
+                "interval": "step",
+                "frequency": 1,
             }
             return {"optimizer": optimizer, "lr_scheduler": scheduler_config}
         return optimizer
