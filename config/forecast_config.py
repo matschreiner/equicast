@@ -39,7 +39,7 @@ def main():
         get_timeseries,
         dataset_path="/home/masc/storage/mini_aifs.zarr",
         start_idx=0,
-        steps=100,
+        steps=109,
     )
 
     logger = fdl.Config(
@@ -50,7 +50,7 @@ def main():
 
     graph_provider = fdl.Config(
         data.StaticGraphProvider,
-        path="./graph/aifs-graphcast.pt",
+        path="./graph/aifs-single.pt",
     )
     graph = fdl.Config(
         get_graph_from_provider,
@@ -58,17 +58,18 @@ def main():
         idx=None,
     )
 
-    checkpoint_provider = fdl.Config(
-        RemoteCheckpointProvider,
-        remote_path="/vf/masc/programming/equicast/26/ad5bc3e47a4046d0b98db1bd527cf00b/checkpoints/latest.ckpt",
-        host="ohm",
-    )
+    #  checkpoint_provider = fdl.Config(
+    #      RemoteCheckpointProvider,
+    #      remote_path="/vf/masc/programming/equicast/26/ad5bc3e47a4046d0b98db1bd527cf00b/checkpoints/latest.ckpt",
+    #      host="ohm",
+    #  )
+    #  model = fdl.Config(
+    #      from_checkpoint,
+    #      model_cls=Model,
+    #      checkpoint_provider=checkpoint_provider,
+    #  )
 
-    model = fdl.Config(
-        from_checkpoint,
-        model_cls=Model,
-        checkpoint_provider=checkpoint_provider,
-    )
+    model = get_gnn()
 
     forecaster = fdl.Config(
         Forecaster,
@@ -85,6 +86,25 @@ def main():
     )
 
     experiments.run_experiment(cfg)
+
+
+def get_gnn():
+    feature_config = data.FeatureConfig.from_yaml(
+        path="hydraconfig/features/base.yaml",
+    )
+    model = fdl.Config(
+        Model,
+        backbone=fdl.Config(
+            GNN,
+            feature_config=feature_config,
+        ),
+        data_handler=fdl.Config(
+            data.GraphDataHandler,
+            feature_config=feature_config,
+            dataset_path="/home/masc/storage/mini_aifs.zarr",
+        ),
+    )
+    return model
 
 
 if __name__ == "__main__":

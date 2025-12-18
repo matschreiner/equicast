@@ -56,7 +56,7 @@ def main():
 
     optimizer_factory = fdl.Partial(
         Adam,
-        lr=1e-4,  # Match GraphCast LR
+        lr=1e-3,
     )
 
     scheduler_factory = None
