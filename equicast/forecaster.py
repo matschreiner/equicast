@@ -63,7 +63,7 @@ class Forecaster:
         preds = torch.stack(predictions)
         preds_path = os.path.join(output_dir, "predictions.pt")
         torch.save(preds, preds_path)
-        timeseries = self.model.data_handler.scaler.transform(timeseries)
+        timeseries = self.model.data_handler.normalizer.transform(timeseries)
         targets = self.model.data_handler.get_output_features(timeseries)
         fields = preds[:, :, field]
         mp4_path = os.path.join(output_dir, "forecast.mp4")

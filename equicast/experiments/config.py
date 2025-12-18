@@ -72,11 +72,12 @@ def vis_config(config):
 def run_experiment(config: fdl.Config):
     vis_config(config)
     experiment = fdl.build(config)
-    git_info = get_git_info()
-    experiment.logger.log_hyperparams(git_info)
+    experiment.run()
 
-    with experiment_error_handler(experiment.logger):
-        experiment.run()
+    #  git_info = get_git_info()
+    #  experiment.logger.log_hyperparams(git_info)
+    #
+    #  with experiment_error_handler(experiment.logger):
 
 
 @contextmanager
