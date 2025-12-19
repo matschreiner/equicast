@@ -11,6 +11,7 @@ from equicast.logger import CSVLogger, MLFlowLogger
 from equicast.model.backbones.gnn import GNN
 from equicast.model.model import Model
 from equicast.model.schedulers import WarmupCosineAnnealingLR
+from equicast.profiler import LoggingProfiler
 
 torch.set_float32_matmul_precision("medium | high")
 
@@ -80,11 +81,18 @@ def main():
         metrics_tracker=metrics_tracker,
     )
 
+    profiler = fdl.Config(
+        LoggingProfiler,
+        logger=logger,
+    )
+
     trainer = fdl.Config(
         Trainer,
         logger=logger,
         log_every_n_steps=1,
         gradient_clip_val=1.0,
+        profiler=profiler,
+        max_steps=10,
         callbacks=[
             fdl.Config(
                 ModelCheckpoint,
