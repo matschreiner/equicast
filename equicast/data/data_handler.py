@@ -40,6 +40,11 @@ class BaseDataHandler(torch.nn.Module, ABC):
         return self.feature_indices.out_idxs
 
     @abstractmethod
+    def update_next_with_prediction(
+        self, next: Any, pred: torch.Tensor
+    ) -> Any: ...
+
+    @abstractmethod
     def prepare_input(self, data: Any) -> Any: ...
 
     @abstractmethod
@@ -87,24 +92,68 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def get_output_features(self, tensor: torch.Tensor) -> torch.Tensor:
         return tensor[..., self.out_idxs]
 
+    def pad_prediction(self, prediction: torch.Tensor) -> torch.Tensor:
+        """
+        Pad prediction to full feature size.
+
+        Args:
+            prediction: Output features (prognostic + diagnostic)
+                       Shape: [..., len(out_idxs)]
+
+        Returns:
+            Padded tensor with prognostic placed at correct indices
+            Shape: [..., total_features]
+        """
+        *batch_dims, _ = prediction.shape
+        total_features = len(self.name_to_index)
+
+        padded = torch.zeros(
+            *batch_dims,
+            total_features,
+            device=prediction.device,
+            dtype=prediction.dtype,
+        )
+
+        num_prognostic = len(self.feature_indices.prognostic_idxs)
+        padded[..., self.feature_indices.prognostic_idxs] = prediction[
+            ..., :num_prognostic
+        ]
+
+        return padded
+
 
 class GraphDataHandler(BaseDataHandler):
     """DataHandler for graph data."""
 
     def prepare_input(self, data: Data) -> Data:
-        features = data["grid"].data
-        features = self.normalize_features(features)
-
-        input_features = self.get_input_features(features[0])
-        residual = self.get_output_features(features[0])
-
-        data["grid"]["input"] = input_features
-        data["grid"]["residual"] = residual
+        normalized = self.normalize_features(data["grid"].raw_input)
+        data["grid"]["input"] = self.get_input_features(normalized)
+        data["grid"]["residual"] = self.get_output_features(normalized)
 
         return data
 
     def get_target(self, data: Data) -> torch.Tensor:
-        features = data["grid"].data[1]
-        target = self.get_output_features(features)
-        target = self.normalize_output_features(target)
+        normalized = self.normalize_features(data["grid"].raw_target)
+        target = self.get_output_features(normalized)
         return target
+
+    def update_next_with_prediction(
+        self, data: Data, pred: torch.Tensor
+    ) -> Data:
+        """
+        Create next state from prediction + forcing.
+
+        Args:
+            data: Next graph with raw_target (for forcing)
+            pred: Current prediction (output features, denormalized)
+
+        Returns:
+            Updated graph with raw_input set
+        """
+        next_state = self.pad_prediction(pred)
+        forcing = data["grid"].raw_target[..., self.feature_indices.forcing_idxs]
+        next_state[..., self.feature_indices.forcing_idxs] = forcing
+
+        data["grid"].raw_input = next_state
+
+        return data

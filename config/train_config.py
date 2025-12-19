@@ -60,13 +60,6 @@ def main():
     )
 
     scheduler_factory = None
-    #  scheduler_factory = fdl.Partial(
-    #      WarmupCosineAnnealingLR,
-    #      warmup_steps=1000,
-    #      total_steps=10000,
-    #      eta_min=1e-7,
-    #      start_factor=0.01,
-    #  )
     metrics_tracker = fdl.Config(
         metrics.MetricsTracker,
         data_handler=data_handler,

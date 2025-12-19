@@ -34,6 +34,7 @@ class AnemoiDataset(Dataset):
         )
 
         graph = self.graph_provider.get_graph(idx)
-        graph["grid"].data = data
+        graph["grid"].raw_input = data[:-1]
+        graph["grid"].raw_target = data[-1:]
 
         return graph

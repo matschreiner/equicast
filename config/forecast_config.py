@@ -5,7 +5,10 @@ import torch
 from anemoi.datasets import open_dataset
 
 from equicast import data, experiments
-from equicast.checkpoint import RemoteCheckpointProvider
+from equicast.checkpoint import (
+    MLFlowCheckpointProvider,
+    RemoteCheckpointProvider,
+)
 from equicast.forecaster import Forecaster
 from equicast.logger import CSVLogger, MLFlowLogger
 from equicast.model import Model
@@ -73,11 +76,18 @@ def main():
     #      remote_path="/vf/masc/programming/equicast/26/ad5bc3e47a4046d0b98db1bd527cf00b/checkpoints/latest.ckpt",
     #      host="ohm",
     #  )
-    #  model = fdl.Config(
-    #      from_checkpoint,
-    #      model_cls=Model,
-    #      checkpoint_provider=checkpoint_provider,
-    #  )
+    checkpoint_provider = fdl.Config(
+        MLFlowCheckpointProvider,
+        tracking_uri="https://mlflow.dmidev.org/",
+        run_id="26ad5bc3e47a4046d0b98db1bd527cf00b",
+        checkpoint_name="latest",
+    )
+
+    model = fdl.Config(
+        from_checkpoint,
+        model_cls=Model,
+        checkpoint_provider=checkpoint_provider,
+    )
 
     model = get_gnn()
 

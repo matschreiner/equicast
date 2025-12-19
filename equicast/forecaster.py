@@ -37,12 +37,21 @@ class Forecaster:
         current_state = timeseries[0]
         for step in range(10):
             pred = self.model(current_state)
+            current_state = self.model.data_handler.update_next_with_prediction(
+                timeseries[step + 1],
+                pred,
+            )
+
             predictions.append(pred)
 
-            next_state = timeseries[step + 1]
-            current_state = self.model.data_handler.update_state_with_prediction(
-                next_state,
-                pred,
+        preds = torch.stack(predictions, dim=0).squeeze()
+        if self.logger is not None:
+            video_path = os.path.join(output_dir, "forecast_comparison.mp4")
+            make_comparison_video(
+                video_path,
+                ground_truth=timeseries[1 : steps + 1].cpu().numpy(),
+                predictions=preds.cpu().numpy(),
+                interval=200,
             )
 
         return predictions
