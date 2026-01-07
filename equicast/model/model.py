@@ -10,6 +10,10 @@ from equicast.data.data_handler import BaseDataHandler
 from equicast.metrics import BaseMetricsTracker
 
 
+def default_optimizer_factory(params):
+    return torch.optim.Adam(params, lr=1e-3)
+
+
 class Model(pl.LightningModule):
     """
     Model that handles preprocessing (scaling, feature routing) internally.
@@ -22,7 +26,7 @@ class Model(pl.LightningModule):
         self,
         backbone: torch.nn.Module,
         data_handler: BaseDataHandler,
-        optimizer_factory: Callable | None = None,
+        optimizer_factory: Callable = default_optimizer_factory,
         scheduler_factory: Callable | None = None,
         metrics_tracker: BaseMetricsTracker | None = None,
     ):
@@ -62,11 +66,8 @@ class Model(pl.LightningModule):
         return torch.nn.functional.mse_loss(pred, target)
 
     def configure_optimizers(self):
-        if self.optimizer_factory is None:
-            self.optimizer_factory = lambda params: torch.optim.Adam(
-                params, lr=1e-3
-            )
         optimizer = self.optimizer_factory(self.parameters())
+
         if self.scheduler_factory is not None:
             scheduler = self.scheduler_factory(optimizer)
             scheduler_config = {
