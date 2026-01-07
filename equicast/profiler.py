@@ -1,8 +1,9 @@
 """Custom profilers for equicast."""
 
+import re
 from pathlib import Path
 
-from pytorch_lightning.profilers import AdvancedProfiler, SimpleProfiler
+from pytorch_lightning.profilers import AdvancedProfiler
 
 
 class LoggingProfiler(AdvancedProfiler):
@@ -12,20 +13,13 @@ class LoggingProfiler(AdvancedProfiler):
         super().__init__(**kwargs)
         self.logger = logger
 
-    @override
     def summary(self) -> str:
-        recorded_stats = {}
-        for action_name, pr in self.profiled_actions.items():
-            if self.dump_stats:
-                self._dump_stats(action_name, pr)
-            s = io.StringIO()
-            ps = pstats.Stats(pr, stream=s).strip_dirs().sort_stats("cumulative")
-            ps.print_stats(self.line_count_restriction)
-            recorded_stats[action_name] = s.getvalue()
-        summary_text = self._stats_to_str(recorded_stats)
+        summary_text = super().summary()
+        summary_text = filter_and_order_profiler_summary(summary_text)
         self._log_summary(summary_text)
         return ""
 
+    #
     def _log_summary(self, summary_text: str):
         """Upload profiler summary to logger."""
         if self._output_file:
@@ -42,3 +36,21 @@ class LoggingProfiler(AdvancedProfiler):
         temp_file = Path("profiler_summary.txt")
         temp_file.write_text(text)
         self.logger.log_artifact(str(temp_file), artifact_path="profiler")
+
+
+def filter_and_order_profiler_summary(text, thresh=1e-2):
+    sections = re.split(r"\n(?=Profile stats for:)", text)
+    kept = []
+
+    for section in sections:
+        m = re.search(r"in ([0-9.]+) seconds", section)
+        if not m:
+            continue
+
+        total_time = float(m.group(1))
+        if total_time >= thresh:
+            kept.append((total_time, section))
+
+    kept.sort(key=lambda x: x[0], reverse=True)
+
+    return "\n".join(section for _, section in kept)
