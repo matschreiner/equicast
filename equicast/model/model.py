@@ -120,7 +120,7 @@ def ignore_backbone_warning():
         yield
 
 
-def get_lr(self):
-    opt = self.trainer.optimizers[0]
+def get_lr(model):
+    opt = model.trainer.optimizers[0]
     lr = opt.param_groups[0]["lr"]
     return lr

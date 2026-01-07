@@ -2,6 +2,7 @@ import fiddle as fdl
 import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.profilers import AdvancedProfiler
 from torch.optim import Adam
 from torch_geometric.loader import DataLoader
 
@@ -46,6 +47,7 @@ def main():
     dataloader = fdl.Config(
         DataLoader,
         dataset,
+        num_workers=10,
         batch_size=1,
         shuffle=True,
     )
@@ -82,8 +84,10 @@ def main():
     )
 
     profiler = fdl.Config(
+        #  AdvancedProfiler,
         LoggingProfiler,
         logger=logger,
+        #  include_actions=["training_step"],
     )
 
     trainer = fdl.Config(
