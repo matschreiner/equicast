@@ -242,11 +242,11 @@ def make_comparison_video(
     predictions = np.asarray(predictions)
     targets = np.asarray(targets)
 
-    # Compute colormap range if needed
+    # Compute colormap range from ground truth only
     if vmin is None:
-        vmin = min(predictions.min(), targets.min())
+        vmin = targets.min()
     if vmax is None:
-        vmax = max(predictions.max(), targets.max())
+        vmax = targets.max()
 
     # ------- Create figure -------
     n_panels = 3 if show_error else 2
