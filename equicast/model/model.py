@@ -50,6 +50,20 @@ class Model(pl.LightningModule):
         pred = self.data_handler.inverse_normalize_output_features(pred)
         return pred
 
+    def step_forward(self, current_graph, next_graph):
+        """Single autoregressive step.
+
+        Args:
+            current_graph: Graph to make prediction from
+            next_graph: Graph to update with prediction (provides forcing)
+
+        Returns:
+            tuple[Data, Data]: (updated next_graph, prediction tensor)
+        """
+        pred = self.forward(current_graph)
+        next_graph = self.data_handler.update_next_with_prediction(next_graph, pred)
+        return next_graph, pred
+
     def training_step(self, graph, _):
         graph = self.data_handler.prepare_input(graph)
         pred = self.backbone.forward(graph)
