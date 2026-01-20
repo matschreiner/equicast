@@ -48,7 +48,10 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def prepare_input(self, data: Any) -> Any: ...
 
     @abstractmethod
-    def get_target(self, data: Any) -> torch.Tensor: ...
+    def update_output(self, output: Any, backbone_out: torch.Tensor) -> Any: ...
+
+    @abstractmethod
+    def prepare_backbone_target(self, data: Any) -> torch.Tensor: ...
 
     def normalize_input_features(
         self, input_features: torch.Tensor
@@ -125,35 +128,46 @@ class BaseDataHandler(torch.nn.Module, ABC):
 class GraphDataHandler(BaseDataHandler):
     """DataHandler for graph data."""
 
+    def __init__(
+        self,
+        dataset_path: str,
+        feature_config: FeatureConfig,
+        nodes: str = "grid",
+    ):
+        super().__init__(dataset_path, feature_config)
+        self.nodes = nodes
+
     def prepare_input(self, data: Data) -> Data:
-        normalized = self.normalize_features(data["grid"].raw_input)
-        data["grid"]["input"] = self.get_input_features(normalized)
-        data["grid"]["residual"] = self.get_output_features(normalized)
+        normalized = self.normalize_features(data[self.nodes].data)
+        data[self.nodes]["input"] = self.get_input_features(normalized)
+        data[self.nodes]["residual"] = self.get_output_features(normalized)
 
         return data
 
-    def get_target(self, data: Data) -> torch.Tensor:
-        normalized = self.normalize_features(data["grid"].raw_target)
+    def prepare_backbone_target(self, data: Data) -> torch.Tensor:
+        normalized = self.normalize_features(data[self.nodes].data)
         target = self.get_output_features(normalized)
         return target
 
+    def update_output(self, input: Data, backbone_out: torch.Tensor) -> Data:
+        output = self.inverse_normalize_output_features(backbone_out)
+        input[self.nodes].data[..., self.out_idxs] = output
+        return input
+
     def update_next_with_prediction(
-        self, data: Data, pred: torch.Tensor
+        self, target_graph: Data, pred_graph: Data
     ) -> Data:
         """
-        Create next state from prediction + forcing.
+        Create next input graph from prediction + forcing.
 
         Args:
-            data: Next graph with raw_target (for forcing)
-            pred: Current prediction (output features, denormalized)
+            target_graph: Graph with forcing data (forcing already present)
+            pred_graph: Graph with prediction (all features, output updated)
 
         Returns:
-            Updated graph with raw_input set
+            Graph ready to use as next input
         """
-        next_state = self.pad_prediction(pred)
-        forcing = data["grid"].raw_target[..., self.feature_indices.forcing_idxs]
-        next_state[..., self.feature_indices.forcing_idxs] = forcing
-
-        data["grid"].raw_input = next_state
-
-        return data
+        # Copy output features from prediction, forcing already in target_graph
+        pred = pred_graph[self.nodes].data[..., self.out_idxs]
+        target_graph[self.nodes].data[..., self.out_idxs] = pred
+        return target_graph

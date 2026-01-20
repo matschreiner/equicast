@@ -44,40 +44,50 @@ class Model(pl.LightningModule):
     def device(self):
         return next(self.parameters()).device
 
-    def forward(self, data):
-        data = self.data_handler.prepare_input(data)
-        pred = self.backbone.forward(data)
-        pred = self.data_handler.inverse_normalize_output_features(pred)
-        return pred
+    @property
+    def nodes(self):
+        return self.data_handler.nodes
 
-    def step_forward(self, condition, next_graph):
+    def forward(self, input):
+        input = self.data_handler.prepare_input(input)
+        backbone_out = self.backbone.forward(input)
+        output = self.data_handler.update_output(input, backbone_out)
+        return output
+
+    def step_forward(self, input, next):
         """Single autoregressive step.
 
         Args:
-            condition: Data to make prediction from
-            next_graph: Graph to update with prediction (provides forcing)
+            input: Graph to make prediction from
+            next: Graph to update with prediction (provides forcing)
 
         Returns:
-            tuple: (updated next_graph, prediction tensor)
+            tuple: (updated next graph, prediction graph)
         """
-        pred = self.forward(condition)
-        next_graph = self.data_handler.update_next_with_prediction(next_graph, pred)
-        return next_graph, pred
+        input = input.clone()
+        next = next.clone()
 
-    def training_step(self, graph, _):
-        graph = self.data_handler.prepare_input(graph)
-        pred = self.backbone.forward(graph)
+        pred = self.forward(input)
+        next = self.data_handler.update_next_with_prediction(next, pred)
+        return next, pred
 
-        target = self.data_handler.get_target(graph)
-        loss = self.loss(pred, target)
+    def training_step(self, batch, _):
+        input = batch["input"]
+        input = self.data_handler.prepare_input(input)
 
-        self.log_loss(loss, graph.num_graphs)
-        self.log_metrics(pred, target, graph.num_graphs)
+        target = batch["target"]
+        backbone_target = self.data_handler.prepare_backbone_target(target)
+
+        backbone_out = self.backbone.forward(input)
+
+        loss = self.loss(backbone_out, backbone_target)
+        self.log_loss(loss, input.num_graphs)
+        self.log_metrics(backbone_out, backbone_target, input.num_graphs)
 
         return loss
 
-    def loss(self, pred, target):
-        return torch.nn.functional.mse_loss(pred, target)
+    def loss(self, backbone_out, backbone_target):
+        return torch.nn.functional.mse_loss(backbone_out, backbone_target)
 
     def configure_optimizers(self):
         optimizer = self.optimizer_factory(self.parameters())
@@ -104,14 +114,16 @@ class Model(pl.LightningModule):
             batch_size=batch_size,
         )
 
-    def log_metrics(self, pred, target, batch_size):
+    def log_metrics(self, backbone_out, backbone_target, batch_size):
         """Log all metrics (lr, log_step, model metrics) to logger only."""
         lr = get_lr(self)
         ln_step = np.log(self.global_step + 1)
         log_dict = {"lr": lr, "log_step": ln_step}
 
         if self.metrics_tracker is not None:
-            metrics = self.metrics_tracker.compute_metrics(pred, target)
+            metrics = self.metrics_tracker.compute_metrics(
+                backbone_out, backbone_target
+            )
             log_dict.update(metrics)
 
         self.log_dict(

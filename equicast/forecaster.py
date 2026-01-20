@@ -34,40 +34,45 @@ class Forecaster:
             List of predictions (model handles scaling internally)
         """
         predictions = []
-        condition = timeseries[0]
+        input = timeseries[0]["input"]
         num_steps = steps if steps > 0 else len(timeseries) - 1
+        ground_truths = [t["target"] for t in timeseries[:num_steps]]
+        feature_idx = 1
 
         with torch.no_grad():
-            for step in tqdm(range(num_steps), desc="Forecasting"):
-                condition, pred = self.model.step_forward(
-                    condition,
-                    timeseries[step + 1],
+            for target in tqdm(ground_truths, desc="Forecasting"):
+                input, prediction = self.model.step_forward(
+                    input,
+                    target,
                 )
-                predictions.append(pred.detach())
+
+                predictions.append(prediction)
 
         if self.logger is not None:
             self._save_visualization(
-                predictions, timeseries, num_steps, output_dir, feature_idx
+                predictions, ground_truths, output_dir, feature_idx
             )
 
         return predictions
 
     def _save_visualization(
-        self, predictions, timeseries, num_steps, output_dir, feature_idx
+        self, predictions, ground_truths, output_dir, feature_idx
     ):
         """Save comparison video of predictions vs ground truth."""
-        preds = torch.stack(predictions, dim=0).squeeze()
-        ground_truth = torch.stack(
-            [
-                self.model.data_handler.get_output_features(graph["grid"].raw_input)
-                for graph in timeseries[1 : num_steps + 1]
-            ]
-        )
+        nodes = self.model.nodes
+
+        pred = [p[nodes].data for p in predictions]
+        pred = torch.stack(pred, dim=0)
+        pred = self.model.data_handler.get_output_features(pred)
+
+        ground_truth = [g[nodes].data for g in ground_truths[: len(predictions)]]
+        ground_truth = torch.stack(ground_truth, dim=0)
+        ground_truth = self.model.data_handler.get_output_features(ground_truth)
 
         video_path = os.path.join(output_dir, "forecast_comparison.mp4")
         make_comparison_video(
-            predictions=preds.cpu().numpy()[..., feature_idx],
-            targets=ground_truth.squeeze().cpu().numpy()[..., feature_idx],
-            latlon=timeseries[0]["grid"].x.cpu().numpy(),
+            predictions=pred.cpu().numpy()[..., feature_idx],
+            targets=ground_truth.cpu().numpy()[..., feature_idx],
+            latlon=ground_truths[0][nodes].x.cpu().numpy(),
             output_path=video_path,
         )

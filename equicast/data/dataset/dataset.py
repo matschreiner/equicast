@@ -33,8 +33,10 @@ class AnemoiDataset(Dataset):
             .permute(0, 2, 1)
         )
 
-        graph = self.graph_provider.get_graph(idx)
-        graph["grid"].raw_input = data[:-1]
-        graph["grid"].raw_target = data[-1:]
+        input_graph = self.graph_provider.get_graph(idx)
+        input_graph["grid"].data = data[:-1].squeeze()
 
-        return graph
+        target_graph = self.graph_provider.get_graph(idx)
+        target_graph["grid"].data = data[-1:].squeeze()
+
+        return {"input": input_graph, "target": target_graph}
