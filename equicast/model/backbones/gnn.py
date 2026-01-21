@@ -55,5 +55,5 @@ class GraphConv(MessagePassing):
     def message(self, x_j, x_i, edge_attr):  # type: ignore
         return self.message_mlp(torch.cat([x_i, x_j, edge_attr], dim=-1))
 
-    def update(self, inputs: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
+    def update(self, inputs: torch.Tensor, x: torch.Tensor) -> torch.Tensor:  # type: ignore
         return self.update_mlp(torch.cat([inputs, x], dim=-1))
