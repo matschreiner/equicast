@@ -105,7 +105,7 @@ class Model(pl.LightningModule):
     def log_loss(self, loss, batch_size):
         """Log loss to progress bar and logger."""
         self.log(
-            "loss",
+            "train/loss",
             loss,
             logger=True,
             prog_bar=True,
@@ -118,7 +118,7 @@ class Model(pl.LightningModule):
         """Log all metrics (lr, log_step, model metrics) to logger only."""
         lr = get_lr(self)
         ln_step = np.log(self.global_step + 1)
-        log_dict = {"lr": lr, "log_step": ln_step}
+        log_dict = {"train/lr": lr, "train/log_step": ln_step}
 
         if self.metrics_tracker is not None:
             metrics = self.metrics_tracker.compute_metrics(
