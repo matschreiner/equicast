@@ -160,7 +160,6 @@ class TestStepForwardMutation:
         original_target_data = sample_target["grid"].data.clone()
 
         next_graph, pred_graph = model.step_forward(sample_input, sample_target)
-        __import__("pdb").set_trace()  # TODO delme
 
         # Mutate the original inputs
         sample_input["grid"].data[:] = -999.0
