@@ -25,6 +25,45 @@ class GNN(torch.nn.Module):
         return x + residual
 
 
+class EncProcDec(torch.nn.Module):
+    """Encoder-Processor-Decoder using GraphConv layers with grid-mesh structure."""
+
+    def __init__(
+        self,
+        feature_config,
+        grid_nodes: str = "grid",
+        mesh_nodes: str = "mesh",
+        hidden_dim: int = 256,
+        edge_dim: int = 3,
+    ):
+        super().__init__()
+        in_dim = len(feature_config.forcing) + len(feature_config.prognostic)
+        out_dim = len(feature_config.prognostic) + len(feature_config.diagnostic)
+
+        self.grid_nodes = grid_nodes
+        self.mesh_nodes = mesh_nodes
+        self.encoder = GraphConv(
+            in_dim=in_dim, out_dim=hidden_dim, edge_dim=edge_dim
+        )
+        self.processor = GraphConv(
+            in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim
+        )
+        self.decoder = GraphConv(
+            in_dim=hidden_dim, out_dim=out_dim, edge_dim=edge_dim
+        )
+
+    def forward(self, graph):
+        residual = graph[self.grid_nodes].residual
+        x = self.encoder(
+            graph[self.grid_nodes].input,
+            graph[self.grid_nodes, "to", self.mesh_nodes],
+        )
+        x = x + self.processor(x, graph[self.mesh_nodes, "to", self.mesh_nodes])
+        out = self.decoder(x, graph[self.mesh_nodes, "to", self.grid_nodes])
+
+        return out  #  + residual
+
+
 class GraphConv(MessagePassing):
     def __init__(
         self, in_dim: int, out_dim: int, edge_dim: int = 3, aggr: str = "mean"
