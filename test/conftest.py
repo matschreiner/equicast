@@ -1,8 +1,8 @@
 import pytest
 from torch_geometric.loader.dataloader import DataLoader
 
-from equicast.dataset import AnemoiDataset
-from equicast.graph.graph_provider import StaticGraphProvider
+from equicast.data import AnemoiDataset
+from equicast.data.graph_provider import StaticGraphProvider
 
 
 @pytest.fixture
