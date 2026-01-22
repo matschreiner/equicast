@@ -1,6 +1,7 @@
 """Data handling components for equicast."""
 
 from equicast.data.data_handler import BaseDataHandler, GraphDataHandler
+from equicast.data.equivariant_data_handler import EquivariantDataHandler
 from equicast.data.dataset import AnemoiDataset, GraphDataset
 from equicast.data.feature_config import FeatureConfig
 from equicast.data.feature_indices import FeatureIndices
