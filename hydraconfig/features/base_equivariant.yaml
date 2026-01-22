@@ -16,9 +16,9 @@ diagnostic:
   - 2d
   - msl
   - skt
-  - tp
-  - tcw
-  - cp
+  # - tp
+  # - tcw
+  # - cp
 
 prognostic:
   - sp
