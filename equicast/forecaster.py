@@ -37,7 +37,7 @@ class Forecaster:
         input = timeseries[0]["input"]
         num_steps = steps if steps > 0 else len(timeseries) - 1
         ground_truths = [t["target"] for t in timeseries[:num_steps]]
-        feature_idx = 1
+        feature_idx = 5
 
         with torch.no_grad():
             for target in tqdm(ground_truths, desc="Forecasting"):
