@@ -1,9 +1,12 @@
+import logging
 import os
 import subprocess
 import tempfile
 from abc import ABC, abstractmethod
 
 from equicast import CHECKPOINT_PATH
+
+logger = logging.getLogger(__name__)
 
 
 class CheckpointProvider(ABC):
@@ -42,19 +45,17 @@ class RemoteCheckpointProvider(CheckpointProvider):
 
     def get_checkpoint(self) -> str:
         if self.local_path and os.path.exists(self.local_path):
-            print(f"Using cached checkpoint: {self.local_path}")
+            logger.info(f"Using cached checkpoint: {self.local_path}")
             return self.local_path
 
-        # Create cache directory if needed
         os.makedirs(self.local_cache_dir, exist_ok=True)
 
-        # Generate local filename from remote path
         checkpoint_name = os.path.basename(self.remote_path)
         self.local_path = os.path.join(self.local_cache_dir, checkpoint_name)
 
-        # Copy from remote server using scp
         remote_spec = f"{self.host}:{self.remote_path}"
-        print(f"Copying checkpoint from {remote_spec}")
+        logger.info(f"Fetching checkpoint from {remote_spec}")
+        logger.info(f"Destination: {self.local_path}")
 
         try:
             subprocess.run(
@@ -63,11 +64,47 @@ class RemoteCheckpointProvider(CheckpointProvider):
                 capture_output=True,
                 text=True,
             )
-            print(f"Checkpoint copied to {self.local_path}")
+            size_mb = os.path.getsize(self.local_path) / (1024 * 1024)
+            logger.info(f"Checkpoint downloaded: {size_mb:.1f} MB")
         except subprocess.CalledProcessError as e:
+            logger.error(f"SCP failed: {e.stderr}")
             raise RuntimeError(
                 f"Failed to copy checkpoint from {remote_spec}: {e.stderr}"
             )
+
+        return self.local_path
+
+
+class RsyncCheckpointProvider(CheckpointProvider):
+    """Load checkpoint from a remote server via rsync."""
+
+    def __init__(self, remote_path: str, host: str):
+        """
+        Args:
+            remote_path: Path to checkpoint on remote server
+            host: SSH host (e.g., "ohm")
+        """
+        self.remote_path = remote_path
+        self.host = host
+        self.local_path = os.path.join(
+            tempfile.gettempdir(), os.path.basename(remote_path)
+        )
+
+    def get_checkpoint(self) -> str:
+        remote_spec = f"{self.host}:{self.remote_path}"
+        logger.info(f"Syncing checkpoint from {remote_spec}")
+        logger.info(f"Destination: {self.local_path}")
+
+        try:
+            subprocess.run(
+                ["rsync", "-P", remote_spec, self.local_path],
+                check=True,
+            )
+            size_mb = os.path.getsize(self.local_path) / (1024 * 1024)
+            logger.info(f"Checkpoint synced: {size_mb:.1f} MB")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Rsync failed: {e}")
+            raise RuntimeError(f"Failed to rsync checkpoint from {remote_spec}: {e}")
 
         return self.local_path
 
