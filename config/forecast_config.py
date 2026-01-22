@@ -6,14 +6,17 @@ from anemoi.datasets import open_dataset
 
 from equicast import data, experiments
 from equicast.checkpoint import (
+    LocalCheckpointProvider,
     MLFlowCheckpointProvider,
     RemoteCheckpointProvider,
+    RsyncCheckpointProvider,
 )
 from equicast.forecaster import Forecaster
 from equicast.logger import CSVLogger, MLFlowLogger
 from equicast.model import Model
 from equicast.model.backbones.gnn import GNN
 from equicast.model.from_checkpoint import from_checkpoint
+from equicast.utils.mlflow_loader import load_model_from_mlflow
 
 
 def get_graph_from_provider(graph_provider, idx):
@@ -37,7 +40,8 @@ def get_timeseries(
 
 def main():
     dataset_path = "/home/masc/storage/mini_aifs.zarr"
-    graph_path = "graph/aifs-single.pt"
+    #  graph_path = "graph/aifs-single.pt"
+    graph_path = "graph/graphcast-paper.pt"
 
     graph_provider = fdl.Config(
         data.StaticGraphProvider,
@@ -53,7 +57,7 @@ def main():
         get_timeseries,
         dataset=dataset,
         start_idx=0,
-        steps=109,
+        steps=30,
     )
 
     logger = fdl.Config(
@@ -73,14 +77,25 @@ def main():
 
     #  checkpoint_provider = fdl.Config(
     #      RemoteCheckpointProvider,
-    #      remote_path="/vf/masc/programming/equicast/26/ad5bc3e47a4046d0b98db1bd527cf00b/checkpoints/latest.ckpt",
+    #      remote_path="/vf/masc/programming/equicast/58/7122bdee98804e149b1ed606a598c4a3/checkpoints/latest.ckpt",
     #      host="ohm",
     #  )
+    #
+    #  checkpoint_provider = fdl.Config(
+    #      MLFlowCheckpointProvider,
+    #      tracking_uri="https://mlflow.dmidev.org/",
+    #      run_id="6c273433894c4f44b9613d7816b71890",
+    #      checkpoint_name="latest",
+    #  )
+    #  checkpoint_provider = fdl.Config(
+    #      LocalCheckpointProvider,
+    #      checkpoint_path="latest2.ckpt",
+    #  )
+    #
     checkpoint_provider = fdl.Config(
-        MLFlowCheckpointProvider,
-        tracking_uri="https://mlflow.dmidev.org/",
-        run_id="26ad5bc3e47a4046d0b98db1bd527cf00b",
-        checkpoint_name="latest",
+        RsyncCheckpointProvider,
+        remote_path="/vf/masc/programming/equicast/58/7e831360a2d942ca825c1b131610d93d/checkpoints/latest.ckpt",
+        host="ohm",
     )
 
     model = fdl.Config(
@@ -88,8 +103,6 @@ def main():
         model_cls=Model,
         checkpoint_provider=checkpoint_provider,
     )
-
-    model = get_gnn()
 
     forecaster = fdl.Config(
         Forecaster,
@@ -100,7 +113,6 @@ def main():
     cfg = fdl.Config(
         experiments.ForecastConfig,
         forecaster=forecaster,
-        #  graph=graph,
         timeseries=timeseries,
         logger=logger,
     )
