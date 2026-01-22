@@ -35,6 +35,7 @@ class EncProcDec(torch.nn.Module):
         mesh_nodes: str = "mesh",
         hidden_dim: int = 256,
         edge_dim: int = 3,
+        use_residual: bool = True,
     ):
         super().__init__()
         in_dim = len(feature_config.forcing) + len(feature_config.prognostic)
@@ -42,10 +43,14 @@ class EncProcDec(torch.nn.Module):
 
         self.grid_nodes = grid_nodes
         self.mesh_nodes = mesh_nodes
+        self.use_residual = use_residual
         self.encoder = GraphConv(
             in_dim=in_dim, out_dim=hidden_dim, edge_dim=edge_dim
         )
-        self.processor = GraphConv(
+        self.processor1 = GraphConv(
+            in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim
+        )
+        self.processor2 = GraphConv(
             in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim
         )
         self.decoder = GraphConv(
@@ -53,15 +58,20 @@ class EncProcDec(torch.nn.Module):
         )
 
     def forward(self, graph):
-        residual = graph[self.grid_nodes].residual
+        mesh_edges = graph[self.mesh_nodes, "to", self.mesh_nodes]
+
         x = self.encoder(
             graph[self.grid_nodes].input,
             graph[self.grid_nodes, "to", self.mesh_nodes],
         )
-        x = x + self.processor(x, graph[self.mesh_nodes, "to", self.mesh_nodes])
+        x = x + self.processor1(x, mesh_edges)
+        x = x + self.processor2(x, mesh_edges)
         out = self.decoder(x, graph[self.mesh_nodes, "to", self.grid_nodes])
 
-        return out  #  + residual
+        if self.use_residual:
+            out = out + graph[self.grid_nodes].residual
+
+        return out
 
 
 class GraphConv(MessagePassing):
