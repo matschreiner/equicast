@@ -119,7 +119,7 @@ def main():
     )
 
     data_handler = fdl.Config(
-        data.EquivariantDataHandler,
+        data.EquivariantGraphDataHandler,
         feature_config=feature_config,
         dataset_path=dataset_path,
     )

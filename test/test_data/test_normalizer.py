@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from equicast.data.normalizer import Normalizer
+from equicast.data.normalizer import Normalizer, VectorNormalizer
 
 
 @pytest.fixture
@@ -115,33 +115,11 @@ class MockDataset:
         return self.data[idx]
 
 
-def test_compute_vector_statistics(normalizer):
-    """Test that compute_vector_statistics computes correct mean norms."""
-    # Create dataset with known vector values
+@pytest.fixture
+def vector_dataset():
+    """Create a mock dataset with known vector values."""
     # 2 samples, 4 nodes, 4 features (u1, v1, u2, v2)
-    data = np.array(
-        [
-            # Sample 0: vectors with norm 5 (3,4) and norm 13 (5,12)
-            [[3, 4, 5, 12]] * 4,  # 4 nodes, same values
-            # Sample 1: vectors with norm 5 (4,3) and norm 13 (12,5)
-            [[4, 3, 12, 5]] * 4,
-        ],
-        dtype=np.float32,
-    )
-
-    dataset = MockDataset(data)
-    vector_indices = [(0, 1), (2, 3)]  # (u1, v1), (u2, v2)
-
-    normalizer.compute_vector_statistics(dataset, vector_indices, num_samples=2)
-
-    # Both vectors should have consistent norms: 5 and 13
-    assert torch.allclose(normalizer.vector_mean_norm[0], torch.tensor(5.0))
-    assert torch.allclose(normalizer.vector_mean_norm[1], torch.tensor(13.0))
-
-
-def test_transform_vector_roundtrip(normalizer):
-    """Test that transform_vector and inverse_transform_vector are inverses."""
-    # Setup vector statistics
+    # vectors with norm 5 (3,4) and norm 13 (5,12)
     data = np.array(
         [
             [[3, 4, 5, 12]] * 4,
@@ -149,36 +127,47 @@ def test_transform_vector_roundtrip(normalizer):
         ],
         dtype=np.float32,
     )
-    dataset = MockDataset(data)
-    normalizer.compute_vector_statistics(
-        dataset, [(0, 1), (2, 3)], num_samples=2
+    return MockDataset(data)
+
+
+@pytest.fixture
+def vector_normalizer(sample_statistics, vector_dataset):
+    """Create a VectorNormalizer instance."""
+    return VectorNormalizer(
+        sample_statistics,
+        vector_dataset,
+        vector_indices=[(0, 1), (2, 3)],
+        num_samples=2,
     )
 
-    # Test roundtrip
-    original = torch.tensor([[3.0, 4.0], [6.0, 8.0]])
-    transformed = normalizer.transform_vector(original, vector_idx=0)
-    recovered = normalizer.inverse_transform_vector(transformed, vector_idx=0)
+
+def test_vector_normalizer_computes_mean_norms(vector_normalizer):
+    """Test that VectorNormalizer computes correct mean norms."""
+    # Both vectors should have consistent norms: 5 and 13
+    assert torch.allclose(vector_normalizer.vector_mean_norm[0], torch.tensor(5.0))
+    assert torch.allclose(vector_normalizer.vector_mean_norm[1], torch.tensor(13.0))
+
+
+def test_transform_vectors_roundtrip(vector_normalizer):
+    """Test that transform_vectors and inverse_transform_vectors are inverses."""
+    # Test roundtrip: shape [nodes, num_vectors, 2]
+    original = torch.tensor([
+        [[3.0, 4.0], [5.0, 12.0]],
+        [[6.0, 8.0], [10.0, 24.0]],
+    ])
+    transformed = vector_normalizer.transform_vectors(original)
+    recovered = vector_normalizer.inverse_transform_vectors(transformed)
 
     assert torch.allclose(recovered, original)
 
 
-def test_transform_vector_normalizes_to_unit_average(normalizer):
+def test_transform_vectors_normalizes_to_unit_average(vector_normalizer):
     """Test that transformed vectors have average norm close to 1."""
-    # Setup with known mean norm of 5
-    data = np.array(
-        [
-            [[3, 4, 0, 0]] * 4,
-            [[4, 3, 0, 0]] * 4,
-        ],
-        dtype=np.float32,
-    )
-    dataset = MockDataset(data)
-    normalizer.compute_vector_statistics(dataset, [(0, 1)], num_samples=2)
+    # Transform vectors with norms matching the mean norms
+    # shape: [num_vectors, 2]
+    original = torch.tensor([[3.0, 4.0], [5.0, 12.0]])
+    transformed = vector_normalizer.transform_vectors(original)
 
-    # Transform a vector with norm 5
-    original = torch.tensor([3.0, 4.0])
-    transformed = normalizer.transform_vector(original, vector_idx=0)
-
-    # Transformed norm should be 1 (since original norm equals mean norm)
-    transformed_norm = torch.sqrt((transformed**2).sum())
-    assert torch.allclose(transformed_norm, torch.tensor(1.0))
+    # Transformed norms should be 1 (since original norms equal mean norms)
+    transformed_norms = torch.sqrt((transformed**2).sum(dim=-1))
+    assert torch.allclose(transformed_norms, torch.ones(2))

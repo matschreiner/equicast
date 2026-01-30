@@ -16,16 +16,16 @@ from equicast.utils.utils import cast_dict
 class BaseDataHandler(torch.nn.Module, ABC):
     """Standard DataHandler with z-score normalization."""
 
+    normalizer: Normalizer
+
     def __init__(self, dataset_path: str, feature_config: FeatureConfig):
         super().__init__()
         data = open_dataset(dataset_path)
-        statistics: dict[str, torch.Tensor] = cast_dict(
+        self.statistics: dict[str, torch.Tensor] = cast_dict(
             data.statistics, torch.Tensor
         )
-
         self.name_to_index: dict[str, int] = data.name_to_index
 
-        self.normalizer = Normalizer(statistics)
         self.feature_indices = FeatureIndices(
             feature_config=feature_config,
             name_to_index=self.name_to_index,
@@ -136,6 +136,7 @@ class GraphDataHandler(BaseDataHandler):
     ):
         super().__init__(dataset_path, feature_config)
         self.nodes = nodes
+        self.normalizer = Normalizer(self.statistics)
 
     def prepare_input(self, data: Data) -> Data:
         normalized = self.normalize_features(data[self.nodes].data)

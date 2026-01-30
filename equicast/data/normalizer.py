@@ -1,5 +1,3 @@
-from abc import ABC, abstractmethod
-
 import numpy as np
 import torch
 
@@ -50,52 +48,73 @@ class Normalizer(torch.nn.Module):
         """
         return data * self.std[indices] + self.mean[indices]  # type: ignore
 
-    def compute_vector_statistics(
+
+class VectorNormalizer(Normalizer):
+    """Normalizer with additional vector normalization support."""
+
+    def __init__(
+        self,
+        statistics: dict[str, torch.Tensor],
+        dataset,  # anemoi dataset
+        vector_indices: list[tuple[int, int]],  # [(u_idx, v_idx), ...]
+        num_samples: int = 100,
+    ):
+        super().__init__(statistics)
+        self._compute_vector_statistics(dataset, vector_indices, num_samples)
+
+    def _compute_vector_statistics(
         self,
         dataset,  # anemoi dataset
         vector_indices: list[tuple[int, int]],  # [(u_idx, v_idx), ...]
-        num_samples: int = 1000,
+        num_samples: int = 100,
     ) -> None:
         """Compute mean vector norms from data samples.
 
         Args:
             dataset: Anemoi dataset to sample from
             vector_indices: List of (u_idx, v_idx) tuples for each vector
-            num_samples: Number of random samples to use (max 1000)
+            num_samples: Number of random samples to use
         """
+        if not vector_indices:
+            self.register_buffer("vector_mean_norm", torch.tensor([]))
+            return
 
         num_samples = min(num_samples, len(dataset))
         sample_indices = np.random.choice(
             len(dataset), num_samples, replace=False
         )
+        samples = dataset[sample_indices].squeeze()  # [samples, features, nodes]
+        samples = samples.transpose(0, 2, 1)  # [samples, nodes, features]
 
         u_idxs, v_idxs = zip(*vector_indices)
 
-        # Fetch all samples and compute norms
-        data = dataset[sample_indices]
-        u = data[..., u_idxs]
-        v = data[..., v_idxs]
-        norms = np.sqrt(u**2 + v**2)  # [num_samples, nodes, num_vectors]
-        mean_norms = norms.mean(axis=(0, 1))  # [num_vectors]
+        u = samples[..., u_idxs]
+        v = samples[..., v_idxs]
+        norms = np.sqrt(u**2 + v**2)  # [samples, nodes, num_vectors]
+
+        # Mean over all dims except last (num_vectors)
+        mean_norms = norms.mean(axis=tuple(range(norms.ndim - 1)))
 
         self.register_buffer("vector_mean_norm", torch.tensor(mean_norms))
 
-    def transform_vector(
-        self, data: torch.Tensor, vector_idx: int
-    ) -> torch.Tensor:
-        """Normalize a 2D vector so average norm is 1.
+    def transform_vectors(self, data: torch.Tensor) -> torch.Tensor:
+        """Normalize vectors so average norm is 1.
 
         Args:
-            data: Tensor with shape [..., 2] containing (u, v) components
-            vector_idx: Index into vector_mean_norm
+            data: Tensor with shape [..., num_vectors, 2]
 
         Returns:
-            Normalized vector: data / mean_norm
+            Normalized vectors: data / mean_norm
         """
-        return data / self.vector_mean_norm[vector_idx]
+        return data / self.vector_mean_norm.view(1, -1, 1)
 
-    def inverse_transform_vector(
-        self, data: torch.Tensor, vector_idx: int
-    ) -> torch.Tensor:
-        """Denormalize a 2D vector back to physical units."""
-        return data * self.vector_mean_norm[vector_idx]
+    def inverse_transform_vectors(self, data: torch.Tensor) -> torch.Tensor:
+        """Denormalize vectors back to physical units.
+
+        Args:
+            data: Tensor with shape [..., num_vectors, 2]
+
+        Returns:
+            Denormalized vectors: data * mean_norm
+        """
+        return data * self.vector_mean_norm.view(1, -1, 1)
