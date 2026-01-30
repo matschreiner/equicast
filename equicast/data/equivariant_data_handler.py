@@ -30,7 +30,10 @@ class EquivariantDataHandler(BaseDataHandler):
     ) -> list[tuple[int, int]]:
         """Get (u_idx, v_idx) pairs for each vector feature."""
         return [
-            (self.name_to_index[components[0]], self.name_to_index[components[1]])
+            (
+                self.name_to_index[components[0]],
+                self.name_to_index[components[1]],
+            )
             for components in vector_config.values()
         ]
 
@@ -53,7 +56,9 @@ class EquivariantDataHandler(BaseDataHandler):
 
         # Scalar features
         data[self.nodes]["input_scalar"] = self.get_input_features(normalized)
-        data[self.nodes]["residual_scalar"] = self.get_output_features(normalized)
+        data[self.nodes]["residual_scalar"] = self.get_output_features(
+            normalized
+        )
 
         # Vector features [nodes, num_vectors, 2]
         data[self.nodes]["input_vector"] = self._pack_vectors(normalized)
@@ -66,15 +71,16 @@ class EquivariantDataHandler(BaseDataHandler):
         target = self.get_output_features(normalized)
         return target
 
-    def update_output(self, input: Data, backbone_out: torch.Tensor) -> Data:
-        output = self.inverse_normalize_output_features(backbone_out)
-        input[self.nodes].data[..., self.out_idxs] = output
-        return input
-
-    def update_next_with_prediction(
-        self, target_graph: Data, pred_graph: Data
+    def update_state_with_backbone_output(
+        self, state: Data, backbone_output: torch.Tensor
     ) -> Data:
-        """Create next input graph from prediction + forcing."""
-        pred = pred_graph[self.nodes].data[..., self.out_idxs]
-        target_graph[self.nodes].data[..., self.out_idxs] = pred
-        return target_graph
+        """Denormalize backbone output and write to state's data tensor."""
+        output = self.inverse_normalize_output_features(backbone_output)
+        state[self.nodes].data[..., self.out_idxs] = output
+        return state
+
+    def update_state_with_prediction(self, state: Data, pred_state: Data) -> Data:
+        """Copy output features from pred_state to state."""
+        pred = pred_state[self.nodes].data[..., self.out_idxs]
+        state[self.nodes].data[..., self.out_idxs] = pred
+        return state

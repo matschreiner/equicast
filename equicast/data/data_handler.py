@@ -40,15 +40,15 @@ class BaseDataHandler(torch.nn.Module, ABC):
         return self.feature_indices.out_idxs
 
     @abstractmethod
-    def update_next_with_prediction(
-        self, next: Any, pred: torch.Tensor
-    ) -> Any: ...
+    def update_state_with_prediction(self, state: Any, pred_state: Any) -> Any: ...
 
     @abstractmethod
     def prepare_input(self, data: Any) -> Any: ...
 
     @abstractmethod
-    def update_output(self, output: Any, backbone_out: torch.Tensor) -> Any: ...
+    def update_state_with_backbone_output(
+        self, state: Any, backbone_output: torch.Tensor
+    ) -> Any: ...
 
     @abstractmethod
     def prepare_backbone_target(self, data: Any) -> torch.Tensor: ...
@@ -149,25 +149,16 @@ class GraphDataHandler(BaseDataHandler):
         target = self.get_output_features(normalized)
         return target
 
-    def update_output(self, input: Data, backbone_out: torch.Tensor) -> Data:
-        output = self.inverse_normalize_output_features(backbone_out)
-        input[self.nodes].data[..., self.out_idxs] = output
-        return input
-
-    def update_next_with_prediction(
-        self, target_graph: Data, pred_graph: Data
+    def update_state_with_backbone_output(
+        self, state: Data, backbone_output: torch.Tensor
     ) -> Data:
-        """
-        Create next input graph from prediction + forcing.
+        """Denormalize backbone output and write to state's data tensor."""
+        output = self.inverse_normalize_output_features(backbone_output)
+        state[self.nodes].data[..., self.out_idxs] = output
+        return state
 
-        Args:
-            target_graph: Graph with forcing data (forcing already present)
-            pred_graph: Graph with prediction (all features, output updated)
-
-        Returns:
-            Graph ready to use as next input
-        """
-        # Copy output features from prediction, forcing already in target_graph
-        pred = pred_graph[self.nodes].data[..., self.out_idxs]
-        target_graph[self.nodes].data[..., self.out_idxs] = pred
-        return target_graph
+    def update_state_with_prediction(self, state: Data, pred_state: Data) -> Data:
+        """Copy output features from pred_state to state."""
+        pred = pred_state[self.nodes].data[..., self.out_idxs]
+        state[self.nodes].data[..., self.out_idxs] = pred
+        return state

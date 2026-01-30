@@ -51,7 +51,7 @@ class Model(pl.LightningModule):
     def forward(self, input):
         input = self.data_handler.prepare_input(input)
         backbone_out = self.backbone.forward(input)
-        output = self.data_handler.update_output(input, backbone_out)
+        output = self.data_handler.update_state_with_backbone_output(input, backbone_out)
         return output
 
     def step_forward(self, input, next):
@@ -68,7 +68,7 @@ class Model(pl.LightningModule):
         next = next.clone()
 
         pred = self.forward(input)
-        next = self.data_handler.update_next_with_prediction(next, pred)
+        next = self.data_handler.update_state_with_prediction(next, pred)
         return next, pred
 
     def training_step(self, batch, _):
