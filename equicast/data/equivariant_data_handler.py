@@ -105,15 +105,19 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         return data
 
-    def prepare_backbone_target(self, data: Data) -> torch.Tensor:
-        normalized = self.normalize_features(data[self.nodes].data)
-        target = self.get_output_features(normalized)
-        return target
+    def prepare_backbone_target(self, data: Data) -> dict[str, torch.Tensor]:
+        """Prepare normalized scalar and vector targets."""
+        raw = data[self.nodes].data
 
-    def prepare_vector_target(self, data: Data) -> torch.Tensor:
-        """Prepare normalized vector target."""
-        vectors = self._pack_vectors(data[self.nodes].data)
-        return self.normalize_vectors(vectors)
+        # Scalar target
+        normalized = self.normalize_features(raw)
+        scalar_target = self.get_output_features(normalized)
+
+        # Vector target
+        vectors = self._pack_vectors(raw)
+        vector_target = self.normalize_vectors(vectors)
+
+        return {"scalar": scalar_target, "vector": vector_target}
 
     def update_state_with_backbone_output(
         self,
