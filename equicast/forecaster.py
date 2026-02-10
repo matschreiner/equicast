@@ -36,8 +36,8 @@ class Forecaster:
         predictions = []
         input = timeseries[0]["input"]
         num_steps = steps if steps > 0 else len(timeseries) - 1
-        ground_truths = [t["target"] for t in timeseries[:num_steps]]
-        feature_idx = 5
+        ground_truths = [frame["target"] for frame in timeseries[:num_steps]]
+        feature_idx = 24
 
         with torch.no_grad():
             for target in tqdm(ground_truths, desc="Forecasting"):
@@ -60,14 +60,20 @@ class Forecaster:
     ):
         """Save comparison video of predictions vs ground truth."""
         nodes = self.model.nodes
+        dh = self.model.data_handler
 
         pred = [p[nodes].data for p in predictions]
         pred = torch.stack(pred, dim=0)
-        pred = self.model.data_handler.get_output_features(pred)
+        pred = dh.get_output_features(pred)
 
         ground_truth = [g[nodes].data for g in ground_truths[: len(predictions)]]
         ground_truth = torch.stack(ground_truth, dim=0)
-        ground_truth = self.model.data_handler.get_output_features(ground_truth)
+        ground_truth = dh.get_output_features(ground_truth)
+
+        index_to_name = {v: k for k, v in dh.name_to_index.items()}
+        feature_name = index_to_name.get(
+            dh.out_idxs[feature_idx], f"feature_{feature_idx}"
+        )
 
         video_path = os.path.join(output_dir, "forecast_comparison.mp4")
         make_comparison_video(
@@ -75,4 +81,5 @@ class Forecaster:
             targets=ground_truth.cpu().numpy()[..., feature_idx],
             latlon=ground_truths[0][nodes].x.cpu().numpy(),
             output_path=video_path,
+            title_template=f"{feature_name} – Frame {{frame}}",
         )
