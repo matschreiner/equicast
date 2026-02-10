@@ -266,7 +266,7 @@ def plot_field_with_vectors(
     ----------
     graph : HeteroData
         Graph containing grid data with lat/lon coordinates
-    data_handler : EquivariantDataHandler
+    data_handler : EquivariantGraphDataHandler
         Data handler with feature name mappings and vector configuration
     vector_field : str
         Name of vector field (e.g., "wind_500"), must be in prognostic_vector config
@@ -387,7 +387,7 @@ def make_video_with_vectors(
     ----------
     graphs : list
         List of prepared HeteroData graphs (with input_vector populated)
-    data_handler : EquivariantDataHandler
+    data_handler : EquivariantGraphDataHandler
         Data handler with feature name mappings
     vector_field : str
         Name of vector field (e.g., "wind_500")
