@@ -1,3 +1,4 @@
+import argparse
 import json
 import traceback
 from abc import ABC, abstractmethod
@@ -68,7 +69,11 @@ def vis_config(config):
 
 
 def run_experiment(config: fdl.Config):
-    vis_config(config)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--graph", action="store_true", help="Open graphviz visualization of the config")
+    args, _ = parser.parse_known_args()
+    if args.graph:
+        vis_config(config)
     experiment = fdl.build(config)
     experiment.run()
 
