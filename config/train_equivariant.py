@@ -9,8 +9,8 @@ from equicast import data, experiments, metrics
 from equicast.callbacks import TimeDeltaCheckpoint
 from equicast.experiments import TrainConfig
 from equicast.logger import MLFlowLogger
-from equicast.model.backbones.gnn import GNN
-from equicast.model.model import Model
+from equicast.model.backbones.equivariant_gnn import EquivariantGNN
+from equicast.model.model import Model, equivariant_loss_fn
 from equicast.profiler import LoggingProfiler
 
 torch.set_float32_matmul_precision("medium | high")
@@ -18,7 +18,7 @@ torch.set_float32_matmul_precision("medium | high")
 
 def main():
     dataset_path = "/home/masc/storage/mini_aifs.zarr"
-    graph_path = "graph/graphcast-paper.pt"
+    graph_path = "graph/aifs-single.pt"
     feature_config_path = "hydraconfig/features/base_equivariant.yaml"
 
     feature_config = fdl.Config(
@@ -52,9 +52,10 @@ def main():
     )
 
     backbone = fdl.Config(
-        GNN,
-        feature_config,
+        EquivariantGNN,
+        feature_config=feature_config,
         grid_nodes="grid",
+        hidden_dim=256,
     )
 
     optimizer_factory = fdl.Partial(
@@ -79,6 +80,7 @@ def main():
         data_handler=data_handler,
         optimizer_factory=optimizer_factory,
         metrics_tracker=metrics_tracker,
+        loss_fn=equivariant_loss_fn,
     )
 
     profiler = fdl.Config(
@@ -107,6 +109,10 @@ def main():
                 mode="min",
                 monitor="loss",
                 filename="minloss",
+            ),
+            fdl.Config(
+                TimeDeltaCheckpoint,
+                save_initial=True,
             ),
         ],
     )
