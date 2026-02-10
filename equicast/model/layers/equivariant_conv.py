@@ -20,10 +20,10 @@ class EquivariantLinear(nn.Module):
         """Apply linear transformation to vectors.
 
         Args:
-            x: [..., num_vectors, 2]
+            x: [..., num_vectors, d]
 
         Returns:
-            [..., out_features, 2]
+            [..., out_features, d]
         """
         # Swap last two dims, apply linear, swap back
         return self.linear(x.transpose(-1, -2)).transpose(-1, -2)
@@ -94,8 +94,12 @@ class EquivariantMessagePassing(MessagePassing):
         )
 
         # Aggregate
-        out_scalar = scatter(scalar_msg, dst, dim=0, dim_size=num_nodes, reduce=self.aggr)
-        out_vector = scatter(vector_msg, dst, dim=0, dim_size=num_nodes, reduce=self.aggr)
+        out_scalar = scatter(
+            scalar_msg, dst, dim=0, dim_size=num_nodes, reduce=self.aggr
+        )
+        out_vector = scatter(
+            vector_msg, dst, dim=0, dim_size=num_nodes, reduce=self.aggr
+        )
 
         return out_scalar, out_vector
 
@@ -130,7 +134,9 @@ class EquivariantMessagePassing(MessagePassing):
         vector_gates = scalar_out[..., self.scalar_dim :]  # [edges, vector_dim]
 
         # Compute gated vector message
-        vector_transformed = self.vector_linear(vector_j)  # [edges, vector_dim, 2]
+        vector_transformed = self.vector_linear(
+            vector_j
+        )  # [edges, vector_dim, 2]
         vector_msg = vector_gates.unsqueeze(-1) * vector_transformed
 
         return scalar_msg, vector_msg
@@ -139,7 +145,9 @@ class EquivariantMessagePassing(MessagePassing):
 class EquivariantUpdate(nn.Module):
     """Update block that mixes scalar and vector information."""
 
-    def __init__(self, scalar_dim: int, vector_dim: int, hidden_dim: Optional[int] = None):
+    def __init__(
+        self, scalar_dim: int, vector_dim: int, hidden_dim: Optional[int] = None
+    ):
         super().__init__()
         hidden_dim = hidden_dim or scalar_dim
 
@@ -150,7 +158,8 @@ class EquivariantUpdate(nn.Module):
         # Scalar MLP: takes scalars + vector norms
         self.scalar_mlp = MLP(
             in_dim=scalar_dim + vector_dim,
-            out_dim=scalar_dim + 2 * vector_dim,  # scalar + vector_gate + vector_scale
+            out_dim=scalar_dim
+            + 2 * vector_dim,  # scalar + vector_gate + vector_scale
             hidden_dim=hidden_dim,
         )
 
@@ -181,7 +190,9 @@ class EquivariantUpdate(nn.Module):
         scalar_out = self.scalar_mlp(scalar_in)
 
         d_scalar = scalar_out[..., : self.scalar_dim]
-        vector_gate = scalar_out[..., self.scalar_dim : self.scalar_dim + self.vector_dim]
+        vector_gate = scalar_out[
+            ..., self.scalar_dim : self.scalar_dim + self.vector_dim
+        ]
         vector_scale = scalar_out[..., self.scalar_dim + self.vector_dim :]
 
         # Vector update: gated Uv + contribution from Vv squared norm
@@ -200,7 +211,7 @@ class EquivariantBlock(nn.Module):
         self,
         scalar_dim: int,
         vector_dim: int,
-        hidden_dim: Optional[int] = None,
+        hidden_dim: int = 5,
         aggr: str = "mean",
     ):
         super().__init__()
