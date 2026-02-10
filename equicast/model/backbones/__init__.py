@@ -1,5 +1,6 @@
 """Model backbones for equicast."""
 
+from equicast.model.backbones.equivariant_gnn import EquivariantGNN
 from equicast.model.backbones.gnn import GNN
 from equicast.model.backbones.graphcast import Graphcast
 
