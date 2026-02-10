@@ -17,11 +17,11 @@ class TimeDeltaCheckpoint(Callback):
 
     def __init__(
         self,
-        phase1_interval: float = 60,      # 1 minute
-        phase1_duration: float = 1200,    # 20 minutes
-        phase2_interval: float = 300,     # 5 minutes
-        phase2_duration: float = 7200,    # 2 hours
-        phase3_interval: float = 1200,    # 20 minutes
+        phase1_interval: float = 60,  # 1 minute
+        phase1_duration: float = 1200,  # 20 minutes
+        phase2_interval: float = 300,  # 5 minutes
+        phase2_duration: float = 7200,  # 2 hours
+        phase3_interval: float = 1200,  # 20 minutes
         monitor: str = "train/loss_step",
         save_initial: bool = False,
     ):
@@ -42,8 +42,7 @@ class TimeDeltaCheckpoint(Callback):
         self.start_time = time.time()
         self.last_save_time = self.start_time
 
-    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
-        if batch_idx == 0 and self.save_initial:
+        if self.save_initial:
             self._save_checkpoint(trainer, "initial")
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
