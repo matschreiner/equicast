@@ -211,7 +211,7 @@ class EquivariantBlock(nn.Module):
         self,
         scalar_dim: int,
         vector_dim: int,
-        hidden_dim: int = 5,
+        hidden_dim: int = 64,
         aggr: str = "mean",
     ):
         super().__init__()
@@ -245,3 +245,43 @@ class EquivariantBlock(nn.Module):
         scalar, vector = self.update(scalar, vector)
 
         return scalar, vector
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
