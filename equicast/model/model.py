@@ -66,21 +66,15 @@ class Model(pl.LightningModule):
         return self.data_handler.nodes
 
     def forward(self, input):
+        input = input.clone()
         input = self.data_handler.prepare_input(input)
         backbone_out = self.backbone.forward(input)
-        output = self.data_handler.update_state_with_backbone_output(input, backbone_out)
+        output = self.data_handler.update_state_with_backbone_output(
+            input, backbone_out
+        )
         return output
 
     def step_forward(self, input, next):
-        """Single autoregressive step.
-
-        Args:
-            input: Graph to make prediction from
-            next: Graph to update with prediction (provides forcing)
-
-        Returns:
-            tuple: (updated next graph, prediction graph)
-        """
         input = input.clone()
         next = next.clone()
 
