@@ -7,6 +7,8 @@ from equicast import CHECKPOINT_PATH
 
 class MLFlowLogger(MLFlowLoggerParent):
     def after_save_checkpoint(self, checkpoint_callback):
+        if checkpoint_callback.dirpath is None or checkpoint_callback.filename is None:
+            return
         local_path = os.path.join(
             checkpoint_callback.dirpath, checkpoint_callback.filename + ".ckpt"
         )
