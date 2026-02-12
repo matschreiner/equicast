@@ -112,12 +112,11 @@ class PaiNNBlock(nn.Module):
     def __init__(
         self,
         hidden_dim: int,
-        max_edge_length: float = 10.0,
         aggr: str = "mean",
     ):
         super().__init__()
 
-        self.embed_edge_length = PositionalEmbedder(hidden_dim, max_edge_length)
+        self.embed_edge_length = PositionalEmbedder(hidden_dim)
         self.message_passing = PaiNNMessagePassing(hidden_dim, aggr)
         self.update = PaiNNUpdate(hidden_dim)
 

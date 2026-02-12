@@ -10,19 +10,26 @@ class PositionalEmbedder(nn.Module):
     """Sinusoidal positional encoding for scalar distances.
 
     Maps a scalar distance to a vector of size `hidden_dim` using
-    sinusoidal basis functions with geometrically spaced frequencies,
-    normalised by `max_length`.
+    sinusoidal basis functions with log-spaced frequencies spanning
+    from `1/max_length` to `1/min_length`.
     """
 
-    def __init__(self, hidden_dim: int, max_length: float = 10.0):
+    def __init__(
+        self,
+        hidden_dim: int,
+        max_length: float = math.pi,
+        min_length: float = 0.01,
+    ):
         super().__init__()
         self.hidden_dim = hidden_dim
-        self.max_length = max_length
 
-        # Frequencies: exp(-i * log(max_length) / (hidden_dim // 2))
         half = hidden_dim // 2
         freq = torch.exp(
-            -torch.arange(half, dtype=torch.float) * math.log(max_length) / half
+            torch.linspace(
+                math.log(1.0 / max_length),
+                math.log(1.0 / min_length),
+                half,
+            )
         )
         self.register_buffer("freq", freq)  # [half]
 

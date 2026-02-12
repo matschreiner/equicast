@@ -15,7 +15,6 @@ class PaiNN(nn.Module):
         grid_nodes: str = "grid",
         mesh_nodes: str = "mesh",
         hidden_dim: int = 32,
-        max_edge_length: float = 10.0,
         aggr: str = "mean",
     ):
         super().__init__()
@@ -31,9 +30,9 @@ class PaiNN(nn.Module):
         self.embed_scalar_in = MLP(in_dim=scalar_in_dim, out_dim=hidden_dim)
         self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=scalar_out_dim)
 
-        self.painnblock1 = PaiNNBlock(hidden_dim, max_edge_length=max_edge_length, aggr=aggr)
-        self.painnblock2 = PaiNNBlock(hidden_dim, max_edge_length=max_edge_length, aggr=aggr)
-        self.painnblock3 = PaiNNBlock(hidden_dim, max_edge_length=max_edge_length, aggr=aggr)
+        self.painnblock1 = PaiNNBlock(hidden_dim, aggr=aggr)
+        self.painnblock2 = PaiNNBlock(hidden_dim, aggr=aggr)
+        self.painnblock3 = PaiNNBlock(hidden_dim, aggr=aggr)
 
     def forward(self, graph) -> dict[str, torch.Tensor]:
         scalar_in = graph[self.grid_nodes].input_scalar
