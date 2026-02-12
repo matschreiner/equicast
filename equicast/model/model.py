@@ -5,6 +5,7 @@ from typing import Callable
 import numpy as np
 import pytorch_lightning as pl
 import torch
+from pytorch_lightning.utilities.types import LRSchedulerConfigType, OptimizerLRSchedulerConfig
 
 from equicast.data.data_handler import BaseDataHandler
 from equicast.metrics import BaseMetricsTracker
@@ -99,12 +100,14 @@ class Model(pl.LightningModule):
 
         if self.scheduler_factory is not None:
             scheduler = self.scheduler_factory(optimizer)
-            scheduler_config = {
+            scheduler_config: LRSchedulerConfigType = {
                 "scheduler": scheduler,
                 "interval": "step",
                 "frequency": 1,
             }
-            return {"optimizer": optimizer, "lr_scheduler": scheduler_config}
+            return OptimizerLRSchedulerConfig(
+                optimizer=optimizer, lr_scheduler=scheduler_config
+            )
         return optimizer
 
     def log_loss(self, loss, batch_size):
