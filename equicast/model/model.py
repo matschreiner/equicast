@@ -78,7 +78,6 @@ class Model(pl.LightningModule):
 
     def training_step(self, batch, step):
         input = batch["input"]
-        __import__("pdb").set_trace()  # TODO delme
         input = self.data_handler.prepare_backbone_input(input)
 
         target = batch["target"]
@@ -88,8 +87,7 @@ class Model(pl.LightningModule):
 
         loss = self.loss(backbone_out, backbone_target)
         self.log_loss(loss, input.num_graphs)
-        if self._should_log_metrics():
-            self.log_metrics(backbone_out, backbone_target, input.num_graphs)
+        self.log_metrics(backbone_out, backbone_target, input.num_graphs)
 
         return loss
 
@@ -109,14 +107,6 @@ class Model(pl.LightningModule):
             return {"optimizer": optimizer, "lr_scheduler": scheduler_config}
         return optimizer
 
-    def _should_log_metrics(self) -> bool:
-        step = self.global_step
-        if step < 100:
-            return True
-        if step < 1000:
-            return step % 10 == 0
-        return step % 50 == 0
-
     def log_loss(self, loss, batch_size):
         """Log loss to progress bar and logger."""
         self.log(
@@ -131,6 +121,9 @@ class Model(pl.LightningModule):
 
     def log_metrics(self, backbone_out, backbone_target, batch_size):
         """Log all metrics (lr, log_step, model metrics) to logger only."""
+        if not self._should_log_metrics():
+            return
+
         lr = get_lr(self)
         ln_step = np.log(self.global_step + 1)
         log_dict = {"train/lr": lr, "train/log_step": ln_step}
@@ -147,6 +140,14 @@ class Model(pl.LightningModule):
             on_epoch=True,
             batch_size=batch_size,
         )
+
+    def _should_log_metrics(self) -> bool:
+        step = self.global_step
+        if step < 100:
+            return True
+        if step < 1000:
+            return step % 10 == 0
+        return step % 50 == 0
 
 
 @contextmanager
