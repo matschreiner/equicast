@@ -1,5 +1,6 @@
 """Custom PyTorch Lightning callbacks."""
 
+import os
 import time
 
 from pytorch_lightning import Callback
@@ -42,6 +43,12 @@ class TimeDeltaCheckpoint(Callback):
         self.start_time = time.time()
         self.last_save_time = self.start_time
 
+        dirpath = getattr(trainer.checkpoint_callback, "dirpath", None) or trainer.log_dir
+        print(f"Checkpoint directory: {dirpath}")
+        if trainer.logger and hasattr(trainer.logger, "run_id"):
+            run = trainer.logger.experiment.get_run(trainer.logger.run_id)
+            print(f"MLflow run: {run.info.run_name}")
+
         if self.save_initial:
             self._save_checkpoint(trainer, "initial")
 
@@ -66,7 +73,8 @@ class TimeDeltaCheckpoint(Callback):
             return self.phase3_interval
 
     def _save_checkpoint(self, trainer, filename: str):
-        filepath = f"{trainer.log_dir}/{filename}.ckpt"
+        dirpath = getattr(trainer.checkpoint_callback, "dirpath", None) or trainer.log_dir
+        filepath = os.path.join(dirpath, f"{filename}.ckpt")
         trainer.save_checkpoint(filepath)
 
     def _maybe_save_best(self, trainer):
