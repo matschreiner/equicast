@@ -32,16 +32,16 @@ def get_timeseries(
 ):
     """Get timeseries data from dataset for forecasting."""
 
-    timeseries = [
-        dataset[idx] for idx in range(start_idx, start_idx + steps + 1)
-    ]
+    timeseries = [dataset[idx] for idx in range(start_idx, start_idx + steps + 1)]
     return timeseries
 
 
 def main():
     dataset_path = "/home/masc/storage/mini_aifs.zarr"
-    #  graph_path = "graph/aifs-single.pt"
-    graph_path = "graph/graphcast-paper.pt"
+    graph_path = "graph/aifs-graphcast.pt"
+    checkpoint_path = (
+        "/vf/masc/programming/equicast/58/96ff5b45230b4970b7d8cc12157142f2/checkpoints/latest.ckpt"
+    )
 
     graph_provider = fdl.Config(
         data.StaticGraphProvider,
@@ -57,7 +57,7 @@ def main():
         get_timeseries,
         dataset=dataset,
         start_idx=0,
-        steps=30,
+        steps=35,
     )
 
     logger = fdl.Config(
@@ -94,7 +94,7 @@ def main():
     #
     checkpoint_provider = fdl.Config(
         RsyncCheckpointProvider,
-        remote_path="/vf/masc/programming/equicast/58/7e831360a2d942ca825c1b131610d93d/checkpoints/latest.ckpt",
+        remote_path=checkpoint_path,
         host="ohm",
     )
 

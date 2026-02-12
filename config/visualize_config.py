@@ -22,7 +22,7 @@ def get_graphs(dataset, data_handler, start_idx: int = 0, num_frames: int = 20):
     graphs = []
     for i in range(start_idx, start_idx + num_frames):
         sample = dataset[i]
-        graph = data_handler.prepare_input(sample["input"])
+        graph = data_handler.prepare_backbone_input(sample["input"])
         graphs.append(graph)
     return graphs
 
@@ -42,7 +42,7 @@ def visualize(
 ):
     """Run visualization with the given configuration."""
     # Prepare graph with vector features
-    graph = data_handler.prepare_input(graph)
+    graph = data_handler.prepare_backbone_input(graph)
 
     ax, im, quiv = plot_field_with_vectors(
         graph=graph,

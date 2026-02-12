@@ -11,7 +11,7 @@ from equicast.experiments import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.model.backbones.equivariant_gnn import EquivariantGNN
 from equicast.model.model import Model, equivariant_loss_fn
-from equicast.profiler import LoggingProfiler
+from equicast.profiler import CUDAProfiler, LoggingProfiler
 
 torch.set_float32_matmul_precision("medium | high")
 
@@ -64,7 +64,7 @@ def main():
     )
 
     metrics_tracker = fdl.Config(
-        metrics.MetricsTracker,
+        metrics.EquivariantMetricsTracker,
         data_handler=data_handler,
     )
 
@@ -84,8 +84,11 @@ def main():
     )
 
     profiler = fdl.Config(
-        LoggingProfiler,
+        CUDAProfiler,
         logger=logger,
+        wait=5,
+        warmup=5,
+        active=20,
     )
 
     trainer = fdl.Config(
@@ -96,20 +99,20 @@ def main():
         profiler=profiler,
         max_steps=20000,
         callbacks=[
-            fdl.Config(
-                ModelCheckpoint,
-                every_n_train_steps=100,
-                save_top_k=1,
-                filename="latest",
-            ),
-            fdl.Config(
-                ModelCheckpoint,
-                every_n_train_steps=100,
-                save_top_k=1,
-                mode="min",
-                monitor="loss",
-                filename="minloss",
-            ),
+            #  fdl.Config(
+            #      ModelCheckpoint,
+            #      every_n_train_steps=100,
+            #      save_top_k=1,
+            #      filename="latest",
+            #  ),
+            #  fdl.Config(
+            #      ModelCheckpoint,
+            #      every_n_train_steps=100,
+            #      save_top_k=1,
+            #      mode="min",
+            #      monitor="loss",
+            #      filename="minloss",
+            #  ),
             fdl.Config(
                 TimeDeltaCheckpoint,
                 save_initial=True,
