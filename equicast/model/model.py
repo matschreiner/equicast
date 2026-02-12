@@ -42,17 +42,20 @@ class Model(pl.LightningModule):
         scheduler_factory: Callable | None = None,
         metrics_tracker: BaseMetricsTracker | None = None,
         loss_fn: Callable = default_loss_fn,
+        compile_backbone: bool = False,
+        log_metrics: bool = False,
     ):
         super().__init__()
         with ignore_backbone_warning():
             self.save_hyperparameters()
 
-        self.backbone = backbone
+        self.backbone = torch.compile(backbone) if compile_backbone else backbone
         self.data_handler = data_handler
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
         self.metrics_tracker = metrics_tracker
         self.loss_fn = loss_fn
+        self._log_metrics = log_metrics
 
     @property
     def device(self):
@@ -77,18 +80,19 @@ class Model(pl.LightningModule):
         next = self.data_handler.update_state_with_prediction(next, pred)
         return next, pred
 
-    def training_step(self, batch, step):
+    def training_step(self, batch, _):
         input = batch["input"]
-        input = self.data_handler.prepare_backbone_input(input)
+        input = self.data_handler.prepare_backbone_input(input)  # type: ignore
 
         target = batch["target"]
-        backbone_target = self.data_handler.prepare_backbone_target(target)
+        target = self.data_handler.prepare_backbone_target(target)
 
         backbone_out = self.backbone.forward(input)
 
-        loss = self.loss(backbone_out, backbone_target)
+        loss = self.loss(backbone_out, target)
         self.log_loss(loss, input.num_graphs)
-        self.log_metrics(backbone_out, backbone_target, input.num_graphs)
+        if self._log_metrics:
+            self.log_metrics(backbone_out, target, input.num_graphs)
 
         return loss
 
@@ -105,9 +109,7 @@ class Model(pl.LightningModule):
                 "interval": "step",
                 "frequency": 1,
             }
-            return OptimizerLRSchedulerConfig(
-                optimizer=optimizer, lr_scheduler=scheduler_config
-            )
+            return OptimizerLRSchedulerConfig(optimizer=optimizer, lr_scheduler=scheduler_config)
         return optimizer
 
     def log_loss(self, loss, batch_size):
@@ -116,9 +118,9 @@ class Model(pl.LightningModule):
             "train/loss",
             loss,
             logger=True,
-            prog_bar=True,
+            prog_bar=False,
             on_step=True,
-            on_epoch=True,
+            on_epoch=False,
             batch_size=batch_size,
         )
 
@@ -140,7 +142,7 @@ class Model(pl.LightningModule):
             logger=True,
             prog_bar=False,
             on_step=True,
-            on_epoch=True,
+            on_epoch=False,
             batch_size=batch_size,
         )
 
