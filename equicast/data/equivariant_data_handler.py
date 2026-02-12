@@ -85,7 +85,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         """Inverse normalize packed vectors."""
         return self.normalizer.inverse_transform_vectors(vectors)  # type: ignore
 
-    def prepare_input(self, data: Data) -> Data:
+    def prepare_backbone_input(self, data: Data) -> Data:
         raw = data[self.nodes].data
 
         # Normalize scalars

@@ -63,7 +63,7 @@ class Model(pl.LightningModule):
 
     def forward(self, input):
         input = input.clone()
-        input = self.data_handler.prepare_input(input)
+        input = self.data_handler.prepare_backbone_input(input)
         backbone_out = self.backbone.forward(input)
         output = self.data_handler.update_state_with_backbone_output(input, backbone_out)
         return output
@@ -78,8 +78,8 @@ class Model(pl.LightningModule):
 
     def training_step(self, batch, step):
         input = batch["input"]
-        input = self.data_handler.prepare_input(input)
         __import__("pdb").set_trace()  # TODO delme
+        input = self.data_handler.prepare_backbone_input(input)
 
         target = batch["target"]
         backbone_target = self.data_handler.prepare_backbone_target(target)

@@ -43,7 +43,7 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def update_state_with_prediction(self, state: Any, pred_state: Any) -> Any: ...
 
     @abstractmethod
-    def prepare_input(self, data: Any) -> Any: ...
+    def prepare_backbone_input(self, data: Any) -> Any: ...
 
     @abstractmethod
     def update_state_with_backbone_output(
@@ -138,7 +138,7 @@ class GraphDataHandler(BaseDataHandler):
         self.nodes = nodes
         self.normalizer = Normalizer(self.statistics)
 
-    def prepare_input(self, data: Data) -> Data:
+    def prepare_backbone_input(self, data: Data) -> Data:
         normalized = self.normalize_features(data[self.nodes].data)
         data[self.nodes]["input"] = self.get_input_features(normalized)
         data[self.nodes]["residual"] = self.get_output_features(normalized)
