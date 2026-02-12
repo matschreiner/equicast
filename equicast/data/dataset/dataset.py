@@ -28,9 +28,7 @@ class AnemoiDataset(Dataset):
 
     def __getitem__(self, idx):
         data = (
-            torch.tensor(self.data[idx : idx + self.num_input_steps + 1])
-            .squeeze()
-            .permute(0, 2, 1)
+            torch.tensor(self.data[idx : idx + self.num_input_steps + 1]).squeeze().permute(0, 2, 1)
         )
 
         input_graph = self.graph_provider.get_graph(idx)

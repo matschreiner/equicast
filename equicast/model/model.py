@@ -20,12 +20,8 @@ def default_loss_fn(backbone_out, backbone_target):
 
 def equivariant_loss_fn(backbone_out, backbone_target):
     """Loss function for equivariant models with scalar and vector outputs."""
-    scalar_loss = torch.nn.functional.mse_loss(
-        backbone_out["scalar"], backbone_target["scalar"]
-    )
-    vector_loss = torch.nn.functional.mse_loss(
-        backbone_out["vector"], backbone_target["vector"]
-    )
+    scalar_loss = torch.nn.functional.mse_loss(backbone_out["scalar"], backbone_target["scalar"])
+    vector_loss = torch.nn.functional.mse_loss(backbone_out["vector"], backbone_target["vector"])
     return scalar_loss + vector_loss
 
 
@@ -69,9 +65,7 @@ class Model(pl.LightningModule):
         input = input.clone()
         input = self.data_handler.prepare_input(input)
         backbone_out = self.backbone.forward(input)
-        output = self.data_handler.update_state_with_backbone_output(
-            input, backbone_out
-        )
+        output = self.data_handler.update_state_with_backbone_output(input, backbone_out)
         return output
 
     def step_forward(self, input, next):
@@ -82,9 +76,10 @@ class Model(pl.LightningModule):
         next = self.data_handler.update_state_with_prediction(next, pred)
         return next, pred
 
-    def training_step(self, batch, _):
+    def training_step(self, batch, step):
         input = batch["input"]
         input = self.data_handler.prepare_input(input)
+        __import__("pdb").set_trace()  # TODO delme
 
         target = batch["target"]
         backbone_target = self.data_handler.prepare_backbone_target(target)
@@ -93,7 +88,8 @@ class Model(pl.LightningModule):
 
         loss = self.loss(backbone_out, backbone_target)
         self.log_loss(loss, input.num_graphs)
-        self.log_metrics(backbone_out, backbone_target, input.num_graphs)
+        if self._should_log_metrics():
+            self.log_metrics(backbone_out, backbone_target, input.num_graphs)
 
         return loss
 
@@ -112,6 +108,14 @@ class Model(pl.LightningModule):
             }
             return {"optimizer": optimizer, "lr_scheduler": scheduler_config}
         return optimizer
+
+    def _should_log_metrics(self) -> bool:
+        step = self.global_step
+        if step < 100:
+            return True
+        if step < 1000:
+            return step % 10 == 0
+        return step % 50 == 0
 
     def log_loss(self, loss, batch_size):
         """Log loss to progress bar and logger."""
@@ -132,9 +136,7 @@ class Model(pl.LightningModule):
         log_dict = {"train/lr": lr, "train/log_step": ln_step}
 
         if self.metrics_tracker is not None:
-            metrics = self.metrics_tracker.compute_metrics(
-                backbone_out, backbone_target
-            )
+            metrics = self.metrics_tracker.compute_metrics(backbone_out, backbone_target)
             log_dict.update(metrics)
 
         self.log_dict(
