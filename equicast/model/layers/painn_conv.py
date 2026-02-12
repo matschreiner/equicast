@@ -11,53 +11,6 @@ from equicast.model.layers.equivariant_conv import EquivariantLinear
 from equicast.model.layers.mlp import MLP
 
 
-class PaiNN(nn.Module):
-    def __init__(
-        self,
-        feature_config,
-        grid_nodes: str = "grid",
-        hidden_dim: int = 32,
-        max_edge_length: float = 10.0,
-        aggr: str = "mean",
-    ):
-        super().__init__()
-        self.grid_nodes = grid_nodes
-
-        scalar_in_dim = len(feature_config.forcing) + len(feature_config.prognostic)
-        scalar_out_dim = len(feature_config.prognostic) + len(feature_config.diagnostic)
-        vector_dim = len(feature_config.prognostic_vector)
-
-        self.embed_vector_in = EquivariantLinear(vector_dim, hidden_dim)
-        self.embed_vector_out = EquivariantLinear(hidden_dim, vector_dim)
-        self.embed_scalar_in = MLP(in_dim=scalar_in_dim, out_dim=hidden_dim)
-        self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=scalar_out_dim)
-
-        self.painnblock = PaiNNBlock(hidden_dim, max_edge_length=max_edge_length, aggr=aggr)
-
-    def forward(self, graph) -> dict[str, torch.Tensor]:
-        scalar_in = graph[self.grid_nodes].input_scalar
-        vector_in = graph[self.grid_nodes].input_vector
-
-        embedded_scalar = self.embed_scalar_in(scalar_in)
-        embedded_vector = self.embed_vector_in(vector_in)
-
-        edges = graph[self.grid_nodes, "to", self.grid_nodes]
-
-        scalar_residual = graph[self.grid_nodes].residual_scalar
-        vector_residual = graph[self.grid_nodes].residual_vector
-
-        scalar, vector = self.painnblock(
-            embedded_scalar,
-            embedded_vector,
-            edges,
-        )
-
-        scalar_out = self.embed_scalar_out(scalar) + scalar_residual
-        vector_out = self.embed_vector_out(vector) + vector_residual
-
-        return {"scalar": scalar_out, "vector": vector_out}
-
-
 class PaiNNMessagePassing(nn.Module):
     """PaiNN-style equivariant message passing with edge direction/length filtering."""
 
@@ -184,7 +137,7 @@ class PaiNNBlock(nn.Module):
         Returns:
             Updated (scalar, vector) with original dimensions
         """
-        edge_index = edges["edge_index"]
+        edge_index = edges["edge_index"].long()
         edge_dirs = edges.edge_dirs
         edge_emb = self.embed_edge_length(edges.edge_length)
 
