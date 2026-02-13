@@ -21,12 +21,12 @@ def read_and_cast(data, idx):
 
 
 def read_cast_and_permute(data, idx):
-    #  graph_path = "graph/aifs-graphcast-unnormed.pt"
-    #  graph = torch.load(graph_path, weights_only=False)
+    graph_path = "graph/aifs-graphcast-unnormed.pt"
+    graph = torch.load(graph_path, weights_only=False)
     raw = data[idx : idx + 2]
     data = torch.from_numpy(raw).squeeze().permute(0, 2, 1)
     #  graph["grid"].data = tensor
-    return data
+    return data, graph
 
 
 def worker(path, indices, queue, read_fn):
