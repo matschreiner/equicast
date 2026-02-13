@@ -16,17 +16,21 @@ class AnemoiDataset(Dataset):
         self,
         path: str,
         graph_provider: BaseGraphProvider,
+        subsample: int = 1,
     ):
         super().__init__()
         self.data = open_dataset(path)
         self.graph_provider = graph_provider
+        self.subsample = subsample
 
     def __len__(self):
-        return len(self.data) - 1
+        return (len(self.data) - self.subsample) // self.subsample
 
     def __getitem__(self, idx):
-        input_data = self.data[idx].squeeze()
-        target_data = self.data[idx + 1].squeeze()
+        input_idx = idx * self.subsample
+        target_idx = input_idx + self.subsample
+        input_data = self.data[input_idx].squeeze()
+        target_data = self.data[target_idx].squeeze()
 
         input_graph = self.graph_provider.get_graph(idx)
         input_graph["grid"].data = torch.from_numpy(input_data).T
