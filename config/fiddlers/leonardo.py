@@ -13,7 +13,6 @@ def fiddler(cfg: fdl.Config) -> None:
     #  cfg.dataloader.dataset.subsample = 6
     cfg.dataloader.num_workers = 8
     cfg.dataloader.persistent_workers = True
-    cfg.dataloader.prefetch_factor = 2
     cfg.dataloader.batch_size = 2
     cfg.trainer.strategy = "ddp"
 
