@@ -3,4 +3,4 @@ squeue -u $USER
 srun --jobid=... --overlap --pty bash
 
 get interactive shell:
-srun --nodes=1 --ntasks=1 --gres=gpu:1 --time=01:00:00 --partition=boost_usr_prod --account=deste_340_26 --pty bash
+srun --nodes=1 --ntasks=1 --gres=gpu:1 --cpus-per-task=8 --time=01:00:00 --partition=boost_usr_prod --account=deste_340_26 --pty bash
