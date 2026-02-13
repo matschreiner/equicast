@@ -20,13 +20,13 @@ def read_and_cast(data, idx):
     return torch.tensor(data[idx : idx + 2])
 
 
-def read_cast_and_graph(data, idx):
-    graph_path = "graph/aifs-graphcast-unnormed.pt"
-    graph = torch.load(graph_path, weights_only=False)
+def read_cast_and_permute(data, idx):
+    #  graph_path = "graph/aifs-graphcast-unnormed.pt"
+    #  graph = torch.load(graph_path, weights_only=False)
     raw = data[idx : idx + 2]
-    #  tensor = torch.from_numpy(raw).squeeze().permute(0, 2, 1)
+    data = torch.from_numpy(raw).squeeze().permute(0, 2, 1)
     #  graph["grid"].data = tensor
-    return graph, raw
+    return data
 
 
 def worker(path, indices, queue, read_fn):
@@ -55,4 +55,4 @@ def bench(num_workers, read_fn, label):
 if __name__ == "__main__":
     bench(8, read_raw, "raw")
     bench(8, read_and_cast, "raw + torch.tensor")
-    bench(8, read_cast_and_graph, "raw + torch.tensor + graph")
+    bench(8, read_cast_and_permute, "raw + torch.tensor + permute")
