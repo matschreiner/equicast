@@ -40,7 +40,7 @@ def main():
     dataset_path = "/home/masc/storage/mini_aifs.zarr"
     graph_path = "graph/aifs-graphcast.pt"
     checkpoint_path = (
-        "/vf/masc/programming/equicast/58/96ff5b45230b4970b7d8cc12157142f2/checkpoints/latest.ckpt"
+        "/vf/masc/programming/equicast/58/fa0e587422c24628b1d04541bc02e084/checkpoints/latest.ckpt"
     )
 
     graph_provider = fdl.Config(
@@ -57,7 +57,7 @@ def main():
         get_timeseries,
         dataset=dataset,
         start_idx=0,
-        steps=35,
+        steps=56,
     )
 
     logger = fdl.Config(
