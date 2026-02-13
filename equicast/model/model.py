@@ -80,7 +80,7 @@ class Model(pl.LightningModule):
     def training_step(self, batch, _):
         now = time.time()
         if hasattr(self, "_last_step_end"):
-            print(f"data_wait: {now - self._last_step_end:.4f}s")
+            self.log("wait", now - self._last_step_end, prog_bar=True, logger=False, on_step=True, on_epoch=False)
 
         input = batch["input"]
         input = self.data_handler.prepare_backbone_input(input)  # type: ignore
