@@ -1,3 +1,4 @@
+import time
 import warnings
 from contextlib import contextmanager
 from typing import Callable
@@ -77,6 +78,10 @@ class Model(pl.LightningModule):
         return next, pred
 
     def training_step(self, batch, _):
+        now = time.time()
+        if hasattr(self, "_last_step_end"):
+            print(f"data_wait: {now - self._last_step_end:.4f}s")
+
         input = batch["input"]
         input = self.data_handler.prepare_backbone_input(input)  # type: ignore
 
@@ -90,6 +95,7 @@ class Model(pl.LightningModule):
         if self.metrics_tracker is not None:
             self.log_metrics(backbone_out, target, input.num_graphs)
 
+        self._last_step_end = time.time()
         return loss
 
     def loss(self, backbone_out, backbone_target):
