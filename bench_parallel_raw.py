@@ -3,8 +3,23 @@
 import time
 from multiprocessing import Process, Queue
 
+import numpy as np
 import torch
 from anemoi.datasets import open_dataset
+
+# Hardcoded (u_idx, v_idx) pairs for wind vector components
+VECTOR_PAIRS = [
+    (0, 1),    # 10u, 10v
+    (2, 3),    # 100u, 100v
+    (4, 5),    # 200u, 200v
+    (10, 11),  # u/v at some pressure level
+    (12, 13),
+    (14, 15),
+    (16, 17),
+    (18, 19),
+    (20, 21),
+    (22, 23),
+]
 
 DATASET_PATH = (
     "/leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr"
@@ -35,11 +50,40 @@ def read_cast_permute_and_put_on_graph(data, idx):
     target_graph = torch.load(graph_path, weights_only=False)
 
     input = data[idx][:-1].squeeze()
-
-    target = data[idx + 1].squeeze()
+    target = data[idx + 1][:-1].squeeze()
 
     input_graph["grid"].data = torch.from_numpy(input)
     target_graph["grid"].data = torch.from_numpy(target)
+
+    return {"input": input_graph, "target": target_graph}
+
+
+def read_cast_permute_vectors_and_put_on_graph(data, idx):
+    graph_path = "graph/aifs-graphcast-unnormed.pt"
+    input_graph = torch.load(graph_path, weights_only=False)
+    target_graph = torch.load(graph_path, weights_only=False)
+
+    input_raw = data[idx][:-1].squeeze()
+    target_raw = data[idx + 1][:-1].squeeze()
+
+    u_idxs, v_idxs = zip(*VECTOR_PAIRS)
+
+    # Extract vectors from numpy arrays
+    input_u = input_raw[:, u_idxs]
+    input_v = input_raw[:, v_idxs]
+    input_vectors = np.stack([input_u, input_v], axis=-1)
+
+    target_u = target_raw[:, u_idxs]
+    target_v = target_raw[:, v_idxs]
+    target_vectors = np.stack([target_u, target_v], axis=-1)
+
+    # Cast and assign scalars
+    input_graph["grid"].data = torch.from_numpy(input_raw)
+    target_graph["grid"].data = torch.from_numpy(target_raw)
+
+    # Cast and assign vectors
+    input_graph["grid"].input_vector = torch.from_numpy(input_vectors)
+    target_graph["grid"].input_vector = torch.from_numpy(target_vectors)
 
     return {"input": input_graph, "target": target_graph}
 
@@ -68,7 +112,8 @@ def bench(num_workers, read_fn, label):
 
 
 if __name__ == "__main__":
-    bench(8, read_raw, "raw")
-    bench(8, read_and_cast, "raw + torch.tensor")
-    bench(8, read_cast_and_permute, "raw + torch.tensor + permute")
-    bench(8, read_cast_permute_and_put_on_graph, "raw + cast + permute + graph")
+    bench(7, read_raw, "raw")
+    bench(7, read_and_cast, "raw + torch.tensor")
+    bench(7, read_cast_and_permute, "raw + torch.tensor + permute")
+    bench(7, read_cast_permute_and_put_on_graph, "raw + cast + permute + graph")
+    bench(7, read_cast_permute_vectors_and_put_on_graph, "raw + cast + vectors + graph")
