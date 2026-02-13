@@ -4,12 +4,11 @@ from equicast.logger import CSVLogger
 
 
 def fiddler(cfg: fdl.Config) -> None:
-    leonardo_dataset = "/leonardo_work/DE360_drusso/aifs/aifs.zarr"
+    leonardo_dataset = "/leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr"
+
     cfg.model.backbone.data_handler.dataset_path = leonardo_dataset
     cfg.dataloader.dataset.path = leonardo_dataset
     cfg.dataloader.num_workers = 8
-    cfg.dataloader.pin_memory = True
-    cfg.trainer.devices = 4
     cfg.trainer.strategy = "ddp"
 
     logger = fdl.Config(
