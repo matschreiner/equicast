@@ -1,12 +1,16 @@
 """Benchmark raw zarr read throughput with multiprocessing."""
 
+import multiprocessing
 import time
 from multiprocessing import Process, Queue
+
+multiprocessing.set_start_method("spawn", force=True)
 
 import torch
 from anemoi.datasets import open_dataset
 
 DATASET_PATH = "/leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr"
+GRAPH_PATH = "graph/graphcast-unnormed.pt"
 NUM_READS = 200
 
 
@@ -16,6 +20,14 @@ def read_raw(data, idx):
 
 def read_and_cast(data, idx):
     return torch.tensor(data[idx : idx + 2])
+
+
+def read_cast_and_graph(data, idx):
+    graph = torch.load(GRAPH_PATH, weights_only=False)
+    raw = data[idx : idx + 2]
+    tensor = torch.from_numpy(raw).squeeze().permute(0, 2, 1)
+    graph["grid"].data = tensor
+    return graph
 
 
 def worker(path, indices, queue, read_fn):
@@ -44,3 +56,4 @@ def bench(num_workers, read_fn, label):
 if __name__ == "__main__":
     bench(8, read_raw, "raw")
     bench(8, read_and_cast, "raw + torch.tensor")
+    bench(8, read_cast_and_graph, "raw + cast + graph")
