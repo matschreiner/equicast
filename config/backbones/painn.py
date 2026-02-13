@@ -19,7 +19,11 @@ def backbone_config(dataset_path):
     backbone = fdl.Config(
         PaiNN,
         data_handler=data_handler,
-        edges=[("grid", "to", "mesh"), ("mesh", "to", "mesh"), ("mesh", "to", "grid")],
+        edges=[
+            ("grid", "to", "mesh"),
+            ("mesh", "to", "mesh"),
+            ("mesh", "to", "grid"),
+        ],
         input_nodes="grid",
         hidden_dim=64,
     )
