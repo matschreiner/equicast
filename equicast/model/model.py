@@ -40,7 +40,7 @@ class Model(pl.LightningModule):
         scheduler_factory: Callable | None = None,
         metrics_tracker: BaseMetricsTracker | None = None,
         loss_fn: Callable = default_loss_fn,
-        compile_backbone: bool = False,
+        compile_backbone: bool = True,
     ):
         super().__init__()
         with ignore_backbone_warning():
