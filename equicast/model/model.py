@@ -43,7 +43,6 @@ class Model(pl.LightningModule):
         metrics_tracker: BaseMetricsTracker | None = None,
         loss_fn: Callable = default_loss_fn,
         compile_backbone: bool = False,
-        log_metrics: bool = False,
     ):
         super().__init__()
         with ignore_backbone_warning():
@@ -55,7 +54,6 @@ class Model(pl.LightningModule):
         self.scheduler_factory = scheduler_factory
         self.metrics_tracker = metrics_tracker
         self.loss_fn = loss_fn
-        self._log_metrics = log_metrics
 
     @property
     def device(self):
@@ -91,7 +89,7 @@ class Model(pl.LightningModule):
 
         loss = self.loss(backbone_out, target)
         self.log_loss(loss, input.num_graphs)
-        if self._log_metrics:
+        if self.metrics_tracker is not None:
             self.log_metrics(backbone_out, target, input.num_graphs)
 
         return loss
