@@ -29,9 +29,9 @@ class AnemoiDataset(Dataset):
         target_data = self.data[idx + 1].squeeze()
 
         input_graph = self.graph_provider.get_graph(idx)
-        input_graph["grid"].data = torch.from_numpy(input_data)
+        input_graph["grid"].data = torch.from_numpy(input_data).T
 
         target_graph = self.graph_provider.get_graph(idx)
-        target_graph["grid"].data = torch.from_numpy(target_data)
+        target_graph["grid"].data = torch.from_numpy(target_data).T
 
         return {"input": input_graph, "target": target_graph}
