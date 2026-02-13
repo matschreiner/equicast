@@ -79,9 +79,7 @@ class PaiNNUpdate(nn.Module):
         self.V = EquivariantLinear(hidden_dim, hidden_dim)
         self.scalar_mlp = MLP(in_dim=2 * hidden_dim, out_dim=3 * hidden_dim, hidden_dim=hidden_dim)
 
-    def forward(
-        self, scalar: torch.Tensor, vector: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, scalar: torch.Tensor, vector: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Forward pass.
 
         Args:

@@ -89,9 +89,7 @@ class EquivariantMessagePassing(MessagePassing):
         vector_norm_i, vector_norm_j = vector_norm[dst], vector_norm[src]
 
         # Compute messages
-        scalar_msg, vector_msg = self.message(
-            scalar_i, scalar_j, vector_j, vector_norm_i, vector_norm_j
-        )
+        scalar_msg, vector_msg = self.message(scalar_i, scalar_j, vector_j, vector_norm_i, vector_norm_j)
 
         # Aggregate
         out_scalar = scatter(scalar_msg, dst, dim=0, dim_size=num_nodes, reduce=self.aggr)
@@ -155,9 +153,7 @@ class EquivariantUpdate(nn.Module):
         self.scalar_dim = scalar_dim
         self.vector_dim = vector_dim
 
-    def forward(
-        self, scalar: torch.Tensor, vector: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, scalar: torch.Tensor, vector: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Update scalar and vector features.
 
         Args:

@@ -112,9 +112,7 @@ class MLFlowCheckpointProvider(CheckpointProvider):
         self.client = MlflowClient(tracking_uri=tracking_uri)
         self.run_id = run_id
 
-        self.checkpoint_name = (
-            checkpoint_name if checkpoint_name.endswith(".ckpt") else checkpoint_name + ".ckpt"
-        )
+        self.checkpoint_name = checkpoint_name if checkpoint_name.endswith(".ckpt") else checkpoint_name + ".ckpt"
 
     def get_checkpoint(self) -> str:
         artifact_path = os.path.join(CHECKPOINT_PATH, self.checkpoint_name)

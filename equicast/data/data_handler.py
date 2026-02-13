@@ -46,6 +46,15 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def out_idxs(self) -> list[int]:
         return self.feature_indices.out_idxs
 
+    def get_input_scalars(self, raw: torch.Tensor) -> torch.Tensor:
+        return raw[..., self.in_idxs]
+
+    def get_output_scalars(self, raw: torch.Tensor) -> torch.Tensor:
+        return raw[..., self.out_idxs]
+
+    def set_output_scalars(self, raw: torch.Tensor, values: torch.Tensor) -> None:
+        raw[..., self.out_idxs] = values
+
     @abstractmethod
     def update_state_with_prediction(self, state: Any, pred_state: Any) -> Any: ...
 
@@ -53,69 +62,10 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def prepare_backbone_input(self, data: Any) -> Any: ...
 
     @abstractmethod
-    def update_state_with_backbone_output(
-        self, state: Any, backbone_output: torch.Tensor
-    ) -> Any: ...
+    def update_state_with_backbone_output(self, state: Any, backbone_output: torch.Tensor) -> Any: ...
 
     @abstractmethod
     def prepare_backbone_target(self, data: Any) -> torch.Tensor: ...
-
-    def normalize_input_features(self, input_features: torch.Tensor) -> torch.Tensor:
-        """Scale input features using only input feature statistics."""
-        return self.normalizer.transform_indices(input_features, self.in_idxs)
-
-    def inverse_normalize_input_features(self, input_features: torch.Tensor) -> torch.Tensor:
-        """Inverse normalize input features using only input feature statistics."""
-        return self.normalizer.inverse_transform_indices(input_features, self.in_idxs)
-
-    def normalize_output_features(self, output_features: torch.Tensor) -> torch.Tensor:
-        """Scale output features using only output feature statistics."""
-        return self.normalizer.transform_indices(output_features, self.out_idxs)
-
-    def inverse_normalize_output_features(self, output_features: torch.Tensor) -> torch.Tensor:
-        """Inverse normalize output features using only output feature statistics."""
-        return self.normalizer.inverse_transform_indices(output_features, self.out_idxs)
-
-    def normalize_features(self, features: torch.Tensor) -> torch.Tensor:
-        """Scale features using all feature statistics."""
-        return self.normalizer.transform(features)
-
-    def inverse_normalize_features(self, features: torch.Tensor) -> torch.Tensor:
-        """Inverse normalize features using all feature statistics."""
-        return self.normalizer.inverse_transform(features)
-
-    def get_input_features(self, tensor: torch.Tensor) -> torch.Tensor:
-        return tensor[..., self.in_idxs]
-
-    def get_output_features(self, tensor: torch.Tensor) -> torch.Tensor:
-        return tensor[..., self.out_idxs]
-
-    def pad_prediction(self, prediction: torch.Tensor) -> torch.Tensor:
-        """
-        Pad prediction to full feature size.
-
-        Args:
-            prediction: Output features (prognostic + diagnostic)
-                       Shape: [..., len(out_idxs)]
-
-        Returns:
-            Padded tensor with prognostic placed at correct indices
-            Shape: [..., total_features]
-        """
-        *batch_dims, _ = prediction.shape
-        total_features = len(self.name_to_index)
-
-        padded = torch.zeros(
-            *batch_dims,
-            total_features,
-            device=prediction.device,
-            dtype=prediction.dtype,
-        )
-
-        num_prognostic = len(self.feature_indices.prognostic_idxs)
-        padded[..., self.feature_indices.prognostic_idxs] = prediction[..., :num_prognostic]
-
-        return padded
 
 
 class GraphDataHandler(BaseDataHandler):
@@ -129,28 +79,27 @@ class GraphDataHandler(BaseDataHandler):
     ):
         super().__init__(dataset_path, feature_config)
         self.nodes = nodes
-        self.normalizer = Normalizer(self.statistics)
+        self.normalizer = Normalizer(self.statistics, self.in_idxs, self.out_idxs)
 
     def prepare_backbone_input(self, data: Data) -> Data:
-        normalized = self.normalize_features(data[self.nodes].data)
-        data[self.nodes]["input"] = self.get_input_features(normalized)
-        data[self.nodes]["residual"] = self.get_output_features(normalized)
-
+        raw = data[self.nodes].data
+        input_scalars = self.get_input_scalars(raw)
+        output_scalars = self.get_output_scalars(raw)
+        data[self.nodes]["input"] = self.normalizer.normalize_input(input_scalars)
+        data[self.nodes]["residual"] = self.normalizer.normalize_output(output_scalars)
         return data
 
     def prepare_backbone_target(self, data: Data) -> torch.Tensor:
-        normalized = self.normalize_features(data[self.nodes].data)
-        target = self.get_output_features(normalized)
-        return target
+        raw = data[self.nodes].data
+        output_scalars = self.get_output_scalars(raw)
+        return self.normalizer.normalize_output(output_scalars)
 
     def update_state_with_backbone_output(self, state: Data, backbone_output: torch.Tensor) -> Data:
-        """Denormalize backbone output and write to state's data tensor."""
-        output = self.inverse_normalize_output_features(backbone_output)
-        state[self.nodes].data[..., self.out_idxs] = output
+        denormalized = self.normalizer.denormalize_output(backbone_output)
+        self.set_output_scalars(state[self.nodes].data, denormalized)
         return state
 
     def update_state_with_prediction(self, state: Data, pred_state: Data) -> Data:
-        """Copy output features from pred_state to state."""
-        pred = pred_state[self.nodes].data[..., self.out_idxs]
-        state[self.nodes].data[..., self.out_idxs] = pred
+        pred = self.get_output_scalars(pred_state[self.nodes].data)
+        self.set_output_scalars(state[self.nodes].data, pred)
         return state

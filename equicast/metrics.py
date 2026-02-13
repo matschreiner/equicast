@@ -103,9 +103,7 @@ class EquivariantMetricsTracker(BaseMetricsTracker):
         vector_error = pred["vector"] - target["vector"]
         # Reduce over all dims except vector-feature dim (1) and xy dim (2)
         reduce_dims = tuple(
-            d
-            for d in range(vector_error.ndim)
-            if d not in (vector_error.ndim - 2, vector_error.ndim - 1)
+            d for d in range(vector_error.ndim) if d not in (vector_error.ndim - 2, vector_error.ndim - 1)
         )
         vector_bias = vector_error.mean(dim=reduce_dims)  # [num_vectors, 2]
         unbiased_vector_error = vector_error - vector_bias

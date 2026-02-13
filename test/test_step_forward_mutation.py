@@ -117,9 +117,7 @@ class TestStepForwardMutation:
 
         model.step_forward(sample_input, sample_target)
 
-        assert torch.allclose(
-            sample_input["grid"].data, original_data
-        ), "step_forward mutated the original input!"
+        assert torch.allclose(sample_input["grid"].data, original_data), "step_forward mutated the original input!"
 
     def test_step_forward_does_not_mutate_original_target(self, model, sample_input, sample_target):
         """Original target should be unchanged after step_forward."""
@@ -127,9 +125,7 @@ class TestStepForwardMutation:
 
         model.step_forward(sample_input, sample_target)
 
-        assert torch.allclose(
-            sample_target["grid"].data, original_data
-        ), "step_forward mutated the original target!"
+        assert torch.allclose(sample_target["grid"].data, original_data), "step_forward mutated the original target!"
 
     def test_step_forward_returns_independent_graphs(self, model, sample_input, sample_target):
         """Returned next and pred should be independent from each other."""
@@ -139,9 +135,7 @@ class TestStepForwardMutation:
         next_graph["grid"].data[:] = 999.0
 
         # pred_graph should be unaffected
-        assert not torch.allclose(
-            pred_graph["grid"].data, next_graph["grid"].data
-        ), "next and pred are aliased!"
+        assert not torch.allclose(pred_graph["grid"].data, next_graph["grid"].data), "next and pred are aliased!"
 
     def test_step_forward_output_independent_from_input(self, model, sample_input, sample_target):
         """Returned graphs should be independent from inputs."""
@@ -192,6 +186,4 @@ class TestStepForwardMutation:
         pred_out_features = pred["grid"].data[..., out_idxs]
 
         # pred's output features should match what's in next_graph
-        assert torch.allclose(
-            next_out_features, pred_out_features
-        ), "Prediction not properly copied to next_graph!"
+        assert torch.allclose(next_out_features, pred_out_features), "Prediction not properly copied to next_graph!"

@@ -47,9 +47,7 @@ class WarmupCosineAnnealingLR(SequentialLR):
         last_epoch: int = -1,
     ):
         if warmup_steps >= total_steps:
-            raise ValueError(
-                f"warmup_steps ({warmup_steps}) must be less than total_steps ({total_steps})"
-            )
+            raise ValueError(f"warmup_steps ({warmup_steps}) must be less than total_steps ({total_steps})")
 
         self.warmup_steps = warmup_steps
         self.total_steps = total_steps

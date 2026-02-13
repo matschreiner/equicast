@@ -11,9 +11,7 @@ class GNN(torch.nn.Module):
         super().__init__()
         self.data_handler = data_handler
 
-        self.conv = GraphConv(
-            in_dim=data_handler.in_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim
-        )
+        self.conv = GraphConv(in_dim=data_handler.in_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim)
         self.grid_nodes = grid_nodes
 
     def forward(self, graph):

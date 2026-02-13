@@ -92,9 +92,7 @@ def main():
     )
     args, _ = parser.parse_known_args()
 
-    backbone, loss_fn = importlib.import_module(BACKBONES[args.backbone]).backbone_config(
-        DATASET_PATH
-    )
+    backbone, loss_fn = importlib.import_module(BACKBONES[args.backbone]).backbone_config(DATASET_PATH)
     model = fdl.Config(Model, backbone=backbone, loss_fn=loss_fn)
     dataloader = default_dataloader(DATASET_PATH, GRAPH_PATH)
     logger = default_logger()

@@ -21,11 +21,12 @@ class SimpleEquivariantGNN(nn.Module):
 
         scalar_in_dim = data_handler.in_dim
         scalar_out_dim = data_handler.out_dim
-        vector_dim = data_handler.vector_dim
+        in_vector_dim = data_handler.in_vector_dim
+        out_vector_dim = data_handler.out_vector_dim
 
         # Linear projections to common hidden_dim
         self.scalar_encoder = nn.Linear(scalar_in_dim, hidden_dim)
-        self.vector_encoder = nn.Linear(vector_dim, hidden_dim, bias=False)
+        self.vector_encoder = nn.Linear(in_vector_dim, hidden_dim, bias=False)
 
         # Single equivariant block (message passing + update)
         self.processor = EquivariantBlock(
@@ -36,7 +37,7 @@ class SimpleEquivariantGNN(nn.Module):
 
         # Linear projections back to output dim
         self.scalar_decoder = nn.Linear(hidden_dim, scalar_out_dim)
-        self.vector_decoder = nn.Linear(hidden_dim, vector_dim, bias=False)
+        self.vector_decoder = nn.Linear(hidden_dim, out_vector_dim, bias=False)
 
     def forward(self, graph) -> dict[str, torch.Tensor]:
         scalar = graph[self.grid_nodes].input_scalar

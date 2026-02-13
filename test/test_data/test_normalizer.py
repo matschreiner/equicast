@@ -131,21 +131,14 @@ def vector_dataset():
 
 
 @pytest.fixture
-def vector_normalizer(sample_statistics, vector_dataset):
+def vector_normalizer():
     """Create a VectorNormalizer instance."""
-    return VectorNormalizer(
-        sample_statistics,
-        vector_dataset,
-        vector_indices=[(0, 1), (2, 3)],
-        num_samples=2,
-    )
+    return VectorNormalizer(torch.tensor([5.0, 13.0]))
 
 
-def test_vector_normalizer_computes_mean_norms(vector_normalizer):
-    """Test that VectorNormalizer computes correct mean norms."""
-    # Both vectors should have consistent norms: 5 and 13
-    assert torch.allclose(vector_normalizer.vector_mean_norm[0], torch.tensor(5.0))
-    assert torch.allclose(vector_normalizer.vector_mean_norm[1], torch.tensor(13.0))
+def test_vector_normalizer_stores_mean_norms(vector_normalizer):
+    """Test that VectorNormalizer stores the provided mean norms."""
+    assert torch.allclose(vector_normalizer.vector_mean_norm, torch.tensor([5.0, 13.0]))
 
 
 def test_transform_vectors_roundtrip(vector_normalizer):
@@ -157,7 +150,7 @@ def test_transform_vectors_roundtrip(vector_normalizer):
             [[6.0, 8.0], [10.0, 24.0]],
         ]
     )
-    transformed = vector_normalizer.transform_vectors(original)
+    transformed = vector_normalizer.normalize_vectors(original)
     recovered = vector_normalizer.inverse_transform_vectors(transformed)
 
     assert torch.allclose(recovered, original)
@@ -168,7 +161,7 @@ def test_transform_vectors_normalizes_to_unit_average(vector_normalizer):
     # Transform vectors with norms matching the mean norms
     # shape: [num_vectors, 2]
     original = torch.tensor([[3.0, 4.0], [5.0, 12.0]])
-    transformed = vector_normalizer.transform_vectors(original)
+    transformed = vector_normalizer.normalize_vectors(original)
 
     # Transformed norms should be 1 (since original norms equal mean norms)
     transformed_norms = torch.sqrt((transformed**2).sum(dim=-1))

@@ -24,12 +24,13 @@ class PaiNN(nn.Module):
 
         scalar_in_dim = data_handler.in_dim
         scalar_out_dim = data_handler.out_dim
-        vector_dim = data_handler.vector_dim
+        in_vector_dim = data_handler.in_vector_dim
+        out_vector_dim = data_handler.out_vector_dim
 
         self.embed_scalar_in = MLP(in_dim=scalar_in_dim, out_dim=hidden_dim)
         self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=scalar_out_dim)
-        self.embed_vector_in = EquivariantLinear(vector_dim, hidden_dim)
-        self.embed_vector_out = EquivariantLinear(hidden_dim, vector_dim)
+        self.embed_vector_in = EquivariantLinear(in_vector_dim, hidden_dim)
+        self.embed_vector_out = EquivariantLinear(hidden_dim, out_vector_dim)
 
         self.blocks = nn.ModuleList([PaiNNBlock(hidden_dim, aggr=aggr) for _ in edges])
 

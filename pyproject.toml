@@ -14,4 +14,4 @@ dependencies = ['mlflow', 'anemoi-datasets', 'anemoi-graphs', 'trimesh', "cartop
 where = ["."]
 
 [tool.black]
-line-length = 100
+line-length = 120

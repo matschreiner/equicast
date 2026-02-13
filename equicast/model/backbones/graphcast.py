@@ -52,10 +52,7 @@ class Graphcast(torch.nn.Module):
 
         # Processor: Mesh -> Mesh (stack of GNN layers)
         self.processor_layers = torch.nn.ModuleList(
-            [
-                MeshProcessor(hidden_dim=hidden_dim, edge_dim=mesh2mesh_edge_dim)
-                for _ in range(num_processor_layers)
-            ]
+            [MeshProcessor(hidden_dim=hidden_dim, edge_dim=mesh2mesh_edge_dim) for _ in range(num_processor_layers)]
         )
 
         # Decoder: Mesh -> Grid

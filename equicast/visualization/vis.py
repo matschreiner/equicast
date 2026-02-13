@@ -177,9 +177,7 @@ def make_video(
         fig = ax.get_figure()
 
     # Initialize plot with first frame using plot_field
-    initial_title = (
-        title_template(0) if callable(title_template) else title_template.format(frame=0)
-    )
+    initial_title = title_template(0) if callable(title_template) else title_template.format(frame=0)
 
     # Remove 'title' from kwargs if present to avoid conflict
     plot_kwargs = {k: v for k, v in kwargs.items() if k != "title"}
@@ -301,8 +299,7 @@ def plot_field_with_vectors(
     vector_names = list(data_handler.feature_config.prognostic_vector.keys())
     if vector_field not in vector_names:
         raise ValueError(
-            f"Vector field '{vector_field}' not found in prognostic_vector config. "
-            f"Available: {vector_names}"
+            f"Vector field '{vector_field}' not found in prognostic_vector config. " f"Available: {vector_names}"
         )
     vector_idx = vector_names.index(vector_field)
 
@@ -522,9 +519,7 @@ def make_video_with_vectors(
     plt.colorbar(im, ax=ax, orientation="horizontal", pad=0.05, aspect=40)
 
     # Set initial title
-    initial_title = (
-        title_template(0) if callable(title_template) else title_template.format(frame=0)
-    )
+    initial_title = title_template(0) if callable(title_template) else title_template.format(frame=0)
     ax.set_title(initial_title)
 
     def update(frame_idx):

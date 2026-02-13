@@ -201,9 +201,7 @@ def list_checkpoints_in_run(run_id: str, tracking_uri: str | None = None) -> lis
 
     # Extract checkpoint names (without .ckpt extension)
     checkpoint_names = [
-        os.path.splitext(artifact.path.split("/")[-1])[0]
-        for artifact in artifacts
-        if artifact.path.endswith(".ckpt")
+        os.path.splitext(artifact.path.split("/")[-1])[0] for artifact in artifacts if artifact.path.endswith(".ckpt")
     ]
 
     return checkpoint_names

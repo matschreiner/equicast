@@ -60,11 +60,11 @@ class Forecaster:
 
         pred = [p[nodes].data for p in predictions]
         pred = torch.stack(pred, dim=0)
-        pred = dh.get_output_features(pred)
+        pred = pred[..., dh.out_idxs]
 
         ground_truth = [g[nodes].data for g in ground_truths[: len(predictions)]]
         ground_truth = torch.stack(ground_truth, dim=0)
-        ground_truth = dh.get_output_features(ground_truth)
+        ground_truth = ground_truth[..., dh.out_idxs]
 
         index_to_name = {v: k for k, v in dh.name_to_index.items()}
         feature_name = index_to_name.get(dh.out_idxs[feature_idx], f"feature_{feature_idx}")

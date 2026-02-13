@@ -23,11 +23,12 @@ class EquivariantGNN(nn.Module):
         # Dimensions
         scalar_in_dim = data_handler.in_dim
         scalar_out_dim = data_handler.out_dim
-        vector_dim = data_handler.vector_dim
+        in_vector_dim = data_handler.in_vector_dim
+        out_vector_dim = data_handler.out_vector_dim
 
         # Encoder: project to hidden dim
         self.scalar_encoder = MLP(in_dim=scalar_in_dim, out_dim=hidden_dim)
-        self.vector_encoder = nn.Linear(vector_dim, hidden_dim, bias=False)
+        self.vector_encoder = nn.Linear(in_vector_dim, hidden_dim, bias=False)
 
         # Processor: single equivariant block
         self.processor = EquivariantBlock(
@@ -38,7 +39,7 @@ class EquivariantGNN(nn.Module):
 
         # Decoder: project back to output dim
         self.scalar_decoder = MLP(in_dim=hidden_dim, out_dim=scalar_out_dim)
-        self.vector_decoder = nn.Linear(hidden_dim, vector_dim, bias=False)
+        self.vector_decoder = nn.Linear(hidden_dim, out_vector_dim, bias=False)
 
     def forward(self, graph) -> dict[str, torch.Tensor]:
         """Forward pass.
