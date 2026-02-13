@@ -2,7 +2,6 @@
 
 import time
 
-import torch
 from anemoi.datasets import open_dataset
 
 DATASET_PATH = "/leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr"
