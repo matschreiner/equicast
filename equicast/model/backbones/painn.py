@@ -14,7 +14,7 @@ class PaiNN(nn.Module):
         data_handler,
         edges: list[tuple[str, str, str]],
         input_nodes: str = "grid",
-        hidden_dim: int = 32,
+        hidden_dim: int = 64,
         aggr: str = "mean",
     ):
         super().__init__()

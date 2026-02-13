@@ -3,7 +3,7 @@ import torch
 
 from equicast.data import EquivariantGraphDataHandler, FeatureConfig
 from equicast.model.backbones.painn import PaiNN
-from equicast.model.model import equivariant_loss_fn
+from equicast.model.model import Model, equivariant_loss_fn
 
 torch.set_float32_matmul_precision("medium")
 
@@ -25,7 +25,12 @@ def backbone_config(dataset_path):
             ("mesh", "to", "grid"),
         ],
         input_nodes="grid",
-        hidden_dim=64,
+        hidden_dim=128,
     )
 
-    return backbone, equivariant_loss_fn
+    return fdl.Config(
+        Model,
+        backbone=backbone,
+        loss_fn=equivariant_loss_fn,
+        compile_backbone=True,
+    )
