@@ -3,6 +3,7 @@
 import time
 from multiprocessing import Process, Queue
 
+import torch
 from anemoi.datasets import open_dataset
 
 DATASET_PATH = "/leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr"
@@ -12,7 +13,7 @@ NUM_READS = 200
 def worker(path, indices, queue):
     data = open_dataset(path)
     for idx in indices:
-        _ = data[idx : idx + 2]
+        _ = torch.tensor(data[idx : idx + 2])
     queue.put(len(indices))
 
 
