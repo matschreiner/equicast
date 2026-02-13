@@ -10,9 +10,7 @@ def fiddler(cfg: fdl.Config) -> None:
 
     cfg.model.backbone.data_handler.dataset_path = leonardo_era5
     cfg.dataloader.dataset.path = leonardo_era5
-    #  cfg.dataloader.dataset.subsample = 6
     cfg.dataloader.num_workers = 8
-    cfg.dataloader.persistent_workers = True
     cfg.dataloader.batch_size = 1
     cfg.trainer.strategy = "ddp"
 
