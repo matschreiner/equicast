@@ -22,9 +22,7 @@ def get_mlflow_config(config_path: str | None = None) -> dict:
     """
     if config_path is None:
         # Default to config/mlflow_config.yaml in project root
-        config_path = (
-            Path(__file__).parent.parent.parent / "config" / "mlflow_config.yaml"
-        )
+        config_path = Path(__file__).parent.parent.parent / "config" / "mlflow_config.yaml"
 
     with open(config_path) as f:
         config = yaml.safe_load(f)
@@ -100,9 +98,7 @@ def load_model_from_mlflow(
         tracking_uri = mlflow_config["tracking_uri"]
 
     if checkpoint_name is None:
-        checkpoint_name = mlflow_config.get(
-            "default_checkpoint_name", "best_model"
-        )
+        checkpoint_name = mlflow_config.get("default_checkpoint_name", "best_model")
 
     # Get run info for logging
     run = get_run_info(run_id, tracking_uri)
@@ -127,9 +123,7 @@ def load_model_from_mlflow(
     print(f"  Downloaded to: {checkpoint_path}")
 
     # Load model from checkpoint
-    model = Model.load_from_checkpoint(
-        checkpoint_path, map_location=map_location
-    )
+    model = Model.load_from_checkpoint(checkpoint_path, map_location=map_location)
 
     return model
 
@@ -165,9 +159,7 @@ def load_checkpoint_path_from_mlflow(
         tracking_uri = mlflow_config["tracking_uri"]
 
     if checkpoint_name is None:
-        checkpoint_name = mlflow_config.get(
-            "default_checkpoint_name", "best_model"
-        )
+        checkpoint_name = mlflow_config.get("default_checkpoint_name", "best_model")
 
     # Download checkpoint
     checkpoint_provider = MLFlowCheckpointProvider(
@@ -179,9 +171,7 @@ def load_checkpoint_path_from_mlflow(
     return checkpoint_provider.get_checkpoint()
 
 
-def list_checkpoints_in_run(
-    run_id: str, tracking_uri: str | None = None
-) -> list[str]:
+def list_checkpoints_in_run(run_id: str, tracking_uri: str | None = None) -> list[str]:
     """
     List all available checkpoints in an MLflow run.
 

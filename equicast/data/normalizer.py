@@ -20,9 +20,7 @@ class Normalizer(torch.nn.Module):
         """Denormalize data back to physical units."""
         return data * self.std + self.mean  # type: ignore
 
-    def transform_indices(
-        self, data: torch.Tensor, indices: list[int]
-    ) -> torch.Tensor:
+    def transform_indices(self, data: torch.Tensor, indices: list[int]) -> torch.Tensor:
         """Normalize data using statistics at specified indices.
 
         Args:
@@ -34,9 +32,7 @@ class Normalizer(torch.nn.Module):
         """
         return (data - self.mean[indices]) / self.std[indices]  # type: ignore
 
-    def inverse_transform_indices(
-        self, data: torch.Tensor, indices: list[int]
-    ) -> torch.Tensor:
+    def inverse_transform_indices(self, data: torch.Tensor, indices: list[int]) -> torch.Tensor:
         """Denormalize data using statistics at specified indices.
 
         Args:
@@ -80,9 +76,7 @@ class VectorNormalizer(Normalizer):
             return
 
         num_samples = min(num_samples, len(dataset))
-        sample_indices = np.random.choice(
-            len(dataset), num_samples, replace=False
-        )
+        sample_indices = np.random.choice(len(dataset), num_samples, replace=False)
         samples = dataset[sample_indices].squeeze()  # [samples, features, nodes]
         samples = samples.transpose(0, 2, 1)  # [samples, nodes, features]
 

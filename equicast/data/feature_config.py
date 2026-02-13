@@ -27,9 +27,5 @@ class FeatureConfig:
         return cls(**data)
 
     def __repr__(self):
-        n_vec = (
-            len(self.forcing_vector)
-            + len(self.prognostic_vector)
-            + len(self.diagnostic_vector)
-        )
+        n_vec = len(self.forcing_vector) + len(self.prognostic_vector) + len(self.diagnostic_vector)
         return f"FeatureConfig(forcing={len(self.forcing)}, prognostic={len(self.prognostic)}, diagnostic={len(self.diagnostic)}, vectors={n_vec})"

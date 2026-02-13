@@ -77,14 +77,10 @@ def test_model_initialization(simple_backbone, mock_data_handler):
     assert model.scheduler_factory is None
 
 
-def test_model_initialization_with_optimizers(
-    simple_backbone, mock_data_handler
-):
+def test_model_initialization_with_optimizers(simple_backbone, mock_data_handler):
     """Test Model initialization with optimizer factories."""
     opt_factory = lambda params: torch.optim.Adam(params, lr=0.001)
-    sched_factory = lambda opt: torch.optim.lr_scheduler.StepLR(
-        opt, step_size=10
-    )
+    sched_factory = lambda opt: torch.optim.lr_scheduler.StepLR(opt, step_size=10)
 
     model = Model(
         backbone=simple_backbone,
@@ -115,9 +111,7 @@ def test_model_forward(simple_backbone, mock_data_handler, sample_graph):
     assert isinstance(pred, torch.Tensor)
 
 
-def test_model_forward_processes_input_only(
-    simple_backbone, mock_data_handler, sample_graph
-):
+def test_model_forward_processes_input_only(simple_backbone, mock_data_handler, sample_graph):
     """Test that forward only processes input, not target."""
     model = Model(
         backbone=simple_backbone,
@@ -155,9 +149,7 @@ def test_model_training_step(simple_backbone, mock_data_handler, sample_graph):
     assert loss.item() >= 0  # Loss should be non-negative
 
 
-def test_model_training_step_processes_target(
-    simple_backbone, mock_data_handler, sample_graph
-):
+def test_model_training_step_processes_target(simple_backbone, mock_data_handler, sample_graph):
     """Test that training_step processes both input and target."""
     model = Model(
         backbone=simple_backbone,
@@ -199,14 +191,10 @@ def test_model_configure_optimizers_custom(simple_backbone, mock_data_handler):
     assert isinstance(optimizer, torch.optim.SGD)
 
 
-def test_model_configure_optimizers_with_scheduler(
-    simple_backbone, mock_data_handler
-):
+def test_model_configure_optimizers_with_scheduler(simple_backbone, mock_data_handler):
     """Test optimizer configuration with scheduler."""
     opt_factory = lambda params: torch.optim.Adam(params, lr=0.001)
-    sched_factory = lambda opt: torch.optim.lr_scheduler.StepLR(
-        opt, step_size=10
-    )
+    sched_factory = lambda opt: torch.optim.lr_scheduler.StepLR(opt, step_size=10)
 
     model = Model(
         backbone=simple_backbone,

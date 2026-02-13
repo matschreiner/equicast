@@ -6,9 +6,7 @@ from equicast.data.feature_config import FeatureConfig
 class FeatureIndices:
     """Holds feature indices for model input/output."""
 
-    def __init__(
-        self, feature_config: FeatureConfig, name_to_index: dict[str, int]
-    ):
+    def __init__(self, feature_config: FeatureConfig, name_to_index: dict[str, int]):
         self.feature_config = feature_config
         self.name_to_index = name_to_index
 

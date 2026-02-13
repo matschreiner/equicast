@@ -109,9 +109,7 @@ class GridToMeshEncoder(MessagePassing):
     where w_ij are learned from edge features and softmax-normalized.
     """
 
-    def __init__(
-        self, in_dim: int, hidden_dim: int, edge_dim: int = 0, aggr: str = "add"
-    ):
+    def __init__(self, in_dim: int, hidden_dim: int, edge_dim: int = 0, aggr: str = "add"):
         super().__init__(aggr=aggr)
         self.edge_dim = edge_dim
 

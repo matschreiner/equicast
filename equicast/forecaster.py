@@ -49,15 +49,11 @@ class Forecaster:
                 predictions.append(prediction)
 
         if self.logger is not None:
-            self._save_visualization(
-                predictions, ground_truths, output_dir, feature_idx
-            )
+            self._save_visualization(predictions, ground_truths, output_dir, feature_idx)
 
         return predictions
 
-    def _save_visualization(
-        self, predictions, ground_truths, output_dir, feature_idx
-    ):
+    def _save_visualization(self, predictions, ground_truths, output_dir, feature_idx):
         """Save comparison video of predictions vs ground truth."""
         nodes = self.model.nodes
         dh = self.model.data_handler
@@ -71,9 +67,7 @@ class Forecaster:
         ground_truth = dh.get_output_features(ground_truth)
 
         index_to_name = {v: k for k, v in dh.name_to_index.items()}
-        feature_name = index_to_name.get(
-            dh.out_idxs[feature_idx], f"feature_{feature_idx}"
-        )
+        feature_name = index_to_name.get(dh.out_idxs[feature_idx], f"feature_{feature_idx}")
 
         video_path = os.path.join(output_dir, "forecast_comparison.mp4")
         make_comparison_video(

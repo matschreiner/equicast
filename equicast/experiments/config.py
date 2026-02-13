@@ -70,7 +70,9 @@ def vis_config(config):
 
 def run_experiment(config: fdl.Config):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--graph", action="store_true", help="Open graphviz visualization of the config")
+    parser.add_argument(
+        "--graph", action="store_true", help="Open graphviz visualization of the config"
+    )
     args, _ = parser.parse_known_args()
     if args.graph:
         vis_config(config)

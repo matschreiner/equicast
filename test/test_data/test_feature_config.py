@@ -20,9 +20,7 @@ def sample_feature_dict():
 @pytest.fixture
 def sample_yaml_file(sample_feature_dict):
     """Create a temporary YAML file with feature config."""
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(sample_feature_dict, f)
         temp_path = f.name
 
@@ -105,9 +103,7 @@ def sample_feature_dict_with_vectors():
 @pytest.fixture
 def sample_yaml_file_with_vectors(sample_feature_dict_with_vectors):
     """Create a temporary YAML file with vector features."""
-    with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".yaml", delete=False
-    ) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(sample_feature_dict_with_vectors, f)
         temp_path = f.name
 

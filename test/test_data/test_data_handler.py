@@ -24,6 +24,7 @@ def mock_dataset():
     dataset = Mock()
     # Return numpy arrays which cast_dict can convert to tensors
     import numpy as np
+
     type(dataset).statistics = {
         "mean": np.array([0.0, 1.0, 2.0, 3.0, 4.0]),
         "stdev": np.array([1.0, 1.0, 1.0, 1.0, 1.0]),
@@ -40,7 +41,7 @@ def mock_dataset():
 
 def test_data_handler_initialization(sample_feature_config, mock_dataset):
     """Test DataHandler initialization."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         assert handler.dataset_path == "fake_path.zarr"
@@ -51,7 +52,7 @@ def test_data_handler_initialization(sample_feature_config, mock_dataset):
 
 def test_data_handler_statistics(sample_feature_config, mock_dataset):
     """Test that statistics are properly extracted and converted."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         assert "mean" in handler.statistics
@@ -62,7 +63,7 @@ def test_data_handler_statistics(sample_feature_config, mock_dataset):
 
 def test_data_handler_name_to_index(sample_feature_config, mock_dataset):
     """Test that name_to_index mapping is stored."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         assert handler.name_to_index == mock_dataset.name_to_index
@@ -71,7 +72,7 @@ def test_data_handler_name_to_index(sample_feature_config, mock_dataset):
 
 def test_data_handler_in_idxs_property(sample_feature_config, mock_dataset):
     """Test in_idxs property delegates to feature_router."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         # forcing: [0, 1], prognostic: [2, 3]
@@ -82,7 +83,7 @@ def test_data_handler_in_idxs_property(sample_feature_config, mock_dataset):
 
 def test_data_handler_out_idxs_property(sample_feature_config, mock_dataset):
     """Test out_idxs property delegates to feature_router."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         # prognostic: [2, 3], diagnostic: [4]
@@ -93,7 +94,7 @@ def test_data_handler_out_idxs_property(sample_feature_config, mock_dataset):
 
 def test_data_handler_scaler_works(sample_feature_config, mock_dataset):
     """Test that the scaler can transform data."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         data = torch.randn(10, 5)
@@ -105,7 +106,7 @@ def test_data_handler_scaler_works(sample_feature_config, mock_dataset):
 
 def test_data_handler_feature_router_works(sample_feature_config, mock_dataset):
     """Test that the feature_router has correct indices."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         assert len(handler.in_idxs) == 4  # 2 forcing + 2 prognostic
@@ -114,7 +115,7 @@ def test_data_handler_feature_router_works(sample_feature_config, mock_dataset):
 
 def test_data_handler_extract_prognostic(sample_feature_config, mock_dataset):
     """Test extracting prognostic variables from prediction."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         # Prediction: [temp, humidity, precip] = [prognostic, prognostic, diagnostic]
@@ -137,7 +138,7 @@ def test_data_handler_extract_prognostic(sample_feature_config, mock_dataset):
 
 def test_data_handler_reconstruct_state(sample_feature_config, mock_dataset):
     """Test reconstructing full state from prognostic and forcing."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         # Prognostic: [temp, humidity] at indices [2, 3]
@@ -161,7 +162,7 @@ def test_data_handler_reconstruct_state(sample_feature_config, mock_dataset):
 
 def test_data_handler_reconstruct_state_no_forcing(sample_feature_config, mock_dataset):
     """Test reconstructing state without forcing variables."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         # Only prognostic
@@ -179,7 +180,7 @@ def test_data_handler_reconstruct_state_no_forcing(sample_feature_config, mock_d
 
 def test_data_handler_prepare_model_input(sample_feature_config, mock_dataset):
     """Test preparing raw state for model input."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         # Raw state: [solar, pressure, temp, humidity, precip]
@@ -204,7 +205,7 @@ def test_data_handler_prepare_model_input(sample_feature_config, mock_dataset):
 
 def test_data_handler_prepare_model_target(sample_feature_config, mock_dataset):
     """Test preparing raw state for model target."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         # Raw state: [solar, pressure, temp, humidity, precip]
@@ -227,7 +228,7 @@ def test_data_handler_prepare_model_target(sample_feature_config, mock_dataset):
 
 def test_data_handler_from_prediction(sample_feature_config, mock_dataset):
     """Test converting model output back to raw state using prediction argument."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         # Model output: [prognostic, diagnostic] in scaled space
@@ -260,7 +261,7 @@ def test_data_handler_from_prediction(sample_feature_config, mock_dataset):
 
 def test_data_handler_from_prediction_no_forcing(sample_feature_config, mock_dataset):
     """Test converting model output without forcing."""
-    with patch('equicast.data.data_handler.open_dataset', return_value=mock_dataset):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         handler = DataHandler("fake_path.zarr", sample_feature_config)
 
         model_output = torch.tensor([[10.0, 19.0, 28.0]] * 5)

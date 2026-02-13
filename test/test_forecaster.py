@@ -126,9 +126,7 @@ def test_forecaster_forecast_with_forcing(mock_model, sample_initial_state):
 
     forecaster._prepare_next_state = Mock(side_effect=prepare_next_state)
 
-    forecaster.forecast(
-        sample_initial_state, steps=3, forcing_sequence=forcing_seq
-    )
+    forecaster.forecast(sample_initial_state, steps=3, forcing_sequence=forcing_seq)
 
     # Should pass forcing for each step
     assert len(calls) == 3
@@ -161,15 +159,11 @@ def test_forecaster_prepare_next_state_implementation():
     mock_data_handler = Mock()
 
     # Mock extract_prognostic to return prognostic variables
-    mock_prognostic = torch.tensor(
-        [[1.0, 2.0]] * 5
-    )  # 5 nodes, 2 prognostic vars
+    mock_prognostic = torch.tensor([[1.0, 2.0]] * 5)  # 5 nodes, 2 prognostic vars
     mock_data_handler.extract_prognostic = Mock(return_value=mock_prognostic)
 
     # Mock reconstruct_state to return full state
-    mock_full_state = torch.tensor(
-        [[0.5, 1.0, 2.0, 0.0]] * 5
-    )  # 5 nodes, 4 features
+    mock_full_state = torch.tensor([[0.5, 1.0, 2.0, 0.0]] * 5)  # 5 nodes, 4 features
     mock_data_handler.reconstruct_state = Mock(return_value=mock_full_state)
 
     mock_model.data_handler = mock_data_handler
@@ -184,9 +178,7 @@ def test_forecaster_prepare_next_state_implementation():
     prediction = torch.tensor([[1.0, 2.0, 3.0]] * 5)  # 5 nodes, 3 outputs
     forcing = torch.tensor([[0.5]] * 5)  # 5 nodes, 1 forcing variable
 
-    next_graph = forecaster._prepare_next_state(
-        sample_graph, prediction, forcing
-    )
+    next_graph = forecaster._prepare_next_state(sample_graph, prediction, forcing)
 
     # Check that reconstruct_state was called with named arguments
     mock_data_handler.reconstruct_state.assert_called_once()

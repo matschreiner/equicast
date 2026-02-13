@@ -51,9 +51,7 @@ class CUDAProfiler(PyTorchProfiler):
                 torch.profiler.ProfilerActivity.CPU,
                 torch.profiler.ProfilerActivity.CUDA,
             ],
-            schedule=torch.profiler.schedule(
-                wait=wait, warmup=warmup, active=active, repeat=1
-            ),
+            schedule=torch.profiler.schedule(wait=wait, warmup=warmup, active=active, repeat=1),
             record_module_names=False,
             with_stack=False,
             **kwargs,

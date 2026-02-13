@@ -33,7 +33,9 @@ def feature_indices(sample_feature_config, sample_name_to_index):
     return FeatureIndices(sample_feature_config, sample_name_to_index)
 
 
-def test_feature_indices_initialization(feature_indices, sample_feature_config, sample_name_to_index):
+def test_feature_indices_initialization(
+    feature_indices, sample_feature_config, sample_name_to_index
+):
     """Test FeatureIndices initialization."""
     assert feature_indices.feature_config == sample_feature_config
     assert feature_indices.name_to_index == sample_name_to_index

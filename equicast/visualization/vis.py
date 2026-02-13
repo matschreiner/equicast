@@ -66,9 +66,7 @@ def plot_field(
 
     # Create axis if not provided
     if ax is None:
-        _, ax = plt.subplots(
-            figsize=(12, 6), subplot_kw=dict(projection=ccrs.PlateCarree())
-        )
+        _, ax = plt.subplots(figsize=(12, 6), subplot_kw=dict(projection=ccrs.PlateCarree()))
 
     # Create triangulation and plot
     triang = tri.Triangulation(lon, lat)
@@ -174,17 +172,13 @@ def make_video(
     # Setup figure and axis if not provided
     own_fig = ax is None
     if own_fig:
-        fig, ax = plt.subplots(
-            figsize=figsize, subplot_kw=dict(projection=ccrs.PlateCarree())
-        )
+        fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(projection=ccrs.PlateCarree()))
     else:
         fig = ax.get_figure()
 
     # Initialize plot with first frame using plot_field
     initial_title = (
-        title_template(0)
-        if callable(title_template)
-        else title_template.format(frame=0)
+        title_template(0) if callable(title_template) else title_template.format(frame=0)
     )
 
     # Remove 'title' from kwargs if present to avoid conflict
@@ -228,9 +222,7 @@ def make_video(
         return (im,)
 
     # Create animation
-    anim = FuncAnimation(
-        fig, update, frames=len(fields), interval=1000 / fps, blit=False
-    )
+    anim = FuncAnimation(fig, update, frames=len(fields), interval=1000 / fps, blit=False)
 
     # Save video if output path provided
     if output_path is not None:
@@ -429,9 +421,7 @@ def make_video_with_vectors(
     scalar_idx = data_handler.name_to_index[scalar_field]
     vector_names = list(data_handler.feature_config.prognostic_vector.keys())
     if vector_field not in vector_names:
-        raise ValueError(
-            f"Vector field '{vector_field}' not found. Available: {vector_names}"
-        )
+        raise ValueError(f"Vector field '{vector_field}' not found. Available: {vector_names}")
     vector_idx = vector_names.index(vector_field)
 
     # Extract all scalar and vector data
@@ -474,9 +464,7 @@ def make_video_with_vectors(
         vmax = scalar_frames.max()
 
     # Create figure
-    fig, ax = plt.subplots(
-        figsize=figsize, subplot_kw=dict(projection=ccrs.PlateCarree())
-    )
+    fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(projection=ccrs.PlateCarree()))
 
     # Initial plot
     triang = tri.Triangulation(lon, lat)
@@ -535,9 +523,7 @@ def make_video_with_vectors(
 
     # Set initial title
     initial_title = (
-        title_template(0)
-        if callable(title_template)
-        else title_template.format(frame=0)
+        title_template(0) if callable(title_template) else title_template.format(frame=0)
     )
     ax.set_title(initial_title)
 
@@ -558,9 +544,7 @@ def make_video_with_vectors(
         return im, quiv
 
     # Create animation
-    anim = FuncAnimation(
-        fig, update, frames=len(graphs), interval=1000 / fps, blit=False
-    )
+    anim = FuncAnimation(fig, update, frames=len(graphs), interval=1000 / fps, blit=False)
 
     # Save
     if output_path.endswith(".gif"):

@@ -151,10 +151,12 @@ def test_vector_normalizer_computes_mean_norms(vector_normalizer):
 def test_transform_vectors_roundtrip(vector_normalizer):
     """Test that transform_vectors and inverse_transform_vectors are inverses."""
     # Test roundtrip: shape [nodes, num_vectors, 2]
-    original = torch.tensor([
-        [[3.0, 4.0], [5.0, 12.0]],
-        [[6.0, 8.0], [10.0, 24.0]],
-    ])
+    original = torch.tensor(
+        [
+            [[3.0, 4.0], [5.0, 12.0]],
+            [[6.0, 8.0], [10.0, 24.0]],
+        ]
+    )
     transformed = vector_normalizer.transform_vectors(original)
     recovered = vector_normalizer.inverse_transform_vectors(transformed)
 

@@ -68,9 +68,7 @@ class RemoteCheckpointProvider(CheckpointProvider):
             logger.info(f"Checkpoint downloaded: {size_mb:.1f} MB")
         except subprocess.CalledProcessError as e:
             logger.error(f"SCP failed: {e.stderr}")
-            raise RuntimeError(
-                f"Failed to copy checkpoint from {remote_spec}: {e.stderr}"
-            )
+            raise RuntimeError(f"Failed to copy checkpoint from {remote_spec}: {e.stderr}")
 
         return self.local_path
 
@@ -86,9 +84,7 @@ class RsyncCheckpointProvider(CheckpointProvider):
         """
         self.remote_path = remote_path
         self.host = host
-        self.local_path = os.path.join(
-            tempfile.gettempdir(), os.path.basename(remote_path)
-        )
+        self.local_path = os.path.join(tempfile.gettempdir(), os.path.basename(remote_path))
 
     def get_checkpoint(self) -> str:
         remote_spec = f"{self.host}:{self.remote_path}"

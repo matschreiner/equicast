@@ -85,9 +85,7 @@ def create_video(
 ):
     """Create video with vectors."""
     if title_template is None:
-        title_template = (
-            lambda i: f"{scalar_field} with {vector_field} - Frame {i}"
-        )
+        title_template = lambda i: f"{scalar_field} with {vector_field} - Frame {i}"
 
     anim = make_video_with_vectors(
         graphs=graphs,

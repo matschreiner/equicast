@@ -55,9 +55,7 @@ class SimpleEquivariantGNN(nn.Module):
 
         # Decode
         scalar_out = self.scalar_decoder(scalar)
-        vector_out = self.vector_decoder(vector.transpose(-1, -2)).transpose(
-            -1, -2
-        )
+        vector_out = self.vector_decoder(vector.transpose(-1, -2)).transpose(-1, -2)
 
         return {
             "scalar": scalar_out + scalar_residual,

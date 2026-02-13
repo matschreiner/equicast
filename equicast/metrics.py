@@ -12,9 +12,7 @@ class BaseMetricsTracker(ABC):
     """Abstract base class for metrics tracking."""
 
     @abstractmethod
-    def compute_metrics(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
+    def compute_metrics(self, pred: torch.Tensor, target: torch.Tensor) -> dict[str, torch.Tensor]:
         """
         Compute various metrics on predictions and targets.
 
@@ -40,14 +38,10 @@ class MetricsTracker(BaseMetricsTracker):
         """
         self.data_handler = data_handler
         # Create mapping from output index position to variable name
-        self.index_to_name = {
-            v: k for k, v in data_handler.name_to_index.items()
-        }
+        self.index_to_name = {v: k for k, v in data_handler.name_to_index.items()}
         self.out_idxs = data_handler.out_idxs
 
-    def compute_metrics(
-        self, pred: torch.Tensor, target: torch.Tensor
-    ) -> dict[str, torch.Tensor]:
+    def compute_metrics(self, pred: torch.Tensor, target: torch.Tensor) -> dict[str, torch.Tensor]:
         """
         Compute various metrics on predictions and targets.
 
@@ -84,13 +78,9 @@ class EquivariantMetricsTracker(BaseMetricsTracker):
 
     def __init__(self, data_handler: EquivariantGraphDataHandler):
         self.data_handler = data_handler
-        self.index_to_name = {
-            v: k for k, v in data_handler.name_to_index.items()
-        }
+        self.index_to_name = {v: k for k, v in data_handler.name_to_index.items()}
         self.out_idxs = data_handler.out_idxs
-        self.vector_names = list(
-            data_handler.feature_config.prognostic_vector.keys()
-        )
+        self.vector_names = list(data_handler.feature_config.prognostic_vector.keys())
 
     def compute_metrics(
         self, pred: dict[str, torch.Tensor], target: dict[str, torch.Tensor]
@@ -113,7 +103,9 @@ class EquivariantMetricsTracker(BaseMetricsTracker):
         vector_error = pred["vector"] - target["vector"]
         # Reduce over all dims except vector-feature dim (1) and xy dim (2)
         reduce_dims = tuple(
-            d for d in range(vector_error.ndim) if d not in (vector_error.ndim - 2, vector_error.ndim - 1)
+            d
+            for d in range(vector_error.ndim)
+            if d not in (vector_error.ndim - 2, vector_error.ndim - 1)
         )
         vector_bias = vector_error.mean(dim=reduce_dims)  # [num_vectors, 2]
         unbiased_vector_error = vector_error - vector_bias

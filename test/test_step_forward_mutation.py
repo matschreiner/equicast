@@ -44,9 +44,7 @@ def mock_dataset():
 @pytest.fixture
 def data_handler(feature_config, mock_dataset):
     """Create a GraphDataHandler with mocked dataset."""
-    with patch(
-        "equicast.data.data_handler.open_dataset", return_value=mock_dataset
-    ):
+    with patch("equicast.data.data_handler.open_dataset", return_value=mock_dataset):
         return GraphDataHandler("fake_path.zarr", feature_config, nodes="grid")
 
 
@@ -113,9 +111,7 @@ def timeseries():
 class TestStepForwardMutation:
     """Tests to verify step_forward does not mutate inputs unexpectedly."""
 
-    def test_step_forward_does_not_mutate_original_input(
-        self, model, sample_input, sample_target
-    ):
+    def test_step_forward_does_not_mutate_original_input(self, model, sample_input, sample_target):
         """Original input should be unchanged after step_forward."""
         original_data = sample_input["grid"].data.clone()
 
@@ -125,9 +121,7 @@ class TestStepForwardMutation:
             sample_input["grid"].data, original_data
         ), "step_forward mutated the original input!"
 
-    def test_step_forward_does_not_mutate_original_target(
-        self, model, sample_input, sample_target
-    ):
+    def test_step_forward_does_not_mutate_original_target(self, model, sample_input, sample_target):
         """Original target should be unchanged after step_forward."""
         original_data = sample_target["grid"].data.clone()
 
@@ -137,9 +131,7 @@ class TestStepForwardMutation:
             sample_target["grid"].data, original_data
         ), "step_forward mutated the original target!"
 
-    def test_step_forward_returns_independent_graphs(
-        self, model, sample_input, sample_target
-    ):
+    def test_step_forward_returns_independent_graphs(self, model, sample_input, sample_target):
         """Returned next and pred should be independent from each other."""
         next_graph, pred_graph = model.step_forward(sample_input, sample_target)
 
@@ -151,9 +143,7 @@ class TestStepForwardMutation:
             pred_graph["grid"].data, next_graph["grid"].data
         ), "next and pred are aliased!"
 
-    def test_step_forward_output_independent_from_input(
-        self, model, sample_input, sample_target
-    ):
+    def test_step_forward_output_independent_from_input(self, model, sample_input, sample_target):
         """Returned graphs should be independent from inputs."""
         # Save original input data BEFORE passing through the model
         original_input_data = sample_input["grid"].data.clone()
@@ -195,9 +185,7 @@ class TestStepForwardMutation:
         initial_out_features = input_graph["grid"].data[..., out_idxs].clone()
 
         # Run one step
-        next_graph, pred = model.step_forward(
-            input_graph, timeseries[0]["target"]
-        )
+        next_graph, pred = model.step_forward(input_graph, timeseries[0]["target"])
 
         # The next_graph should have different output features (the prediction)
         next_out_features = next_graph["grid"].data[..., out_idxs]

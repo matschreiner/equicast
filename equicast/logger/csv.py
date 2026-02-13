@@ -15,9 +15,7 @@ class CSVLogger(CSVLoggerParent, BaseLogger):
     Logs metrics to CSV files and saves artifacts to an artifacts/ subdirectory.
     """
 
-    def __init__(
-        self, save_dir: str, name: str = "default", version: str | None = None
-    ):
+    def __init__(self, save_dir: str, name: str = "default", version: str | None = None):
         """
         Initialize CSV logger.
 
@@ -48,4 +46,3 @@ class CSVLogger(CSVLoggerParent, BaseLogger):
         # Copy the file
         shutil.copy2(src, dest)
         print(f"Logged artifact: {src.name} -> {dest}")
-

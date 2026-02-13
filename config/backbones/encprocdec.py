@@ -10,7 +10,9 @@ torch.set_float32_matmul_precision("medium")
 
 def backbone_config(dataset_path):
     feature_config = fdl.Config(FeatureConfig.from_yaml, path="hydraconfig/features/base.yaml")
-    data_handler = fdl.Config(GraphDataHandler, feature_config=feature_config, dataset_path=dataset_path)
+    data_handler = fdl.Config(
+        GraphDataHandler, feature_config=feature_config, dataset_path=dataset_path
+    )
 
     backbone = fdl.Config(
         EncProcDec,

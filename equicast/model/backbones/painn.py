@@ -31,9 +31,7 @@ class PaiNN(nn.Module):
         self.embed_vector_in = EquivariantLinear(vector_dim, hidden_dim)
         self.embed_vector_out = EquivariantLinear(hidden_dim, vector_dim)
 
-        self.blocks = nn.ModuleList(
-            [PaiNNBlock(hidden_dim, aggr=aggr) for _ in edges]
-        )
+        self.blocks = nn.ModuleList([PaiNNBlock(hidden_dim, aggr=aggr) for _ in edges])
 
     def forward(self, graph) -> dict[str, torch.Tensor]:
         scalar = self.embed_scalar_in(graph[self.input_nodes].input_scalar)

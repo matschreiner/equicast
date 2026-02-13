@@ -11,7 +11,9 @@ class GNN(torch.nn.Module):
         super().__init__()
         self.data_handler = data_handler
 
-        self.conv = GraphConv(in_dim=data_handler.in_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim)
+        self.conv = GraphConv(
+            in_dim=data_handler.in_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim
+        )
         self.grid_nodes = grid_nodes
 
     def forward(self, graph):
@@ -42,18 +44,10 @@ class EncProcDec(torch.nn.Module):
         self.grid_nodes = grid_nodes
         self.mesh_nodes = mesh_nodes
         self.use_residual = use_residual
-        self.encoder = GraphConv(
-            in_dim=data_handler.in_dim, out_dim=hidden_dim, edge_dim=edge_dim
-        )
-        self.processor1 = GraphConv(
-            in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim
-        )
-        self.processor2 = GraphConv(
-            in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim
-        )
-        self.decoder = GraphConv(
-            in_dim=hidden_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim
-        )
+        self.encoder = GraphConv(in_dim=data_handler.in_dim, out_dim=hidden_dim, edge_dim=edge_dim)
+        self.processor1 = GraphConv(in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim)
+        self.processor2 = GraphConv(in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim)
+        self.decoder = GraphConv(in_dim=hidden_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim)
 
     def forward(self, graph):
         mesh_edges = graph[self.mesh_nodes, "to", self.mesh_nodes]
@@ -73,9 +67,7 @@ class EncProcDec(torch.nn.Module):
 
 
 class GraphConv(MessagePassing):
-    def __init__(
-        self, in_dim: int, out_dim: int, edge_dim: int = 3, aggr: str = "mean"
-    ):
+    def __init__(self, in_dim: int, out_dim: int, edge_dim: int = 3, aggr: str = "mean"):
         super().__init__(aggr=aggr)
         self.message_mlp = MLP(
             in_dim=2 * in_dim + edge_dim,
@@ -93,9 +85,7 @@ class GraphConv(MessagePassing):
         _: Optional[tuple[int, int]] = None,
     ) -> torch.Tensor:
         edge_index = edge_storage["edge_index"].long()
-        edge_attr = torch.cat(
-            [edge_storage["edge_dirs"], edge_storage["edge_length"]], dim=-1
-        )
+        edge_attr = torch.cat([edge_storage["edge_dirs"], edge_storage["edge_length"]], dim=-1)
 
         return self.propagate(x=x, edge_index=edge_index, edge_attr=edge_attr)
 

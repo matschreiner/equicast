@@ -24,9 +24,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         self.nodes = nodes
 
         # Build vector index pairs (u_idx, v_idx) for each vector
-        self.prognostic_vector_idxs = self._get_vector_idxs(
-            feature_config.prognostic_vector
-        )
+        self.prognostic_vector_idxs = self._get_vector_idxs(feature_config.prognostic_vector)
 
         # Create normalizer with vector support
         data = open_dataset(dataset_path)
@@ -40,9 +38,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
     def vector_dim(self) -> int:
         return len(self.feature_config.prognostic_vector)
 
-    def _get_vector_idxs(
-        self, vector_config: dict[str, list[str]]
-    ) -> list[tuple[int, int]]:
+    def _get_vector_idxs(self, vector_config: dict[str, list[str]]) -> list[tuple[int, int]]:
         """Get (u_idx, v_idx) pairs for each vector feature."""
         return [
             (
@@ -66,9 +62,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         # Stack to [nodes, num_vectors, 2]
         return torch.stack([u_components, v_components], dim=-1)
 
-    def _unpack_vectors(
-        self, vectors: torch.Tensor, data: torch.Tensor
-    ) -> torch.Tensor:
+    def _unpack_vectors(self, vectors: torch.Tensor, data: torch.Tensor) -> torch.Tensor:
         """Unpack [nodes, num_vectors, 2] back into data tensor."""
         if not self.prognostic_vector_idxs:
             return data
@@ -93,12 +87,8 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         # Normalize scalars
         normalized_scalars = self.normalize_features(raw)
-        data[self.nodes]["input_scalar"] = self.get_input_features(
-            normalized_scalars
-        )
-        data[self.nodes]["residual_scalar"] = self.get_output_features(
-            normalized_scalars
-        )
+        data[self.nodes]["input_scalar"] = self.get_input_features(normalized_scalars)
+        data[self.nodes]["residual_scalar"] = self.get_output_features(normalized_scalars)
 
         # Pack and normalize vectors
         vectors = self._pack_vectors(raw)
@@ -129,9 +119,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
     ) -> Data:
         """Denormalize outputs and write to state's data tensor."""
         # Denormalize scalars
-        scalars = self.inverse_normalize_output_features(
-            backbone_output["scalar"]
-        )
+        scalars = self.inverse_normalize_output_features(backbone_output["scalar"])
         state[self.nodes].data[..., self.out_idxs] = scalars
 
         # Denormalize and unpack vectors
@@ -140,9 +128,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         return state
 
-    def update_state_with_prediction(
-        self, state: Data, pred_state: Data
-    ) -> Data:
+    def update_state_with_prediction(self, state: Data, pred_state: Data) -> Data:
         """Copy output features from pred_state to state."""
         pred = pred_state[self.nodes].data[..., self.out_idxs]
         state[self.nodes].data[..., self.out_idxs] = pred

@@ -61,9 +61,7 @@ class EquivariantGNN(nn.Module):
         # Encode
         scalar = self.scalar_encoder(scalar_in)
         # Vector encoder: [nodes, vector_dim, 2] -> [nodes, hidden_dim, 2]
-        vector = self.vector_encoder(vector_in.transpose(-1, -2)).transpose(
-            -1, -2
-        )
+        vector = self.vector_encoder(vector_in.transpose(-1, -2)).transpose(-1, -2)
 
         # Process
         scalar, vector = self.processor(scalar, vector, edge_index)
@@ -71,9 +69,7 @@ class EquivariantGNN(nn.Module):
         # Decode
         scalar_out = self.scalar_decoder(scalar)
         # Vector decoder: [nodes, hidden_dim, 2] -> [nodes, vector_dim, 2]
-        vector_out = self.vector_decoder(vector.transpose(-1, -2)).transpose(
-            -1, -2
-        )
+        vector_out = self.vector_decoder(vector.transpose(-1, -2)).transpose(-1, -2)
 
         # Add residuals
         scalar_out = scalar_out + scalar_residual

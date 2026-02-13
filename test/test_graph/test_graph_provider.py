@@ -10,15 +10,13 @@ from equicast.graph.graph_provider import BaseGraphProvider, StaticGraphProvider
 @pytest.fixture
 def sample_graph():
     """Create a sample PyTorch Geometric graph."""
-    return HeteroData({
-        "grid": Data(x=torch.randn(100, 10))
-    })
+    return HeteroData({"grid": Data(x=torch.randn(100, 10))})
 
 
 @pytest.fixture
 def graph_file(sample_graph):
     """Create a temporary file with a saved graph."""
-    with tempfile.NamedTemporaryFile(suffix='.pt', delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as f:
         torch.save(sample_graph, f.name)
         temp_path = f.name
 
@@ -85,10 +83,10 @@ def test_static_graph_provider_to_device(graph_file):
     provider = StaticGraphProvider(graph_file)
 
     # Move to CPU (should work even if already on CPU)
-    provider_cpu = provider.to('cpu')
+    provider_cpu = provider.to("cpu")
 
     assert provider_cpu is provider  # Should return self
-    assert provider.graph["grid"].x.device.type == 'cpu'
+    assert provider.graph["grid"].x.device.type == "cpu"
 
 
 def test_static_graph_provider_is_base_graph_provider(graph_file):
@@ -117,7 +115,7 @@ def test_static_graph_provider_with_simple_data():
     simple_graph = Data(x=torch.randn(10, 5), edge_index=torch.randint(0, 10, (2, 20)))
 
     # Save and load
-    with tempfile.NamedTemporaryFile(suffix='.pt', delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as f:
         torch.save(simple_graph, f.name)
         temp_path = f.name
 
