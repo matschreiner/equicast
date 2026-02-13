@@ -34,8 +34,9 @@ def read_cast_permute_and_put_on_graph(data, idx):
     input_graph = torch.load(graph_path, weights_only=False)
     target_graph = torch.load(graph_path, weights_only=False)
 
-    input = data[idx]
-    target = data[idx + 1]
+    input = data[idx][:-1].squeeze()
+
+    target = data[idx + 1].squeeze()
 
     input_graph["grid"].data = torch.from_numpy(input)
     target_graph["grid"].data = torch.from_numpy(target)
