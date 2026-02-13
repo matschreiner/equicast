@@ -7,12 +7,11 @@ from equicast.model.layers.mlp import MLP
 
 
 class GNN(torch.nn.Module):
-    def __init__(self, feature_config, grid_nodes="grid", edge_dim: int = 3):
+    def __init__(self, data_handler, grid_nodes="grid", edge_dim: int = 3):
         super().__init__()
-        in_dim = len(feature_config.forcing) + len(feature_config.prognostic)
-        out_dim = len(feature_config.prognostic) + len(feature_config.diagnostic)
+        self.data_handler = data_handler
 
-        self.conv = GraphConv(in_dim=in_dim, out_dim=out_dim, edge_dim=edge_dim)
+        self.conv = GraphConv(in_dim=data_handler.in_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim)
         self.grid_nodes = grid_nodes
 
     def forward(self, graph):
@@ -30,7 +29,7 @@ class EncProcDec(torch.nn.Module):
 
     def __init__(
         self,
-        feature_config,
+        data_handler,
         grid_nodes: str = "grid",
         mesh_nodes: str = "mesh",
         hidden_dim: int = 256,
@@ -38,14 +37,13 @@ class EncProcDec(torch.nn.Module):
         use_residual: bool = True,
     ):
         super().__init__()
-        in_dim = len(feature_config.forcing) + len(feature_config.prognostic)
-        out_dim = len(feature_config.prognostic) + len(feature_config.diagnostic)
+        self.data_handler = data_handler
 
         self.grid_nodes = grid_nodes
         self.mesh_nodes = mesh_nodes
         self.use_residual = use_residual
         self.encoder = GraphConv(
-            in_dim=in_dim, out_dim=hidden_dim, edge_dim=edge_dim
+            in_dim=data_handler.in_dim, out_dim=hidden_dim, edge_dim=edge_dim
         )
         self.processor1 = GraphConv(
             in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim
@@ -54,7 +52,7 @@ class EncProcDec(torch.nn.Module):
             in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim
         )
         self.decoder = GraphConv(
-            in_dim=hidden_dim, out_dim=out_dim, edge_dim=edge_dim
+            in_dim=hidden_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim
         )
 
     def forward(self, graph):

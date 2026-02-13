@@ -20,6 +20,7 @@ class BaseDataHandler(torch.nn.Module, ABC):
 
     def __init__(self, dataset_path: str, feature_config: FeatureConfig):
         super().__init__()
+        self.feature_config = feature_config
         data = open_dataset(dataset_path)
         self.statistics: dict[str, torch.Tensor] = cast_dict(
             data.statistics, torch.Tensor
@@ -30,6 +31,14 @@ class BaseDataHandler(torch.nn.Module, ABC):
             feature_config=feature_config,
             name_to_index=self.name_to_index,
         )
+
+    @property
+    def in_dim(self) -> int:
+        return len(self.feature_config.forcing) + len(self.feature_config.prognostic)
+
+    @property
+    def out_dim(self) -> int:
+        return len(self.feature_config.prognostic) + len(self.feature_config.diagnostic)
 
     @property
     def in_idxs(self) -> list[int]:

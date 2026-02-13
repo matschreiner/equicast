@@ -7,7 +7,6 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities.types import LRSchedulerConfigType, OptimizerLRSchedulerConfig
 
-from equicast.data.data_handler import BaseDataHandler
 from equicast.metrics import BaseMetricsTracker
 
 
@@ -37,7 +36,6 @@ class Model(pl.LightningModule):
     def __init__(
         self,
         backbone: torch.nn.Module,
-        data_handler: BaseDataHandler,
         optimizer_factory: Callable = default_optimizer_factory,
         scheduler_factory: Callable | None = None,
         metrics_tracker: BaseMetricsTracker | None = None,
@@ -49,7 +47,7 @@ class Model(pl.LightningModule):
             self.save_hyperparameters()
 
         self.backbone = torch.compile(backbone) if compile_backbone else backbone
-        self.data_handler = data_handler
+        self.data_handler = backbone.data_handler
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
         self.metrics_tracker = metrics_tracker

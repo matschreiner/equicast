@@ -22,7 +22,6 @@ class EquivariantGraphDataHandler(BaseDataHandler):
     ):
         super().__init__(dataset_path, feature_config)
         self.nodes = nodes
-        self.feature_config = feature_config
 
         # Build vector index pairs (u_idx, v_idx) for each vector
         self.prognostic_vector_idxs = self._get_vector_idxs(
@@ -36,6 +35,10 @@ class EquivariantGraphDataHandler(BaseDataHandler):
             data,
             self.prognostic_vector_idxs,
         )
+
+    @property
+    def vector_dim(self) -> int:
+        return len(self.feature_config.prognostic_vector)
 
     def _get_vector_idxs(
         self, vector_config: dict[str, list[str]]

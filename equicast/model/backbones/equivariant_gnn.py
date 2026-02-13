@@ -3,7 +3,6 @@
 import torch
 from torch import nn
 
-from equicast.data.feature_config import FeatureConfig
 from equicast.model.layers.equivariant_conv import EquivariantBlock
 from equicast.model.layers.mlp import MLP
 
@@ -13,23 +12,18 @@ class EquivariantGNN(nn.Module):
 
     def __init__(
         self,
-        feature_config: FeatureConfig,
+        data_handler,
         grid_nodes: str = "grid",
         hidden_dim: int = 256,
     ):
         super().__init__()
+        self.data_handler = data_handler
         self.grid_nodes = grid_nodes
 
-        # Scalar dimensions
-        scalar_in_dim = len(feature_config.forcing) + len(
-            feature_config.prognostic
-        )
-        scalar_out_dim = len(feature_config.prognostic) + len(
-            feature_config.diagnostic
-        )
-
-        # Vector dimension (number of vector features)
-        vector_dim = len(feature_config.prognostic_vector)
+        # Dimensions
+        scalar_in_dim = data_handler.in_dim
+        scalar_out_dim = data_handler.out_dim
+        vector_dim = data_handler.vector_dim
 
         # Encoder: project to hidden dim
         self.scalar_encoder = MLP(in_dim=scalar_in_dim, out_dim=hidden_dim)
