@@ -12,7 +12,7 @@ from equicast.logger import MLFlowLogger
 from equicast.model.model import Model
 
 DATASET_PATH = "/home/masc/storage/mini_aifs.zarr"
-GRAPH_PATH = "graph/aifs-graphcast.pt"
+GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
 
 BACKBONES = {
     "painn": "config.backbones.painn",
