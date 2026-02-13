@@ -96,6 +96,7 @@ class Model(pl.LightningModule):
             self.log_metrics(backbone_out, target, input.num_graphs)
 
         self._last_step_end = time.time()
+        self.log("step", self._last_step_end - now, prog_bar=True, logger=False, on_step=True, on_epoch=False)
         return loss
 
     def loss(self, backbone_out, backbone_target):

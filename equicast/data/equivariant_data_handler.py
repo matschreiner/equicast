@@ -138,8 +138,6 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
     def _pack_vectors(self, raw: torch.Tensor, vector_idxs: list[tuple[int, int]]) -> torch.Tensor:
         """Pack vector components into [..., num_vectors, 2] tensor."""
-        n_vecs = len(vector_idxs)
-        return torch.randn(*raw.shape[:-1], n_vecs, 2, device=raw.device)
 
         if not vector_idxs:
             return torch.empty(*raw.shape[:-1], 0, 2, device=raw.device)
