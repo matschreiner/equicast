@@ -18,10 +18,12 @@ def backbone_config(dataset_path):
         edges=[
             ("grid", "to", "mesh"),
             ("mesh", "to", "mesh"),
+            ("mesh", "to", "mesh"),
+            ("mesh", "to", "mesh"),
             ("mesh", "to", "grid"),
         ],
         input_nodes="grid",
-        hidden_dim=64,
+        hidden_dim=128,
     )
 
     return backbone, equivariant_loss_fn
