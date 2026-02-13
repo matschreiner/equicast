@@ -42,5 +42,4 @@ def bench(num_workers):
 
 
 if __name__ == "__main__":
-    for nw in [0, 1, 2, 4, 8]:
-        bench(nw)
+    bench(8)
