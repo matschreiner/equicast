@@ -40,7 +40,7 @@ def main():
     dataset_path = "/home/masc/storage/mini_aifs.zarr"
     graph_path = "graph/aifs-graphcast.pt"
     checkpoint_path = (
-        "/leonardo/home/userexternal/jschrei1/equicast/logs/equicast/version_6/checkpoints/latest.ckpt"
+        "/leonardo/home/userexternal/jschrei1/equicast/logs/equicast/version_8/checkpoints/latest.ckpt"
         #  "/vf/masc/programming/equicast/58/fa0e587422c24628b1d04541bc02e084/checkpoints/latest.ckpt"
     )
     host = "leonardo"
