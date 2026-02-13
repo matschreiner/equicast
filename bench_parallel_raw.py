@@ -17,7 +17,7 @@ def read_raw(data, idx):
 
 
 def read_and_cast(data, idx):
-    return torch.tensor(data[idx : idx + 2])
+    return torch.from_numpy(data[idx : idx + 2])
 
 
 def read_cast_and_permute(data, idx):
