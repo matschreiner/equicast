@@ -24,9 +24,9 @@ def read_cast_and_graph(data, idx):
     graph_path = "graph/aifs-graphcast-unnormed.py"
     graph = torch.load(graph_path, weights_only=False)
     raw = data[idx : idx + 2]
-    tensor = torch.from_numpy(raw).squeeze().permute(0, 2, 1)
-    graph["grid"].data = tensor
-    return graph
+    #  tensor = torch.from_numpy(raw).squeeze().permute(0, 2, 1)
+    #  graph["grid"].data = tensor
+    return graph, raw
 
 
 def worker(path, indices, queue, read_fn):
