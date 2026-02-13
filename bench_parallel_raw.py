@@ -10,37 +10,37 @@ DATASET_PATH = "/leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-
 NUM_READS = 200
 
 
-def worker(path, indices, queue):
+def read_raw(data, idx):
+    return data[idx : idx + 2]
+
+
+def read_and_cast(data, idx):
+    return torch.tensor(data[idx : idx + 2])
+
+
+def worker(path, indices, queue, read_fn):
     data = open_dataset(path)
     for idx in indices:
-        _ = torch.tensor(data[idx : idx + 2])
+        _ = read_fn(data, idx)
     queue.put(len(indices))
 
 
-def bench(num_workers):
+def bench(num_workers, read_fn, label):
     indices = list(range(NUM_READS))
+    chunks = [indices[i::num_workers] for i in range(num_workers)]
+    queue = Queue()
+    procs = [Process(target=worker, args=(DATASET_PATH, chunk, queue, read_fn)) for chunk in chunks]
 
-    if num_workers == 0:
-        data = open_dataset(DATASET_PATH)
-        _ = data[0:2]  # warm up
-        start = time.time()
-        for idx in indices:
-            _ = data[idx : idx + 2]
-        elapsed = time.time() - start
-    else:
-        chunks = [indices[i::num_workers] for i in range(num_workers)]
-        queue = Queue()
-        procs = [Process(target=worker, args=(DATASET_PATH, chunk, queue)) for chunk in chunks]
+    start = time.time()
+    for p in procs:
+        p.start()
+    for p in procs:
+        p.join()
+    elapsed = time.time() - start
 
-        start = time.time()
-        for p in procs:
-            p.start()
-        for p in procs:
-            p.join()
-        elapsed = time.time() - start
-
-    print(f"workers={num_workers:2d}  {NUM_READS} reads in {elapsed:.2f}s  ({NUM_READS / elapsed:.1f} reads/s)")
+    print(f"{label:20s}  {NUM_READS} reads in {elapsed:.2f}s  ({NUM_READS / elapsed:.1f} reads/s)")
 
 
 if __name__ == "__main__":
-    bench(8)
+    bench(8, read_raw, "raw")
+    bench(8, read_and_cast, "raw + torch.tensor")
