@@ -22,7 +22,7 @@ class AnemoiDataset(Dataset):
         self.graph_provider = graph_provider
 
     def __len__(self):
-        return len(self.data) - self.num_input_steps
+        return len(self.data) - 1
 
     def __getitem__(self, idx):
         input_data = self.data[idx].squeeze()
