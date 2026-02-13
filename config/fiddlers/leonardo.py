@@ -14,7 +14,7 @@ def fiddler(cfg: fdl.Config) -> None:
     cfg.dataloader.num_workers = 8
     cfg.dataloader.persistent_workers = True
     cfg.dataloader.prefetch_factor = 2
-    cfg.dataloader.batch_size = 1
+    cfg.dataloader.batch_size = 4
     cfg.trainer.strategy = "ddp"
 
     logger = fdl.Config(
