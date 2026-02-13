@@ -17,8 +17,6 @@ def backbone_config(dataset_path):
         data_handler=data_handler,
         edges=[
             ("grid", "to", "mesh"),
-            #  ("mesh", "to", "mesh"),
-            #  ("mesh", "to", "mesh"),
             ("mesh", "to", "mesh"),
             ("mesh", "to", "grid"),
         ],
