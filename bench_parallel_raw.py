@@ -31,12 +31,13 @@ def read_cast_and_permute(data, idx):
 
 def read_cast_permute_and_put_on_graph(data, idx):
     graph_path = "graph/aifs-graphcast-unnormed.pt"
-    graph = torch.load(graph_path, weights_only=False)
+    input_graph = torch.load(graph_path, weights_only=False)
+    target_graph = torch.load(graph_path, weights_only=False)
     raw = data[idx : idx + 2]
-    input_graph = graph.clone()
-    input_graph["grid"].data = torch.from_numpy(raw[0]).T
-    target_graph = graph.clone()
-    target_graph["grid"].data = torch.from_numpy(raw[1]).T
+
+    input_graph["grid"].data = torch.from_numpy(raw[0])
+    target_graph["grid"].data = torch.from_numpy(raw[1])
+
     return {"input": input_graph, "target": target_graph}
 
 
