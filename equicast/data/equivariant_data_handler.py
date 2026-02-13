@@ -64,6 +64,8 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         diagnostic_vector_idxs = self._get_vector_idxs(feature_config.diagnostic_vector)
         self.in_vector_idxs = forcing_vector_idxs + prognostic_vector_idxs
         self.out_vector_idxs = prognostic_vector_idxs + diagnostic_vector_idxs
+        if self.in_vector_idxs == self.out_vector_idxs:
+            self.get_output_vectors = self.get_input_vectors
 
         # Create normalizers
         data = open_dataset(dataset_path)
@@ -83,9 +85,14 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         # Pack and normalize vectors
         input_vectors = self.get_input_vectors(raw)
-        output_vectors = self.get_output_vectors(raw)
-        data[self.nodes]["input_vector"] = self.vector_normalizer.normalize_vectors(input_vectors)
-        data[self.nodes]["residual_vector"] = self.vector_normalizer.normalize_vectors(output_vectors)
+        norm_input_vectors = self.vector_normalizer.normalize_vectors(input_vectors)
+        data[self.nodes]["input_vector"] = norm_input_vectors
+
+        if self._shared_vector_idxs:
+            data[self.nodes]["residual_vector"] = norm_input_vectors
+        else:
+            output_vectors = self.get_output_vectors(raw)
+            data[self.nodes]["residual_vector"] = self.vector_normalizer.normalize_vectors(output_vectors)
 
         return data
 
