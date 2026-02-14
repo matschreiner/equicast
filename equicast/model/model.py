@@ -115,7 +115,7 @@ class Model(pl.LightningModule):
             "train/loss",
             loss,
             logger=True,
-            prog_bar=True,
+            prog_bar=False,
             on_step=True,
             on_epoch=False,
             batch_size=batch_size,
