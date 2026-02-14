@@ -22,7 +22,7 @@ class StepTimer(Callback):
             pl_module.log(
                 "performance/step_time", self._last_opt_time, prog_bar=True, logger=True, on_step=True, on_epoch=False
             )
-            pl_module.log("performance/it_per_s", it_per_s, prog_bar=True, logger=True, on_step=True, on_epoch=False)
+            pl_module.log("performance/it_per_s", it_per_s, prog_bar=False, logger=True, on_step=True, on_epoch=False)
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         now = time.time()
