@@ -112,7 +112,7 @@ def main():
         print(f"Job folder: {job_dir}")
         return
 
-    result = subprocess.run(["sbatch"], input=script, text=True, capture_output=True)
+    result = subprocess.run(["sbatch"], input=script, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     sys.stdout.write(result.stdout)
     sys.stderr.write(result.stderr)
     if result.returncode == 0:
