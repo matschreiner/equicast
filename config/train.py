@@ -29,6 +29,7 @@ FIDDLERS = {
     "debug": "config.fiddlers.debug",
     "cuda_profile": "config.fiddlers.cuda_profile",
     "scheduler": "config.fiddlers.scheduler",
+    "ema": "config.fiddlers.ema",
 }
 
 
