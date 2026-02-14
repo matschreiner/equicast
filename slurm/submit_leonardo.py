@@ -62,6 +62,14 @@ def next_job_index() -> int:
 
 
 def main():
+    # Split sys.argv on "--" so the command after it isn't parsed by argparse
+    argv = sys.argv[1:]
+    if "--" in argv:
+        split = argv.index("--")
+        our_args, cmd_args = argv[:split], argv[split + 1 :]
+    else:
+        our_args, cmd_args = argv, []
+
     parser = argparse.ArgumentParser(
         description="Submit a Leonardo sbatch job.",
         usage="%(prog)s [options] -- command [args...]",
@@ -72,19 +80,16 @@ def main():
     parser.add_argument("--partition", default="boost_usr_prod")
     parser.add_argument("--account", default="deste_340_26")
     parser.add_argument("--dry-run", action="store_true", help="Print the script instead of submitting")
-    parser.add_argument("command", nargs=argparse.REMAINDER, help="Command to run (after --)")
-    args = parser.parse_args()
+    args = parser.parse_args(our_args)
 
-    if not args.command:
+    if not cmd_args:
         parser.error("No command given. Usage: submit_leonardo.py [options] -- command [args...]")
-    if args.command[0] == "--":
-        args.command = args.command[1:]
 
     idx = next_job_index()
     job_dir = JOBS_DIR / str(idx)
     job_dir.mkdir(parents=True, exist_ok=True)
 
-    train_cmd = " ".join(args.command)
+    train_cmd = " ".join(cmd_args)
     job_dir_remote = f"{PROJECT_DIR}/jobs/{idx}"
 
     script = TEMPLATE.format(
