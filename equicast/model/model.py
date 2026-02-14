@@ -122,7 +122,7 @@ class Model(pl.LightningModule):
             "train/lr",
             lr,
             logger=True,
-            prog_bar=True,
+            prog_bar=False,
             on_step=True,
             on_epoch=False,
         )
