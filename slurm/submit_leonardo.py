@@ -24,10 +24,10 @@ To attach to a running job:
 """
 
 import argparse
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 CPUS_PER_TASK = 8
 PROJECT_DIR = "/leonardo/home/userexternal/jschrei1/equicast"
@@ -110,10 +110,13 @@ def main():
         print(script)
         write_enter_script(job_dir, job_id="$1")
         write_tail_script(job_dir, job_dir_remote, job_id="JOBID")
+        write_cancel_script(job_dir, job_id="JOBID")
         print_summary(idx, job_dir, job_dir_remote, job_id="JOBID")
         return
 
-    result = subprocess.run(["sbatch"], input=script, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.run(
+        ["sbatch"], input=script, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     sys.stdout.write(result.stdout)
     sys.stderr.write(result.stderr)
     if result.returncode == 0:
@@ -121,6 +124,7 @@ def main():
         job_id = match.group(1) if match else "$1"
         write_enter_script(job_dir, job_id=job_id)
         write_tail_script(job_dir, job_dir_remote, job_id=job_id)
+        write_cancel_script(job_dir, job_id=job_id)
         print_summary(idx, job_dir, job_dir_remote, job_id=job_id)
     sys.exit(result.returncode)
 
@@ -128,11 +132,9 @@ def main():
 def print_summary(idx, job_dir, remote_dir, job_id):
     print("")
     print("Job #{idx}".format(idx=idx))
-    print("  folder:  {dir}".format(dir=job_dir))
-    print("  script:  {dir}/submit.sbatch".format(dir=job_dir))
     print("  enter:   {dir}/enter.sh".format(dir=job_dir))
     print("  tail:    {dir}/tail.sh".format(dir=job_dir))
-    print("  logs:    {dir}/slurm-{id}.out".format(dir=remote_dir, id=job_id))
+    print("  cancel:  {dir}/cancel.sh".format(dir=job_dir))
 
 
 def write_enter_script(job_dir: Path, job_id: str) -> None:
@@ -145,6 +147,12 @@ def write_tail_script(job_dir: Path, remote_dir: str, job_id: str) -> None:
     tail = job_dir / "tail.sh"
     tail.write_text('#!/bin/bash\ntail -f "{dir}/slurm-{id}.out"\n'.format(dir=remote_dir, id=job_id))
     tail.chmod(tail.stat().st_mode | 0o111)
+
+
+def write_cancel_script(job_dir: Path, job_id: str) -> None:
+    cancel = job_dir / "cancel.sh"
+    cancel.write_text('#!/bin/bash\nscancel "{id}"\n'.format(id=job_id))
+    cancel.chmod(cancel.stat().st_mode | 0o111)
 
 
 if __name__ == "__main__":
