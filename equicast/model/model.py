@@ -80,7 +80,10 @@ class Model(pl.LightningModule):
     def training_step(self, batch, _):
         self._step_start = time.time()
         if hasattr(self, "_last_step_end"):
-            self.log("train/wait_time", self._step_start - self._last_step_end, prog_bar=True, logger=True, on_step=True, on_epoch=False)
+            wait_time = self._step_start - self._last_step_end
+            self.log("train/wait_time", wait_time, prog_bar=True, logger=True, on_step=True, on_epoch=False)
+        if hasattr(self, "_last_optimization_step_time"):
+            self.log("optimization_step_time", self._last_optimization_step_time, prog_bar=True, logger=True, on_step=True, on_epoch=False)
 
         input = batch["input"]
         input = self.data_handler.prepare_backbone_input(input)  # type: ignore
@@ -99,7 +102,7 @@ class Model(pl.LightningModule):
 
     def on_train_batch_end(self, outputs, batch, batch_idx):
         self._last_step_end = time.time()
-        self.log("optimization_step_time", self._last_step_end - self._step_start, prog_bar=True, logger=True, on_step=True, on_epoch=False)
+        self._last_optimization_step_time = self._last_step_end - self._step_start
 
     def loss(self, backbone_out, backbone_target):
         return self.loss_fn(backbone_out, backbone_target)
