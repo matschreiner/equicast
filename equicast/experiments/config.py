@@ -20,7 +20,7 @@ from equicast.data.graph_provider import BaseGraphProvider
 from equicast.forecaster import Forecaster
 from equicast.logger import BaseLogger
 from equicast.model import Model
-from equicast.utils import get_git_info
+from equicast.utils import get_git_info, get_hardware_info
 
 
 class ExperimentConfig(ABC):
@@ -76,6 +76,7 @@ def run_experiment(config: fdl.Config):
         vis_config(config)
     experiment = fdl.build(config)
     experiment.logger.log_hyperparams(get_git_info())
+    experiment.logger.log_hyperparams(get_hardware_info())
     experiment.run()
 
 
