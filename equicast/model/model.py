@@ -57,10 +57,6 @@ class Model(pl.LightningModule):
     def device(self):
         return next(self.parameters()).device
 
-    @property
-    def nodes(self):
-        return self.data_handler.nodes
-
     def forward(self, input):
         input = input.clone()
         input = self.data_handler.prepare_backbone_input(input)
@@ -83,7 +79,7 @@ class Model(pl.LightningModule):
         target = batch["target"]
         target = self.data_handler.prepare_backbone_target(target)  # type: ignore
 
-        backbone_out = self.backbone.forward(input)
+        backbone_out = self.backbone.forward(input)  # type: ignore
 
         loss = self.loss(backbone_out, target)
         self.log_loss(loss, input.num_graphs)
