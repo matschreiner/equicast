@@ -1,12 +1,7 @@
-"""Custom PyTorch Lightning callbacks."""
-
-import copy
 import os
 import time
 
-import torch
 from pytorch_lightning import Callback
-
 
 
 class TimeDeltaCheckpoint(Callback):
@@ -87,72 +82,3 @@ class TimeDeltaCheckpoint(Callback):
         if current_loss is not None and current_loss < self.best_loss:
             self.best_loss = current_loss
             self._save_checkpoint(trainer, "best")
-
-
-class StepTimer(Callback):
-    """Logs wall-clock wait_time and opt_step_time per training step."""
-
-    def __init__(self, start_step: int = 10):
-        super().__init__()
-        self.start_step = start_step
-        self._step_start = None
-        self._last_step_end = None
-        self._last_opt_time = None
-
-    def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
-        self._step_start = time.time()
-        if self._last_step_end is not None and trainer.global_step >= self.start_step:
-            wait_time = self._step_start - self._last_step_end
-            pl_module.log("train/wait_time", wait_time, prog_bar=True, logger=True, on_step=True, on_epoch=False)
-            pl_module.log("train/opt_step_time", self._last_opt_time, prog_bar=True, logger=True, on_step=True, on_epoch=False)
-
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        now = time.time()
-        self._last_opt_time = now - self._step_start
-        self._last_step_end = now
-
-
-class EMA(Callback):
-    """Exponential Moving Average of model weights.
-
-    Maintains shadow weights updated each step as:
-        ema_weight = decay * ema_weight + (1 - decay) * model_weight
-
-    Swaps EMA weights into the model before checkpointing/validation,
-    then swaps back for continued training.
-    """
-
-    def __init__(self, decay: float = 0.999):
-        super().__init__()
-        self.decay = decay
-        self.shadow: dict[str, torch.Tensor] = {}
-
-    def on_train_start(self, trainer, pl_module):
-        self.shadow = {name: p.clone().detach() for name, p in pl_module.named_parameters()}
-
-    @torch.no_grad()
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        for name, p in pl_module.named_parameters():
-            self.shadow[name].lerp_(p.data, 1 - self.decay)
-
-    def _swap(self, pl_module):
-        for name, p in pl_module.named_parameters():
-            tmp = p.data.clone()
-            p.data.copy_(self.shadow[name])
-            self.shadow[name].copy_(tmp)
-
-    def on_validation_start(self, trainer, pl_module):
-        self._swap(pl_module)
-
-    def on_validation_end(self, trainer, pl_module):
-        self._swap(pl_module)
-
-    def on_save_checkpoint(self, trainer, pl_module, checkpoint):
-        self._swap(pl_module)
-        checkpoint["state_dict"] = copy.deepcopy(pl_module.state_dict())
-        self._swap(pl_module)
-        checkpoint["ema_shadow"] = self.shadow
-
-    def on_load_checkpoint(self, trainer, pl_module, checkpoint):
-        if "ema_shadow" in checkpoint:
-            self.shadow = checkpoint.pop("ema_shadow")

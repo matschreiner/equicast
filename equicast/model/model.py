@@ -2,7 +2,6 @@ import warnings
 from contextlib import contextmanager
 from typing import Callable
 
-import numpy as np
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities.types import LRSchedulerConfigType, OptimizerLRSchedulerConfig
@@ -117,11 +116,11 @@ class Model(pl.LightningModule):
         )
 
     def log_lr(self):
-        """Log learning rate and log step to logger only."""
+        """Log learning rate to logger only."""
         lr = get_lr(self)
-        ln_step = np.log(self.global_step + 1)
-        self.log_dict(
-            {"train/lr": lr, "train/log_step": ln_step},
+        self.log(
+            "train/lr",
+            lr,
             logger=True,
             prog_bar=False,
             on_step=True,
