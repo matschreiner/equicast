@@ -1,8 +1,29 @@
 #!/usr/bin/env python3
-"""Submit an sbatch job on Leonardo with parameterized GPU count."""
+"""Submit an sbatch job on Leonardo with parameterized GPU count.
+
+Usage:
+    python slurm/submit_leonardo.py [options] -- command [args...]
+
+Examples:
+    # Submit a training job (1 GPU, 12h default)
+    python slurm/submit_leonardo.py -- python config/train.py --backbone painn
+
+    # Multi-GPU with custom wall time
+    python slurm/submit_leonardo.py --gpus 4 --time 24:00:00 -- python config/train.py --backbone painn
+
+    # Dry run (print script, don't submit)
+    python slurm/submit_leonardo.py --dry-run -- python config/train.py --backbone painn
+
+Each submission creates a jobs/<idx>/ folder containing:
+    submit.sbatch  - the generated sbatch script
+    enter.sh       - executable script to attach to the running job
+    slurm-*.out/err - stdout/stderr logs (created by slurm)
+
+To attach to a running job:
+    ./jobs/3/enter.sh
+"""
 
 import argparse
-import os
 from pathlib import Path
 import re
 import subprocess
@@ -41,21 +62,29 @@ def next_job_index() -> int:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Submit a Leonardo sbatch job.")
-    parser.add_argument("command", help="Command to run, as a quoted string (e.g. 'python config/train.py --backbone painn')")
+    parser = argparse.ArgumentParser(
+        description="Submit a Leonardo sbatch job.",
+        usage="%(prog)s [options] -- command [args...]",
+    )
     parser.add_argument("--gpus", type=int, default=1, help="Number of GPUs (default: 1). Sets ntasks=N, cpus=N*8.")
     parser.add_argument("--time", default="12:00:00", help="Wall time (default: 12:00:00)")
     parser.add_argument("--job-name", default="equicast", help="Job name (default: equicast)")
     parser.add_argument("--partition", default="boost_usr_prod")
     parser.add_argument("--account", default="deste_340_26")
     parser.add_argument("--dry-run", action="store_true", help="Print the script instead of submitting")
+    parser.add_argument("command", nargs=argparse.REMAINDER, help="Command to run (after --)")
     args = parser.parse_args()
+
+    if not args.command:
+        parser.error("No command given. Usage: submit_leonardo.py [options] -- command [args...]")
+    if args.command[0] == "--":
+        args.command = args.command[1:]
 
     idx = next_job_index()
     job_dir = JOBS_DIR / str(idx)
     job_dir.mkdir(parents=True, exist_ok=True)
 
-    train_cmd = args.command
+    train_cmd = " ".join(args.command)
     job_dir_remote = f"{PROJECT_DIR}/jobs/{idx}"
 
     script = TEMPLATE.format(
