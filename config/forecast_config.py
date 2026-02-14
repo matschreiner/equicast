@@ -25,42 +25,36 @@ def get_graph_from_provider(graph_provider, idx):
     return graph
 
 
-def get_timeseries(
-    dataset,
-    start_idx,
-    steps,
-):
-    """Get timeseries data from dataset for forecasting."""
+def load_model(model_cls, checkpoint_provider):
+    return from_checkpoint(model_cls, checkpoint_provider)
 
-    timeseries = [dataset[idx] for idx in range(start_idx, start_idx + steps + 1)]
+
+def load_timeseries(path, graph_path):
+    """Load raw timeseries from npz and reconstruct graphs."""
+    import numpy as np
+
+    raw = np.load(path)["raw"]
+    graph = torch.load(graph_path, weights_only=False)
+
+    timeseries = []
+    for i in range(len(raw) - 1):
+        input_graph = graph.clone()
+        target_graph = graph.clone()
+        input_graph["grid"].data = torch.from_numpy(raw[i]).float()
+        target_graph["grid"].data = torch.from_numpy(raw[i + 1]).float()
+        timeseries.append({"input": input_graph, "target": target_graph})
+
     return timeseries
 
 
 def main():
-    dataset_path = "/home/masc/storage/mini_aifs.zarr"
-    graph_path = "graph/aifs-graphcast.pt"
-    checkpoint_path = (
-        "/leonardo/home/userexternal/jschrei1/equicast/logs/equicast/version_8/checkpoints/latest.ckpt"
-        #  "/vf/masc/programming/equicast/58/fa0e587422c24628b1d04541bc02e084/checkpoints/latest.ckpt"
-    )
+    #  dataset_path = "/home/masc/storage/mini_aifs.zarr"
+    #  graph_path = "graph/aifs-graphcast.pt"
+    #  checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/logs/equicast/version_68/checkpoints/latest.ckpt"
+    checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/mlruns/394873961037717851/eb5715aca43c4351a308e089840afd66/checkpoints/latest.ckpt"
     host = "leonardo"
 
-    graph_provider = fdl.Config(
-        data.StaticGraphProvider,
-        path=graph_path,
-    )
-    dataset = fdl.Config(
-        data.AnemoiDataset,
-        path=dataset_path,
-        graph_provider=graph_provider,
-    )
-
-    timeseries = fdl.Config(
-        get_timeseries,
-        dataset=dataset,
-        start_idx=0,
-        steps=56,
-    )
+    timeseries = torch.load("timeseries.pt", weights_only=False)
 
     logger = fdl.Config(
         MLFlowLogger,
@@ -101,7 +95,7 @@ def main():
     )
 
     model = fdl.Config(
-        from_checkpoint,
+        load_model,
         model_cls=Model,
         checkpoint_provider=checkpoint_provider,
     )
