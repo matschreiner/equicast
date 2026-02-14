@@ -2,6 +2,7 @@
 
 import numpy as np
 import torch
+from tqdm import tqdm
 
 RAW_PATH = "timeseries_raw.npz"
 GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
@@ -13,7 +14,7 @@ def main():
     graph = torch.load(GRAPH_PATH, weights_only=False)
 
     timeseries = []
-    for i in range(len(raw) - 1):
+    for i in tqdm(range(len(raw) - 1), desc="Unpacking"):
         input_graph = graph.clone()
         target_graph = graph.clone()
         input_graph["grid"].data = torch.from_numpy(raw[i]).float()
