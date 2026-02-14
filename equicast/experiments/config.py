@@ -75,12 +75,8 @@ def run_experiment(config: fdl.Config):
     if args.graph:
         vis_config(config)
     experiment = fdl.build(config)
+    experiment.logger.log_hyperparams(get_git_info())
     experiment.run()
-
-    #  git_info = get_git_info()
-    #  experiment.logger.log_hyperparams(git_info)
-    #
-    #  with experiment_error_handler(experiment.logger):
 
 
 @contextmanager
