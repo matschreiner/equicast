@@ -81,8 +81,8 @@ class Model(pl.LightningModule):
         backbone_out = self.backbone.forward(input)  # type: ignore
 
         loss = self.loss(backbone_out, target)
-        self.log_loss(loss, input.num_graphs)
         self.log_lr()
+        self.log_loss(loss, input.num_graphs)
         self.log_metrics(backbone_out, target, input.num_graphs)
 
         return loss
@@ -122,7 +122,7 @@ class Model(pl.LightningModule):
             "train/lr",
             lr,
             logger=True,
-            prog_bar=False,
+            prog_bar=True,
             on_step=True,
             on_epoch=False,
         )
