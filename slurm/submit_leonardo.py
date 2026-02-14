@@ -86,11 +86,11 @@ def main():
         parser.error("No command given. Usage: submit_leonardo.py [options] -- command [args...]")
 
     idx = next_job_index()
-    job_dir = JOBS_DIR / str(idx)
+    job_dir = JOBS_DIR / "{:04d}".format(idx)
     job_dir.mkdir(parents=True, exist_ok=True)
 
     train_cmd = " ".join(cmd_args)
-    job_dir_remote = f"{PROJECT_DIR}/jobs/{idx}"
+    job_dir_remote = "{}/jobs/{:04d}".format(PROJECT_DIR, idx)
 
     script = TEMPLATE.format(
         job_name=args.job_name,
@@ -109,7 +109,8 @@ def main():
     if args.dry_run:
         print(script)
         write_enter_script(job_dir, job_id="$1")
-        print(f"Job folder: {job_dir}")
+        write_tail_script(job_dir, job_dir_remote, job_id="JOBID")
+        print_summary(idx, job_dir, job_dir_remote, job_id="JOBID")
         return
 
     result = subprocess.run(["sbatch"], input=script, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -119,14 +120,31 @@ def main():
         match = re.search(r"Submitted batch job (\d+)", result.stdout)
         job_id = match.group(1) if match else "$1"
         write_enter_script(job_dir, job_id=job_id)
-        print(f"Job folder: {job_dir}")
+        write_tail_script(job_dir, job_dir_remote, job_id=job_id)
+        print_summary(idx, job_dir, job_dir_remote, job_id=job_id)
     sys.exit(result.returncode)
+
+
+def print_summary(idx, job_dir, remote_dir, job_id):
+    print("")
+    print("Job #{idx}".format(idx=idx))
+    print("  folder:  {dir}".format(dir=job_dir))
+    print("  script:  {dir}/submit.sbatch".format(dir=job_dir))
+    print("  enter:   {dir}/enter.sh".format(dir=job_dir))
+    print("  tail:    {dir}/tail.sh".format(dir=job_dir))
+    print("  logs:    {dir}/slurm-{id}.out".format(dir=remote_dir, id=job_id))
 
 
 def write_enter_script(job_dir: Path, job_id: str) -> None:
     enter = job_dir / "enter.sh"
-    enter.write_text(f'#!/bin/bash\nsrun --overlap --jobid="{job_id}" --pty bash\n')
+    enter.write_text('#!/bin/bash\nsrun --overlap --jobid="{id}" --pty bash\n'.format(id=job_id))
     enter.chmod(enter.stat().st_mode | 0o111)
+
+
+def write_tail_script(job_dir: Path, remote_dir: str, job_id: str) -> None:
+    tail = job_dir / "tail.sh"
+    tail.write_text('#!/bin/bash\ntail -f "{dir}/slurm-{id}.out"\n'.format(dir=remote_dir, id=job_id))
+    tail.chmod(tail.stat().st_mode | 0o111)
 
 
 if __name__ == "__main__":
