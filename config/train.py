@@ -6,7 +6,7 @@ from pytorch_lightning import Trainer
 from torch_geometric.loader import DataLoader
 
 from equicast import data, experiments
-from equicast.callbacks import TimeDeltaCheckpoint
+from equicast.callbacks import StepTimer, TimeDeltaCheckpoint
 from equicast.experiments import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.model.model import Model
@@ -28,6 +28,7 @@ FIDDLERS = {
     "local": "config.fiddlers.local",
     "debug": "config.fiddlers.debug",
     "cuda_profile": "config.fiddlers.cuda_profile",
+    "scheduler": "config.fiddlers.scheduler",
 }
 
 
@@ -50,6 +51,7 @@ def default_trainer(logger):
                 TimeDeltaCheckpoint,
                 save_initial=True,
             ),
+            fdl.Config(StepTimer),
         ],
     )
 

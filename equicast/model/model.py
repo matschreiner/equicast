@@ -1,4 +1,3 @@
-import time
 import warnings
 from contextlib import contextmanager
 from typing import Callable
@@ -78,30 +77,22 @@ class Model(pl.LightningModule):
         return next, pred
 
     def training_step(self, batch, _):
-        self._step_start = time.time()
-        if self.global_step >= 10:
-            wait_time = self._step_start - self._last_step_end
-            self.log("train/wait_time", wait_time, prog_bar=True, logger=True, on_step=True, on_epoch=False)
-            self.log("train/opt_step_time", self._last_optimization_step_time, prog_bar=True, logger=True, on_step=True)
-
         input = batch["input"]
         input = self.data_handler.prepare_backbone_input(input)  # type: ignore
 
         target = batch["target"]
-        target = self.data_handler.prepare_backbone_target(target)
+        target = self.data_handler.prepare_backbone_target(target)  # type: ignore
 
         backbone_out = self.backbone.forward(input)
 
         loss = self.loss(backbone_out, target)
         self.log_loss(loss, input.num_graphs)
+        self.log_lr()
+
         if self.metrics_tracker is not None:
             self.log_metrics(backbone_out, target, input.num_graphs)
 
         return loss
-
-    def on_train_batch_end(self, outputs, batch, batch_idx):
-        self._last_step_end = time.time()
-        self._last_optimization_step_time = self._last_step_end - self._step_start
 
     def loss(self, backbone_out, backbone_target):
         return self.loss_fn(backbone_out, backbone_target)
@@ -131,21 +122,23 @@ class Model(pl.LightningModule):
             batch_size=batch_size,
         )
 
-    def log_metrics(self, backbone_out, backbone_target, batch_size):
-        """Log all metrics (lr, log_step, model metrics) to logger only."""
-        if not self._should_log_metrics():
-            return
-
+    def log_lr(self):
+        """Log learning rate and log step to logger only."""
         lr = get_lr(self)
         ln_step = np.log(self.global_step + 1)
-        log_dict = {"train/lr": lr, "train/log_step": ln_step}
-
-        if self.metrics_tracker is not None:
-            metrics = self.metrics_tracker.compute_metrics(backbone_out, backbone_target)
-            log_dict.update(metrics)
-
         self.log_dict(
-            log_dict,
+            {"train/lr": lr, "train/log_step": ln_step},
+            logger=True,
+            prog_bar=False,
+            on_step=True,
+            on_epoch=False,
+        )
+
+    def log_metrics(self, backbone_out, backbone_target, batch_size):
+        """Log model metrics to logger only."""
+        metrics = self.metrics_tracker.compute_metrics(backbone_out, backbone_target)
+        self.log_dict(
+            metrics,
             logger=True,
             prog_bar=False,
             on_step=True,
