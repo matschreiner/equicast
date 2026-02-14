@@ -18,11 +18,11 @@ class StepTimer(Callback):
         if self._last_step_end is not None and trainer.global_step >= self.start_step:
             wait_time = self._step_start - self._last_step_end
             total_time = wait_time + self._last_opt_time
-            pl_module.log("train/wait_time", wait_time, prog_bar=False, logger=True, on_step=True, on_epoch=False)
+            pl_module.log("performance/wait_time", wait_time, prog_bar=False, logger=True, on_step=True, on_epoch=False)
             pl_module.log(
-                "train/opt_step_time", self._last_opt_time, prog_bar=False, logger=True, on_step=True, on_epoch=False
+                "performance/step_time", self._last_opt_time, prog_bar=False, logger=True, on_step=True, on_epoch=False
             )
-            pl_module.log("train/total_step_time", total_time, prog_bar=False, logger=True, on_step=True, on_epoch=False)
+            pl_module.log("performance/total_step_time", total_time, prog_bar=False, logger=True, on_step=True, on_epoch=False)
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         now = time.time()
