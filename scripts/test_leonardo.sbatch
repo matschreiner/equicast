@@ -16,4 +16,4 @@ source venv/bin/activate
 
 mkdir -p logs
 
-python config/train.py --backbone painn --fiddler leonardo
+srun python config/train.py --backbone painn --fiddler leonardo
