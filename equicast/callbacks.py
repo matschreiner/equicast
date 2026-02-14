@@ -47,9 +47,10 @@ class TimeDeltaCheckpoint(Callback):
 
         dirpath = getattr(trainer.checkpoint_callback, "dirpath", None) or trainer.log_dir
         print(f"Checkpoint directory: {dirpath}")
-        if trainer.logger and hasattr(trainer.logger, "run_id"):
+        if trainer.logger and hasattr(trainer.logger, "run_id") and trainer.is_global_zero:
             run = trainer.logger.experiment.get_run(trainer.logger.run_id)
-            print(f"MLflow run: {run.info.run_name}")
+            if run is not None:
+                print(f"MLflow run: {run.info.run_name}")
 
         if self.save_initial:
             self._save_checkpoint(trainer, "initial")
