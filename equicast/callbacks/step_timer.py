@@ -14,13 +14,12 @@ class StepTimer(Callback):
         self._last_opt_time = None
 
     def on_train_batch_start(self, trainer, pl_module, batch, batch_idx):
-        self._step_start = time.time()
         if self._last_step_end is not None and trainer.global_step >= self.start_step:
-            wait_time = self._step_start - self._last_step_end
+            wait_time = time.time() - self._last_step_end
             it_per_s = 1.0 / (wait_time + self._last_opt_time)
-            pl_module.log("performance/wait_time", wait_time, prog_bar=True, logger=True, on_step=True, on_epoch=False)
+            pl_module.log("train/wait_time", wait_time, prog_bar=True, logger=True, on_step=True, on_epoch=False)
             pl_module.log(
-                "performance/step_time", self._last_opt_time, prog_bar=True, logger=True, on_step=True, on_epoch=False
+                "train/opt_step_time", self._last_opt_time, prog_bar=True, logger=True, on_step=True, on_epoch=False
             )
             pl_module.log("performance/it_per_s", it_per_s, prog_bar=False, logger=True, on_step=True, on_epoch=False)
 
@@ -28,3 +27,7 @@ class StepTimer(Callback):
         now = time.time()
         self._last_opt_time = now - self._step_start
         self._last_step_end = now
+
+    def mark_step_start(self):
+        """Called from training_step to mark the start of the optimization step."""
+        self._step_start = time.time()
