@@ -1,6 +1,6 @@
 import fiddle as fdl
 
-from equicast.logger import CSVLogger
+from equicast.logger import MLFlowLogger
 
 
 def fiddler(cfg: fdl.Config) -> None:
@@ -16,9 +16,9 @@ def fiddler(cfg: fdl.Config) -> None:
     cfg.trainer.strategy = "ddp"
 
     logger = fdl.Config(
-        CSVLogger,
-        save_dir="logs",
-        name="equicast",
+        MLFlowLogger,
+        tracking_uri="file:./mlruns",
+        experiment_name="equicast",
     )
     cfg.logger = logger
     cfg.trainer.logger = logger
