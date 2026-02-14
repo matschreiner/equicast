@@ -12,3 +12,4 @@ Graph.gv.pdf
 logs
 experiments/forecast
 forecast_experiment/default/version_0/artifacts
+mlruns
