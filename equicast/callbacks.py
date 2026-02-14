@@ -7,6 +7,8 @@ import time
 import torch
 from pytorch_lightning import Callback
 
+from equicast.utils import get_git_info
+
 
 class TimeDeltaCheckpoint(Callback):
     """
@@ -51,6 +53,9 @@ class TimeDeltaCheckpoint(Callback):
             run = trainer.logger.experiment.get_run(trainer.logger.run_id)
             if run is not None:
                 print(f"MLflow run: {run.info.run_name}")
+
+        if trainer.logger and trainer.is_global_zero:
+            trainer.logger.log_hyperparams(get_git_info())
 
         if self.save_initial:
             self._save_checkpoint(trainer, "initial")
