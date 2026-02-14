@@ -13,3 +13,6 @@ logs
 experiments/forecast
 forecast_experiment/default/version_0/artifacts
 mlruns
+forecast_comparison.mp4
+timeseries.pt
+timeseries_raw.npz
