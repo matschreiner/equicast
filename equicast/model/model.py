@@ -79,18 +79,10 @@ class Model(pl.LightningModule):
 
     def training_step(self, batch, _):
         self._step_start = time.time()
-        if hasattr(self, "_last_step_end"):
+        if self.global_step >= 10:
             wait_time = self._step_start - self._last_step_end
             self.log("train/wait_time", wait_time, prog_bar=True, logger=True, on_step=True, on_epoch=False)
-        if hasattr(self, "_last_optimization_step_time"):
-            self.log(
-                "train/optimization_step_time",
-                self._last_optimization_step_time,
-                prog_bar=True,
-                logger=True,
-                on_step=True,
-                on_epoch=False,
-            )
+            self.log("train/opt_step_time", self._last_optimization_step_time, prog_bar=True, logger=True, on_step=True)
 
         input = batch["input"]
         input = self.data_handler.prepare_backbone_input(input)  # type: ignore
