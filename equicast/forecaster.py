@@ -55,8 +55,8 @@ class Forecaster:
 
     def _save_visualization(self, predictions, ground_truths, output_dir, feature_idx):
         """Save comparison video of predictions vs ground truth."""
-        nodes = self.model.nodes
         dh = self.model.data_handler
+        nodes = dh.nodes
 
         pred = [p[nodes].data for p in predictions]
         pred = torch.stack(pred, dim=0)
