@@ -71,7 +71,13 @@ class Model(pl.LightningModule):
         next = self.data_handler.update_state_with_prediction(next, pred)  # type: ignore
         return next, pred
 
+    def _mark_step_start(self):
+        for cb in self.trainer.callbacks:
+            if hasattr(cb, "mark_step_start"):
+                cb.mark_step_start()
+
     def training_step(self, batch, _):
+        self._mark_step_start()
         input = batch["input"]
         input = self.data_handler.prepare_backbone_input(input)  # type: ignore
 
