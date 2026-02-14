@@ -84,9 +84,7 @@ class Model(pl.LightningModule):
         loss = self.loss(backbone_out, target)
         self.log_loss(loss, input.num_graphs)
         self.log_lr()
-
-        if self.metrics_tracker is not None:
-            self.log_metrics(backbone_out, target, input.num_graphs)
+        self.log_metrics(backbone_out, target, input.num_graphs)
 
         return loss
 
@@ -132,6 +130,8 @@ class Model(pl.LightningModule):
 
     def log_metrics(self, backbone_out, backbone_target, batch_size):
         """Log model metrics to logger only."""
+        if self.metrics_tracker is None:
+            return
         metrics = self.metrics_tracker.compute_metrics(backbone_out, backbone_target)
         self.log_dict(
             metrics,
