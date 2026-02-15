@@ -10,7 +10,7 @@ checkpoints
 Graph.gv
 Graph.gv.pdf
 logs
-experiments/forecast
+experiments
 forecast_experiment/default/version_0/artifacts
 mlruns
 forecast_comparison.mp4
