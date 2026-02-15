@@ -1,93 +1,34 @@
 """Forecast from a trained model checkpoint."""
 
 import fiddle as fdl
-import torch
-from anemoi.datasets import open_dataset
 
-from equicast import data, experiments
-from equicast.checkpoint import (
-    LocalCheckpointProvider,
-    MLFlowCheckpointProvider,
-    RemoteCheckpointProvider,
-    RsyncCheckpointProvider,
-)
+from equicast import experiments
+from equicast.checkpoint import RsyncCheckpointProvider
+from equicast.data.dataset.dataset import AnemoiDataset
 from equicast.forecaster import Forecaster
-from equicast.logger import CSVLogger, MLFlowLogger
+from equicast.logger import MLFlowLogger
 from equicast.model import Model
-from equicast.model.backbones.gnn import GNN
 from equicast.model.from_checkpoint import from_checkpoint
-from equicast.utils.mlflow_loader import load_model_from_mlflow
-
-
-def get_graph_from_provider(graph_provider, idx):
-    """Get graph data from graph provider."""
-    graph = graph_provider.get_graph(idx)
-    return graph
 
 
 def load_model(model_cls, checkpoint_provider):
     return from_checkpoint(model_cls, checkpoint_provider)
 
 
-def load_timeseries(path, graph_path):
-    """Load raw timeseries from npz and reconstruct graphs."""
-    import numpy as np
-
-    raw = np.load(path)["raw"]
-    graph = torch.load(graph_path, weights_only=False)
-
-    timeseries = []
-    for i in range(len(raw) - 1):
-        input_graph = graph.clone()
-        target_graph = graph.clone()
-        input_graph["grid"].data = torch.from_numpy(raw[i]).float()
-        target_graph["grid"].data = torch.from_numpy(raw[i + 1]).float()
-        timeseries.append({"input": input_graph, "target": target_graph})
-
-    return timeseries
-
-
 def main():
-    #  dataset_path = "/home/masc/storage/mini_aifs.zarr"
-    #  graph_path = "graph/aifs-graphcast.pt"
-    #  checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/logs/equicast/version_68/checkpoints/latest.ckpt"
+    dataset_path = "/home/masc/storage/era5-o96-2024-tail200-6h.zarr"
     checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/mlruns/394873961037717851/80a28951aa9941578184d78d870e663e/checkpoints/latest.ckpt"
     host = "leonardo"
 
-    timeseries = torch.load("timeseries.pt", weights_only=False)
+    dataset = AnemoiDataset(path=dataset_path, graph_provider=None, subsample=1)
+    timeseries = [dataset[i]["input"] for i in range(50)]
 
     logger = fdl.Config(
         MLFlowLogger,
         experiment_name="masc1",
         tracking_uri="https://mlflow.dmidev.org/",
     )
-    #  graph_provider = fdl.Config(
-    #      data.StaticGraphProvider,
-    #      path="./graph/aifs-single.pt",
-    #  )
-    #  graph = fdl.Config(
-    #      get_graph_from_provider,
-    #      graph_provider=graph_provider,
-    #      idx=None,
-    #  )
 
-    #  checkpoint_provider = fdl.Config(
-    #      RemoteCheckpointProvider,
-    #      remote_path="/vf/masc/programming/equicast/58/7122bdee98804e149b1ed606a598c4a3/checkpoints/latest.ckpt",
-    #      host="ohm",
-    #  )
-    #
-    #  checkpoint_provider = fdl.Config(
-    #      MLFlowCheckpointProvider,
-    #      tracking_uri="https://mlflow.dmidev.org/",
-    #      run_id="6c273433894c4f44b9613d7816b71890",
-    #      checkpoint_name="latest",
-    #  )
-    #  checkpoint_provider = fdl.Config(
-    #      LocalCheckpointProvider,
-    #      checkpoint_path="latest2.ckpt",
-    #  )
-    #
     checkpoint_provider = fdl.Config(
         RsyncCheckpointProvider,
         remote_path=checkpoint_path,
@@ -114,25 +55,6 @@ def main():
     )
 
     experiments.run_experiment(cfg)
-
-
-def get_gnn():
-    feature_config = data.FeatureConfig.from_yaml(
-        path="hydraconfig/features/base.yaml",
-    )
-    model = fdl.Config(
-        Model,
-        backbone=fdl.Config(
-            GNN,
-            feature_config=feature_config,
-        ),
-        data_handler=fdl.Config(
-            data.GraphDataHandler,
-            feature_config=feature_config,
-            dataset_path="/home/masc/storage/mini_aifs.zarr",
-        ),
-    )
-    return model
 
 
 if __name__ == "__main__":
