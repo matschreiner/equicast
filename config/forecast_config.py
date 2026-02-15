@@ -51,14 +51,14 @@ def main():
     #  dataset_path = "/home/masc/storage/mini_aifs.zarr"
     #  graph_path = "graph/aifs-graphcast.pt"
     #  checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/logs/equicast/version_68/checkpoints/latest.ckpt"
-    checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/mlruns/394873961037717851/eb5715aca43c4351a308e089840afd66/checkpoints/latest.ckpt"
+    checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/mlruns/394873961037717851/80a28951aa9941578184d78d870e663e/checkpoints/latest.ckpt"
     host = "leonardo"
 
     timeseries = torch.load("timeseries.pt", weights_only=False)
 
     logger = fdl.Config(
         MLFlowLogger,
-        experiment_name="masc",
+        experiment_name="masc1",
         tracking_uri="https://mlflow.dmidev.org/",
     )
     #  graph_provider = fdl.Config(
