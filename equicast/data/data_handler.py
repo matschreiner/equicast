@@ -3,6 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+import numpy as np
 import torch
 from anemoi.datasets import open_dataset
 from torch_geometric.data import Data
@@ -103,3 +104,28 @@ class GraphDataHandler(BaseDataHandler):
         pred = self.get_output_scalars(pred_state[self.nodes].data)
         self.set_output_scalars(state[self.nodes].data, pred)
         return state
+
+    def to_cf(self, graph: Data) -> "xr.Dataset":
+        """Convert a graph state to a CF-compliant xarray Dataset."""
+        import xarray as xr
+
+        index_to_name = {v: k for k, v in self.name_to_index.items()}
+
+        data = graph[self.nodes].data[..., self.out_idxs].cpu().numpy()
+
+        latlon = graph[self.nodes].x.cpu().numpy()
+        lat = np.degrees(latlon[:, 0])
+        lon = np.degrees(latlon[:, 1])
+
+        feature_names = [index_to_name.get(idx, f"feature_{i}") for i, idx in enumerate(self.out_idxs)]
+        ds = xr.Dataset(
+            {name: ("node", data[..., i]) for i, name in enumerate(feature_names)},
+            coords={
+                "latitude": ("node", lat),
+                "longitude": ("node", lon),
+            },
+        )
+        ds["latitude"].attrs = {"units": "degrees_north", "standard_name": "latitude"}
+        ds["longitude"].attrs = {"units": "degrees_east", "standard_name": "longitude"}
+        ds.attrs["Conventions"] = "CF-1.8"
+        return ds

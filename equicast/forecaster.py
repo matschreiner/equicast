@@ -1,11 +1,11 @@
 import os
 
 import torch
+import xarray as xr
 from tqdm import tqdm
 
 from equicast.logger import BaseLogger
 from equicast.model.model import Model
-from equicast.visualization import make_comparison_video
 
 
 class Forecaster:
@@ -20,60 +20,39 @@ class Forecaster:
         self.model = model
         self.logger = logger
 
-    def forecast(self, timeseries, steps=-1, output_dir=".", feature_idx=0):
+    def forecast(self, timeseries, output_dir="test_output"):
         """
-        Autoregressively forecast for a given number of steps.
+        Autoregressively forecast over the given timeseries.
 
         Args:
-            timeseries: List of states for each timestep
-            steps: Number of steps to forecast (-1 for all available)
+            timeseries: List of graph states (consecutive timesteps)
             output_dir: Directory where forecast outputs will be saved
-            feature_idx: Feature index to visualize (default: 0)
 
         Returns:
             List of predictions (model handles scaling internally)
         """
-        predictions = []
-        input = timeseries[0]["input"]
-        num_steps = steps if steps > 0 else len(timeseries) - 1
-        ground_truths = [frame["target"] for frame in timeseries[:num_steps]]
-        feature_idx = 24
+        input = timeseries[0]
+        predictions = [input]
+        ground_truth = [frame.clone() for frame in timeseries[1:]]
 
         with torch.no_grad():
-            for target in tqdm(ground_truths, desc="Forecasting"):
+            for next in tqdm(timeseries[1:], desc="Forecasting"):
                 input, prediction = self.model.step_forward(
                     input,
-                    target,
+                    next,
                 )
 
                 predictions.append(prediction)
 
-        if self.logger is not None:
-            self._save_visualization(predictions, ground_truths, output_dir, feature_idx)
+        dh = self.model.data_handler
+
+        self._save_zarr(predictions, output_dir, "predictions.zarr")
+        self._save_zarr(ground_truth, output_dir, "input_timeseries.zarr")
 
         return predictions
 
-    def _save_visualization(self, predictions, ground_truths, output_dir, feature_idx):
-        """Save comparison video of predictions vs ground truth."""
-        dh = self.model.data_handler
-        nodes = dh.nodes
-
-        pred = [p[nodes].data for p in predictions]
-        pred = torch.stack(pred, dim=0)
-        pred = pred[..., dh.out_idxs]
-
-        ground_truth = [g[nodes].data for g in ground_truths[: len(predictions)]]
-        ground_truth = torch.stack(ground_truth, dim=0)
-        ground_truth = ground_truth[..., dh.out_idxs]
-
-        index_to_name = {v: k for k, v in dh.name_to_index.items()}
-        feature_name = index_to_name.get(dh.out_idxs[feature_idx], f"feature_{feature_idx}")
-
-        video_path = os.path.join(output_dir, "forecast_comparison.mp4")
-        make_comparison_video(
-            predictions=pred.cpu().numpy()[..., feature_idx],
-            targets=ground_truth.cpu().numpy()[..., feature_idx],
-            latlon=ground_truths[0][nodes].x.cpu().numpy(),
-            output_path=video_path,
-            title_template=f"{feature_name} – Frame {{frame}}",
-        )
+    def _save_zarr(self, timeseries, output_dir, filename):
+        os.makedirs(output_dir, exist_ok=True)
+        path = os.path.join(output_dir, filename)
+        ds = xr.concat([self.model.data_handler.to_cf(frame) for frame in timeseries], dim="time")  # type: ignore
+        ds.to_zarr(path, mode="w")

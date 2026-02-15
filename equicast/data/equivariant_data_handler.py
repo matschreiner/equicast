@@ -4,6 +4,7 @@ from typing import Any
 
 import numpy as np
 import torch
+import xarray as xr
 from anemoi.datasets import open_dataset
 from torch_geometric.data import Data
 
@@ -125,6 +126,37 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         pred = self.get_output_scalars(pred_state[self.nodes].data)
         self.set_output_scalars(state[self.nodes].data, pred)
         return state
+
+    def to_cf(self, graph: Data) -> "xr.Dataset":
+        """Convert a graph state to a CF-compliant xarray Dataset."""
+        import xarray as xr
+
+        index_to_name = {v: k for k, v in self.name_to_index.items()}
+
+        # Collect all output indices: scalars + vector components
+        vector_idxs = []
+        for u_idx, v_idx in self.out_vector_idxs:
+            vector_idxs.extend([u_idx, v_idx])
+        all_idxs = self.out_idxs + vector_idxs
+
+        data = graph[self.nodes].data[..., all_idxs].cpu().numpy()
+
+        latlon = graph[self.nodes].x.cpu().numpy()
+        lat = np.degrees(latlon[:, 0])
+        lon = np.degrees(latlon[:, 1])
+
+        feature_names = [index_to_name.get(idx, f"feature_{i}") for i, idx in enumerate(all_idxs)]
+        ds = xr.Dataset(
+            {name: ("node", data[..., i]) for i, name in enumerate(feature_names)},
+            coords={
+                "latitude": ("node", lat),
+                "longitude": ("node", lon),
+            },
+        )
+        ds["latitude"].attrs = {"units": "degrees_north", "standard_name": "latitude"}
+        ds["longitude"].attrs = {"units": "degrees_east", "standard_name": "longitude"}
+        ds.attrs["Conventions"] = "CF-1.8"
+        return ds
 
     def _get_vector_idxs(self, vector_config: dict[str, list[str]]) -> list[tuple[int, int]]:
         """Get (u_idx, v_idx) pairs for each vector feature."""
