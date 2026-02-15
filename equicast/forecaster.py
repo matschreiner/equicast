@@ -32,7 +32,7 @@ class Forecaster:
             List of predictions (model handles scaling internally)
         """
         input = timeseries[0]
-        predictions = [input]
+        predictions = []
         ground_truth = [frame.clone() for frame in timeseries[1:]]
 
         with torch.no_grad():
