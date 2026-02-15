@@ -45,7 +45,9 @@ def main():
         print("Error: --subsample must be >= 1", file=sys.stderr)
         sys.exit(1)
 
+    print(f"Opening source: {args.input}")
     src = zarr.open(args.input, mode="r")
+    print(f"Opening destination: {args.output}")
     dst = zarr.open(args.output, mode="w")
 
     total_len = src.data.shape[0]
@@ -57,7 +59,8 @@ def main():
         sys.exit(1)
 
     print(f"Source: {total_len} frames, shape {src.data.shape}")
-    print(f"Output: {len(indices)} frames")
+    print(f"Slice: {args.slice_str}, subsample: {args.subsample}")
+    print(f"Output: {len(indices)} frames (indices {indices[0]}..{indices[-1]})")
 
     # Copy temporal arrays in chunks to limit memory usage
     chunk_size = 500
@@ -67,30 +70,34 @@ def main():
     out_shape = (n_out,) + src.data.shape[1:]
     dst.create_dataset("data", shape=out_shape, dtype=src.data.dtype, chunks=(1,) + src.data.shape[1:])
 
-    print("Copying data...")
+    print(f"Copying data ({n_out} frames, chunk_size={chunk_size})...")
     for start in range(0, n_out, chunk_size):
         end = min(start + chunk_size, n_out)
         idx_chunk = indices[start:end]
         dst.data[start:end] = src.data.get_orthogonal_selection(idx_chunk)
-        print(f"  {end}/{n_out}", end="\r")
-    print()
+        print(f"  [{end}/{n_out}] frames copied", flush=True)
+    print("  Data copy complete.")
 
-    # Copy dates
-    src_dates = src.dates[:]
-    out_dates = src_dates[indices]
+    # Copy dates (use orthogonal selection to avoid loading all 30+ years)
+    print("Copying dates...")
+    out_dates = src.dates.get_orthogonal_selection(indices)
     dst.create_dataset("dates", data=out_dates, chunks=(n_out,))
-    print(f"Date range: {out_dates[0]} -> {out_dates[-1]}")
+    print(f"  Date range: {out_dates[0]} -> {out_dates[-1]}")
 
-    # Copy all non-temporal arrays verbatim
+    # Copy all non-temporal arrays/groups verbatim
     temporal = {"data", "dates"}
+    print(f"Source contains: {list(src.keys())}")
     for name in src:
         if name not in temporal:
-            print(f"Copying {name}...")
+            print(f"  Copying '{name}' ...", end=" ", flush=True)
             dst.create_dataset(name, data=src[name][:], compressor=None)
+            print(f"shape={src[name].shape}")
 
     # Copy attributes, updating temporal metadata
+    print(f"Copying {len(src.attrs)} attributes...")
     for k, v in src.attrs.items():
         dst.attrs[k] = v
+        print(f"  {k}: {str(v)[:80]}")
 
     # Update frequency
     if "frequency" in src.attrs and args.subsample > 1:
@@ -99,13 +106,14 @@ def main():
         orig_freq = frequency_to_timedelta(src.attrs["frequency"])
         new_freq = orig_freq * args.subsample
         dst.attrs["frequency"] = frequency_to_string(new_freq)
-        print(f"Frequency: {src.attrs['frequency']} -> {dst.attrs['frequency']}")
+        print(f"Updated frequency: {src.attrs['frequency']} -> {dst.attrs['frequency']}")
 
     # Update date bounds
     first = str(np.datetime_as_string(out_dates[0], unit="s"))
     last = str(np.datetime_as_string(out_dates[-1], unit="s"))
     dst.attrs["first_date"] = first
     dst.attrs["last_date"] = last
+    print(f"Updated date bounds: {first} -> {last}")
 
     print("Done.")
 
