@@ -1,5 +1,6 @@
 import fiddle as fdl
 
+from equicast.logger import MLFlowLogger
 from equicast.model.backbones.painn import PaiNN
 
 
@@ -9,15 +10,6 @@ def fiddler(cfg: fdl.Config) -> None:
         data_handler=cfg.model.backbone.data_handler,
         edges=[
             ("grid", "to", "mesh"),
-            ("mesh", "to", "mesh"),
-            ("mesh", "to", "mesh"),
-            ("mesh", "to", "mesh"),
-            ("mesh", "to", "mesh"),
-            ("mesh", "to", "mesh"),
-            ("mesh", "to", "mesh"),
-            ("mesh", "to", "mesh"),
-            ("mesh", "to", "mesh"),
-            ("mesh", "to", "mesh"),
             ("mesh", "to", "mesh"),
             ("mesh", "to", "mesh"),
             ("mesh", "to", "mesh"),
