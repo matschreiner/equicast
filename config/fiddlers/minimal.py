@@ -32,5 +32,7 @@ def fiddler(cfg: fdl.Config) -> None:
         experiment_name="continue",
     )
 
+    cfg.dataloader.num_workers = 0
+
     cfg.logger = logger
     cfg.trainer.logger = logger
