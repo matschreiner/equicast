@@ -1,4 +1,5 @@
 import argparse
+import importlib
 import json
 import traceback
 from abc import ABC, abstractmethod
@@ -38,12 +39,13 @@ class TrainConfig(ExperimentConfig):
     dataloader: DataLoader
     logger: BaseLogger
     experiment_name: str = "train"
+    ckpt_path: str | None = None
 
     def run(self):
-        # Set trainer default_root_dir to experiment_dir if provided
         self.trainer.fit(
             self.model,
             self.dataloader,
+            ckpt_path=self.ckpt_path,
         )
 
 
@@ -68,12 +70,32 @@ def vis_config(config):
         pass
 
 
+def _apply_fiddler(config: fdl.Config, fiddler_spec: str):
+    """Apply a fiddler to the config. Format: 'name' or 'name:arg'."""
+    if ":" in fiddler_spec:
+        name, arg = fiddler_spec.split(":", 1)
+    else:
+        name, arg = fiddler_spec, None
+
+    module = importlib.import_module(f"config.fiddlers.{name}")
+    if arg is not None:
+        module.fiddler(config, arg)
+    else:
+        module.fiddler(config)
+
+
 def run_experiment(config: fdl.Config):
     parser = argparse.ArgumentParser()
     parser.add_argument("--graph", action="store_true", help="Open graphviz visualization of the config")
+    parser.add_argument("--fiddler", action="append", default=[], help="Fiddlers (repeatable, use name:arg for args)")
     args, _ = parser.parse_known_args()
+
     if args.graph:
         vis_config(config)
+
+    for fiddler_spec in args.fiddler:
+        _apply_fiddler(config, fiddler_spec)
+
     experiment = fdl.build(config)
     experiment.logger.log_hyperparams(get_git_info())
     experiment.logger.log_hyperparams(get_hardware_info())
