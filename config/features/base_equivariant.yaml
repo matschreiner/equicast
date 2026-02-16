@@ -16,9 +16,8 @@ diagnostic:
   - 2d
   - msl
   - skt
-  # - tp
-  # - tcw
-  # - cp
+  - 10u
+  - 10v
 
 prognostic:
   - sp
@@ -35,7 +34,9 @@ prognostic:
   - w_700
   - w_850
   - w_925
+
   - z
+  - z_10
   - z_100
   - z_1000
   - z_150
@@ -49,6 +50,7 @@ prognostic:
   - z_700
   - z_850
   - z_925
+
   - q_100
   - q_1000
   - q_150
@@ -62,6 +64,7 @@ prognostic:
   - q_700
   - q_850
   - q_925
+
   - t_100
   - t_1000
   - t_150
@@ -76,7 +79,6 @@ prognostic:
   - t_850
   - t_925
 
-# Prognostic vector features (rotation-equivariant)
 prognostic_vector:
   wind_50:
     - u_50
