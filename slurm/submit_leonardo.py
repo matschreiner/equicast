@@ -114,6 +114,7 @@ def main():
         print_summary(idx, job_dir, job_dir_remote, job_id="JOBID")
         return
 
+    print(script)
     result = subprocess.run(
         ["sbatch"], input=script, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
