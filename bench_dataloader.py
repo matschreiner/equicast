@@ -7,7 +7,9 @@ from torch_geometric.loader import DataLoader
 from equicast.data.dataset import AnemoiDataset
 from equicast.data.graph_provider import StaticGraphProvider
 
-DATASET_PATH = "/leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr"
+DATASET_PATH = (
+    "/leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr"
+)
 GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
 
 NUM_BATCHES = 200
