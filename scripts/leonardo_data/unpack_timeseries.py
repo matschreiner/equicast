@@ -14,12 +14,10 @@ def main():
     graph = torch.load(GRAPH_PATH, weights_only=False)
 
     timeseries = []
-    for i in tqdm(range(len(raw) - 1), desc="Unpacking"):
-        input_graph = graph.clone()
-        target_graph = graph.clone()
-        input_graph["grid"].data = torch.from_numpy(raw[i]).float()
-        target_graph["grid"].data = torch.from_numpy(raw[i + 1]).float()
-        timeseries.append({"input": input_graph, "target": target_graph})
+    for i in tqdm(range(len(raw)), desc="Unpacking"):
+        frame = graph.clone()
+        frame["grid"].data = torch.from_numpy(raw[i]).float()
+        timeseries.append(frame)
 
     torch.save(timeseries, OUTPUT_PATH)
     print(f"Saved {len(timeseries)} frames to {OUTPUT_PATH}")

@@ -11,6 +11,8 @@ import sys
 import numpy as np
 import zarr
 
+# python scripts/slice_anemoi_dataset.py /leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr test_dataset.zarr --slice="-60:" --subsample 6
+
 
 def parse_slice(s: str) -> slice:
     """Parse a Python slice string like '-3000:', '100:2000', ':' into a slice object."""
