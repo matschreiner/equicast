@@ -24,5 +24,5 @@ def fiddler(cfg: fdl.Config) -> None:
             ("mesh", "to", "grid"),
         ],
         input_nodes="grid",
-        hidden_dim=512,
+        hidden_dim=256,
     )
