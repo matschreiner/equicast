@@ -1,6 +1,3 @@
-import argparse
-import importlib
-
 import fiddle as fdl
 from pytorch_lightning import Trainer
 from torch_geometric.loader import DataLoader
@@ -12,17 +9,11 @@ from equicast.experiments import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.model.backbones.painn import PaiNN
 from equicast.model.model import Model, equivariant_loss_fn
-from equicast.utils.mlflow_loader import load_checkpoint_path_from_mlflow
 
 LOCAL_DATASET_PATH = "/home/masc/storage/era5-o96-2024-tail200-6h.zarr"
 GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
 EQUIVARIANT_FEATURE_CONFIG_PATH = "config/features/base_equivariant.yaml"
 
-
-def import_fiddler(name):
-    path = f"config.fiddlers.{name}"
-    module = importlib.import_module(path)
-    return module.fiddler
 
 
 def default_logger():
@@ -87,45 +78,40 @@ def default_backbone(data_handler):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train a model")
-    parser.add_argument(
-        "--fiddler",
-        action="append",
-        default=[],
-        help="Fiddlers, (repeatable)",
-    )
-    parser.add_argument(
-        "--continue",
-        type=str,
-        default=None,
-        dest="run_id",
-        help="MLflow run ID to resume training from",
-    )
-
-    args, _ = parser.parse_known_args()
-
     loss_fn = equivariant_loss_fn
-    feature_config = fdl.Config(FeatureConfig.from_yaml, path=EQUIVARIANT_FEATURE_CONFIG_PATH)
+    feature_config = fdl.Config(
+        FeatureConfig.from_yaml,
+        path=EQUIVARIANT_FEATURE_CONFIG_PATH,
+    )
+
     data_handler = fdl.Config(
-        EquivariantGraphDataHandler, feature_config=feature_config, dataset_path=LOCAL_DATASET_PATH
+        EquivariantGraphDataHandler,
+        feature_config=feature_config,
+        dataset_path=LOCAL_DATASET_PATH,
     )
 
     backbone = default_backbone(data_handler)
 
-    model = fdl.Config(Model, backbone=backbone, loss_fn=loss_fn)
-    dataloader = default_dataloader(LOCAL_DATASET_PATH, GRAPH_PATH)
+    model = fdl.Config(
+        Model,
+        backbone=backbone,
+        loss_fn=loss_fn,
+    )
+
+    dataloader = default_dataloader(
+        LOCAL_DATASET_PATH,
+        GRAPH_PATH,
+    )
+
     logger = default_logger()
     trainer = default_trainer(logger)
-    cfg = fdl.Config(TrainConfig, model, trainer, dataloader, logger)
-
-    for name in args.fiddler:
-        fiddler = import_fiddler(name)
-        fiddler(cfg)
-
-    if args.run_id:
-        cfg.ckpt_path = load_checkpoint_path_from_mlflow(args.run_id)
-        cfg.logger.run_id = args.run_id
-        cfg.trainer.logger.run_id = args.run_id
+    cfg = fdl.Config(
+        TrainConfig,
+        model,
+        trainer,
+        dataloader,
+        logger,
+    )
 
     experiments.run_experiment(cfg)
 
