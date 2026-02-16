@@ -1,11 +1,18 @@
 import os
 
+from mlflow.exceptions import MlflowException
 from pytorch_lightning.loggers import MLFlowLogger as MLFlowLoggerParent
 
 from equicast import CHECKPOINT_PATH
 
 
 class MLFlowLogger(MLFlowLoggerParent):
+    def log_hyperparams(self, params):
+        try:
+            super().log_hyperparams(params)
+        except MlflowException:
+            pass  # Ignore duplicate params when resuming a run
+
     def after_save_checkpoint(self, checkpoint_callback):
         if checkpoint_callback.dirpath is None or checkpoint_callback.filename is None:
             return
