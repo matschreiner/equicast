@@ -72,10 +72,14 @@ class TimeDeltaCheckpoint(Callback):
             return self.phase3_interval
 
     def _save_checkpoint(self, trainer, filename: str):
-        dirpath = getattr(trainer.checkpoint_callback, "dirpath", None) or trainer.log_dir
-        filepath = os.path.join(dirpath, f"{filename}.ckpt")
+        self.dirpath = getattr(trainer.checkpoint_callback, "dirpath", None) or trainer.log_dir
+        self.filename = filename
+        filepath = os.path.join(self.dirpath, f"{filename}.ckpt")
         trainer.save_checkpoint(filepath)
         print(f"Saved checkpoint: {filepath}")
+
+        if trainer.logger and hasattr(trainer.logger, "after_save_checkpoint"):
+            trainer.logger.after_save_checkpoint(self)
 
     def _maybe_save_best(self, trainer):
         current_loss = trainer.callback_metrics.get(self.monitor)
