@@ -122,9 +122,16 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         return state
 
     def update_state_with_prediction(self, state: Data, pred_state: Data) -> Data:
-        """Copy output features from pred_state to state."""
-        pred = self.get_output_scalars(pred_state[self.nodes].data)
-        self.set_output_scalars(state[self.nodes].data, pred)
+        """Copy output features (scalars + vectors) from pred_state to state."""
+        pred_raw = pred_state[self.nodes].data
+        state_raw = state[self.nodes].data
+
+        pred_scalars = self.get_output_scalars(pred_raw)
+        self.set_output_scalars(state_raw, pred_scalars)
+
+        pred_vectors = self.get_output_vectors(pred_raw)
+        self.set_output_vectors(state_raw, pred_vectors)
+
         return state
 
     def to_cf(self, graph: Data) -> "xr.Dataset":
