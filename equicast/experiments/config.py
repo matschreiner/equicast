@@ -52,12 +52,12 @@ class ForecastConfig(ExperimentConfig):
     forecaster: Forecaster
     timeseries: torch.Tensor
     logger: BaseLogger
+    model_id: str = ""
     experiment_name: str = "forecast"
 
     def run(self):
-        self.forecaster.forecast(
-            timeseries=self.timeseries,
-        )
+        output_dir = f"forecasts/{self.model_id}"
+        self.forecaster.forecast(timeseries=self.timeseries, output_dir=output_dir)
 
 
 def vis_config(config):
