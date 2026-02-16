@@ -31,20 +31,18 @@ class Forecaster:
         Returns:
             List of predictions (model handles scaling internally)
         """
-        input = timeseries[0]
+        input_ = timeseries[0]
         predictions = []
         ground_truth = [frame.clone() for frame in timeseries[1:]]
 
         with torch.no_grad():
-            for next in tqdm(timeseries[1:], desc="Forecasting"):
-                input, prediction = self.model.step_forward(
-                    input,
-                    next,
+            for next_ in tqdm(timeseries[1:], desc="Forecasting"):
+                input_, prediction = self.model.step_forward(
+                    input_,
+                    next_,
                 )
 
                 predictions.append(prediction)
-
-        dh = self.model.data_handler
 
         self._save_zarr(predictions, output_dir, "predictions.zarr")
         self._save_zarr(ground_truth, output_dir, "input_timeseries.zarr")

@@ -56,34 +56,31 @@ class Model(pl.LightningModule):
     def device(self):
         return next(self.parameters()).device
 
-    def forward(self, input):
-        input = input.clone()
-        input = self.data_handler.prepare_backbone_input(input)  # type: ignore
-        backbone_out = self.backbone.forward(input)  # type: ignore
-        output = self.data_handler.update_state_with_backbone_output(input, backbone_out)  # type: ignore
+    def forward(self, input_):
+        input_ = input_.clone()
+        input_ = self.data_handler.prepare_backbone_input(input_)  # type: ignore
+        backbone_out = self.backbone.forward(input_)  # type: ignore
+        output = self.data_handler.update_state_with_backbone_output(input_, backbone_out)  # type: ignore
         return output
 
-    def step_forward(self, input, next):
-        input = input.clone()
-        next = next.clone()
+    def step_forward(self, input_, next_):
+        input_ = input_.clone()
+        next_ = next_.clone()
 
-        pred = self.forward(input)
-        next = self.data_handler.update_state_with_prediction(next, pred)  # type: ignore
-        return next, pred
+        pred = self.forward(input_)
+        next_ = self.data_handler.update_state_with_prediction(next_, pred)  # type: ignore
+        return next_, pred
 
     def training_step(self, batch, _):
-        input = batch["input"]
-        input = self.data_handler.prepare_backbone_input(input)  # type: ignore
-
+        input_ = batch["input"]
+        input_ = self.data_handler.prepare_backbone_input(input_)  # type: ignore
         target = batch["target"]
         target = self.data_handler.prepare_backbone_target(target)  # type: ignore
-
-        backbone_out = self.backbone.forward(input)  # type: ignore
-
+        backbone_out = self.backbone.forward(input_)  # type: ignore
         loss = self.loss(backbone_out, target)
         self.log_lr()
-        self.log_loss(loss, input.num_graphs)
-        self.log_metrics(backbone_out, target, input.num_graphs)
+        self.log_loss(loss, input_.num_graphs)
+        self.log_metrics(backbone_out, target, input_.num_graphs)
 
         return loss
 
@@ -104,42 +101,18 @@ class Model(pl.LightningModule):
         return optimizer
 
     def log_loss(self, loss, batch_size):
-        """Log loss to progress bar and logger."""
-        self.log(
-            "train/loss",
-            loss,
-            logger=True,
-            prog_bar=False,
-            on_step=True,
-            on_epoch=False,
-            batch_size=batch_size,
-        )
+        self.log("train/loss", loss, logger=True, prog_bar=False, on_step=True, on_epoch=False, batch_size=batch_size)
 
     def log_lr(self):
-        """Log learning rate to logger only."""
         lr = get_lr(self)
-        self.log(
-            "train/lr",
-            lr,
-            logger=True,
-            prog_bar=False,
-            on_step=True,
-            on_epoch=False,
-        )
+        self.log("train/lr", lr, logger=True, prog_bar=False, on_step=True, on_epoch=False)
 
     def log_metrics(self, backbone_out, backbone_target, batch_size):
-        """Log model metrics to logger only."""
         if self.metrics_tracker is None:
             return
+
         metrics = self.metrics_tracker.compute_metrics(backbone_out, backbone_target)
-        self.log_dict(
-            metrics,
-            logger=True,
-            prog_bar=False,
-            on_step=True,
-            on_epoch=False,
-            batch_size=batch_size,
-        )
+        self.log_dict(metrics, logger=True, prog_bar=False, on_step=True, on_epoch=False, batch_size=batch_size)
 
     def _should_log_metrics(self) -> bool:
         step = self.global_step
