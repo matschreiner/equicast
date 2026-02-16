@@ -7,30 +7,22 @@ from torch_geometric.loader import DataLoader
 
 from equicast import data, experiments
 from equicast.callbacks import StepTimer, TimeDeltaCheckpoint
+from equicast.data import EquivariantGraphDataHandler, FeatureConfig
 from equicast.experiments import TrainConfig
 from equicast.logger import MLFlowLogger
-from equicast.model.model import Model
+from equicast.model.backbones.painn import PaiNN
+from equicast.model.model import Model, equivariant_loss_fn
+from equicast.utils.mlflow_loader import load_checkpoint_path_from_mlflow
 
-DATASET_PATH = "/home/masc/storage/mini_aifs.zarr"
+LOCAL_DATASET_PATH = "/home/masc/storage/era5-o96-2024-tail200-6h.zarr"
 GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
+EQUIVARIANT_FEATURE_CONFIG_PATH = "config/features/base_equivariant.yaml"
 
-BACKBONES = {
-    "painn": "config.backbones.painn",
-    "equivariant_gnn": "config.backbones.equivariant_gnn",
-    "simple_equivariant": "config.backbones.simple_equivariant",
-    "gnn": "config.backbones.gnn",
-    "encprocdec": "config.backbones.encprocdec",
-    "graphcast": "config.backbones.graphcast",
-}
 
-FIDDLERS = {
-    "leonardo": "config.fiddlers.leonardo",
-    "local": "config.fiddlers.local",
-    "debug": "config.fiddlers.debug",
-    "cuda_profile": "config.fiddlers.cuda_profile",
-    "scheduler": "config.fiddlers.scheduler",
-    "ema": "config.fiddlers.ema",
-}
+def import_fiddler(name):
+    path = f"config.fiddlers.{name}"
+    module = importlib.import_module(path)
+    return module.fiddler
 
 
 def default_logger():
@@ -60,7 +52,7 @@ def default_trainer(logger):
 def default_dataloader(dataset_path, graph_path):
     graph_provider = fdl.Config(
         data.StaticGraphProvider,
-        path=graph_path,
+        graph_path=graph_path,
     )
 
     dataset = fdl.Config(
@@ -78,33 +70,62 @@ def default_dataloader(dataset_path, graph_path):
     )
 
 
+def default_backbone(data_handler):
+    return fdl.Config(
+        PaiNN,
+        data_handler=data_handler,
+        edges=[
+            ("grid", "to", "mesh"),
+            ("mesh", "to", "mesh"),
+            ("mesh", "to", "mesh"),
+            ("mesh", "to", "mesh"),
+            ("mesh", "to", "grid"),
+        ],
+        input_nodes="grid",
+        hidden_dim=128,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train a model")
-    parser.add_argument(
-        "--backbone",
-        required=True,
-        choices=BACKBONES.keys(),
-        help="Backbone config to use",
-    )
     parser.add_argument(
         "--fiddler",
         action="append",
         default=[],
-        choices=FIDDLERS.keys(),
-        help="Fiddlers",
+        help="Fiddlers, (repeatable)",
     )
+    parser.add_argument(
+        "--continue",
+        type=str,
+        default=None,
+        dest="run_id",
+        help="MLflow run ID to resume training from",
+    )
+
     args, _ = parser.parse_known_args()
 
-    backbone, loss_fn = importlib.import_module(BACKBONES[args.backbone]).backbone_config(DATASET_PATH)
+    loss_fn = equivariant_loss_fn
+    feature_config = fdl.Config(FeatureConfig.from_yaml, path=EQUIVARIANT_FEATURE_CONFIG_PATH)
+    data_handler = fdl.Config(
+        EquivariantGraphDataHandler, feature_config=feature_config, dataset_path=LOCAL_DATASET_PATH
+    )
+
+    backbone = default_backbone(data_handler)
+
     model = fdl.Config(Model, backbone=backbone, loss_fn=loss_fn)
-    dataloader = default_dataloader(DATASET_PATH, GRAPH_PATH)
+    dataloader = default_dataloader(LOCAL_DATASET_PATH, GRAPH_PATH)
     logger = default_logger()
     trainer = default_trainer(logger)
     cfg = fdl.Config(TrainConfig, model, trainer, dataloader, logger)
 
     for name in args.fiddler:
-        module = importlib.import_module(FIDDLERS[name])
-        module.fiddler(cfg)
+        fiddler = import_fiddler(name)
+        fiddler(cfg)
+
+    if args.run_id:
+        cfg.ckpt_path = load_checkpoint_path_from_mlflow(args.run_id)
+        cfg.logger.run_id = args.run_id
+        cfg.trainer.logger.run_id = args.run_id
 
     experiments.run_experiment(cfg)
 
