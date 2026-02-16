@@ -100,7 +100,20 @@ def run_experiment(config: fdl.Config):
     experiment = fdl.build(config)
     experiment.logger.log_hyperparams(get_git_info())
     experiment.logger.log_hyperparams(get_hardware_info())
+    _log_config_artifact(experiment.logger, config)
     experiment.run()
+
+
+def _log_config_artifact(logger, config: fdl.Config):
+    """Log the fiddle config as a YAML artifact."""
+    import tempfile
+
+    from fiddle.experimental.yaml_serialization import dump_yaml
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, prefix="config_") as f:
+        f.write(dump_yaml(config))
+        f.flush()
+        logger.log_artifact(f.name, artifact_path="")
 
 
 @contextmanager

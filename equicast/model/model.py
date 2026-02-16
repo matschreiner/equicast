@@ -13,15 +13,16 @@ def default_optimizer_factory(params):
     return torch.optim.Adam(params, lr=1e-3)
 
 
-def default_loss_fn(backbone_out, backbone_target):
-    return torch.nn.functional.mse_loss(backbone_out, backbone_target)
+class MSELoss(torch.nn.Module):
+    def forward(self, backbone_out, backbone_target):
+        return torch.nn.functional.mse_loss(backbone_out, backbone_target)
 
 
-def equivariant_loss_fn(backbone_out, backbone_target):
-    """Loss function for equivariant models with scalar and vector outputs."""
-    scalar_loss = torch.nn.functional.mse_loss(backbone_out["scalar"], backbone_target["scalar"])
-    vector_loss = torch.nn.functional.mse_loss(backbone_out["vector"], backbone_target["vector"])
-    return scalar_loss + vector_loss
+class EquivariantMSELoss(torch.nn.Module):
+    def forward(self, backbone_out, backbone_target):
+        scalar_loss = torch.nn.functional.mse_loss(backbone_out["scalar"], backbone_target["scalar"])
+        vector_loss = torch.nn.functional.mse_loss(backbone_out["vector"], backbone_target["vector"])
+        return scalar_loss + vector_loss
 
 
 class Model(pl.LightningModule):
@@ -38,7 +39,7 @@ class Model(pl.LightningModule):
         optimizer_factory: Callable = default_optimizer_factory,
         scheduler_factory: Callable | None = None,
         metrics_tracker: BaseMetricsTracker | None = None,
-        loss_fn: Callable = default_loss_fn,
+        loss_fn: torch.nn.Module = None,
         compile_backbone: bool = True,
     ):
         super().__init__()
@@ -50,7 +51,7 @@ class Model(pl.LightningModule):
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
         self.metrics_tracker = metrics_tracker
-        self.loss_fn = loss_fn
+        self.loss_fn = loss_fn or MSELoss()
 
     @property
     def device(self):

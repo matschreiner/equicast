@@ -1,5 +1,3 @@
-from functools import partial
-
 import fiddle as fdl
 
 from equicast.logger import MLFlowLogger
@@ -8,7 +6,7 @@ from equicast.model.schedulers import WarmupCosineAnnealingLR
 
 
 def fiddler(cfg: fdl.Config) -> None:
-    cfg.model.scheduler_factory = partial(
+    cfg.model.scheduler_factory = fdl.Partial(
         WarmupCosineAnnealingLR,
         warmup_steps=10,
         total_steps=100,

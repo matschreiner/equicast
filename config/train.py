@@ -8,7 +8,7 @@ from equicast.data import EquivariantGraphDataHandler, FeatureConfig
 from equicast.experiments import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.model.backbones.painn import PaiNN
-from equicast.model.model import Model, equivariant_loss_fn
+from equicast.model.model import EquivariantMSELoss, Model
 
 LOCAL_DATASET_PATH = "/home/masc/storage/era5-o96-2024-tail200-6h.zarr"
 GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
@@ -78,7 +78,7 @@ def default_backbone(data_handler):
 
 
 def main():
-    loss_fn = equivariant_loss_fn
+    loss_fn = fdl.Config(EquivariantMSELoss)
     feature_config = fdl.Config(
         FeatureConfig.from_yaml,
         path=EQUIVARIANT_FEATURE_CONFIG_PATH,
