@@ -46,6 +46,7 @@ class TrainConfig(ExperimentConfig):
             self.model,
             self.dataloader,
             ckpt_path=self.ckpt_path,
+            weights_only=False,
         )
 
 
