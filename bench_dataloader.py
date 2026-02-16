@@ -14,7 +14,7 @@ NUM_BATCHES = 200
 
 
 def bench(num_workers):
-    graph_provider = StaticGraphProvider(path=GRAPH_PATH)
+    graph_provider = StaticGraphProvider(graph_path=GRAPH_PATH)
     dataset = AnemoiDataset(path=DATASET_PATH, graph_provider=graph_provider)
     loader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=num_workers)
 
