@@ -91,7 +91,7 @@ def main():
         action="append",
         default=[],
         choices=FIDDLERS.keys(),
-        help="Fiddlers to apply (repeatable)",
+        help="Fiddlers",
     )
     args, _ = parser.parse_known_args()
 
