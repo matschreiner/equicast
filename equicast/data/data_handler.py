@@ -68,6 +68,9 @@ class BaseDataHandler(torch.nn.Module, ABC):
     @abstractmethod
     def prepare_backbone_target(self, data: Any) -> torch.Tensor: ...
 
+    def to_cf(self, graph: Any):
+        raise NotImplementedError
+
 
 class GraphDataHandler(BaseDataHandler):
     """DataHandler for graph data."""
