@@ -24,7 +24,7 @@ def batch(dataset):
 @pytest.fixture
 def graph_provider():
     return StaticGraphProvider(
-        path="test/res/micro_aifs.pt",
+        graph_path="test/res/micro_aifs.pt",
     )
 
 
