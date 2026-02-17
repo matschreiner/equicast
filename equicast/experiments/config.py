@@ -100,6 +100,7 @@ def run_experiment(config: fdl.Config):
     experiment = fdl.build(config)
     experiment.logger.log_hyperparams(get_git_info())
     experiment.logger.log_hyperparams(get_hardware_info())
+    experiment.logger.log_hyperparams({"num_parameters": sum(p.numel() for p in experiment.model.parameters())})
     _log_config(experiment.logger, config)
     experiment.run()
 
@@ -131,23 +132,3 @@ def _log_config(logger, config: fdl.Config):
     flat_config = flatten_config(config)
     for k, w in flat_config.items():
         logger.log_hyperparams({k: w})
-
-
-@contextmanager
-def experiment_error_handler(logger: BaseLogger):
-    logger.log_hyperparams({"status": "started"})
-    try:
-        yield
-        logger.log_hyperparams({"status": "completed"})
-    except KeyboardInterrupt:
-        logger.log_hyperparams({"status": "interrupted"})
-        raise
-    except Exception as e:
-        logger.log_hyperparams(
-            {
-                "status": "failed",
-                "error": str(e),
-                "traceback": traceback.format_exc(),
-            }
-        )
-        raise
