@@ -5,6 +5,7 @@ import fiddle as fdl
 from equicast import experiments
 from equicast.checkpoint import RsyncCheckpointProvider
 from equicast.data.dataset.dataset import AnemoiDataset
+from equicast.data.graph_provider import StaticGraphProvider
 from equicast.forecaster import Forecaster
 from equicast.logger import MLFlowLogger
 from equicast.model import Model
@@ -27,7 +28,8 @@ def main():
     model_id = checkpoint_path.split("/")[-3]  # MLflow run ID
     host = "leonardo"
 
-    dataset = AnemoiDataset(path=dataset_path, graph_provider=None, subsample=1)
+    graph_provider = StaticGraphProvider(graph_path="graph/aifs-graphcast-unnormed.pt")
+    dataset = AnemoiDataset(path=dataset_path, graph_provider=graph_provider, subsample=1)
     timeseries = [dataset[i]["input"] for i in range(50)]
 
     logger = fdl.Config(
