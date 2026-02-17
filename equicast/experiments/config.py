@@ -100,12 +100,25 @@ def run_experiment(config: fdl.Config):
     experiment = fdl.build(config)
     experiment.logger.log_hyperparams(get_git_info())
     experiment.logger.log_hyperparams(get_hardware_info())
-    _log_config_artifact(experiment.logger, config)
+    _log_config(experiment.logger, config)
     experiment.run()
 
 
-def _log_config_artifact(logger, config: fdl.Config):
-    """Log the fiddle config as a YAML artifact."""
+def flatten_config(config: fdl.Config) -> dict[str, any]:
+    """Flatten a fiddle config into a dict with '/'-separated paths."""
+    from fiddle import daglish
+
+    flat = {}
+    for value, path in daglish.iterate(config):
+        if isinstance(value, fdl.Config):
+            continue
+        key = daglish.path_str(path).lstrip(".").replace(".", "/")
+        flat[key] = value
+    return flat
+
+
+def _log_config(logger, config: fdl.Config):
+    """Log the fiddle config as a YAML artifact and flat hyperparams."""
     import tempfile
 
     from fiddle.experimental.yaml_serialization import dump_yaml
@@ -114,6 +127,8 @@ def _log_config_artifact(logger, config: fdl.Config):
         f.write(dump_yaml(config))
         f.flush()
         logger.log_artifact(f.name, artifact_path="")
+
+    logger.log_hyperparams(flatten_config(config))
 
 
 @contextmanager
