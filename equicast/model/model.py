@@ -79,9 +79,10 @@ class Model(pl.LightningModule):
         target = self.data_handler.prepare_backbone_target(target)  # type: ignore
         backbone_out = self.backbone.forward(input_)  # type: ignore
         loss = self.loss(backbone_out, target)
-        self.log_lr()
-        self.log_loss(loss, input_.num_graphs)
-        self.log_metrics(backbone_out, target, input_.num_graphs)
+        if self._should_log_metrics():
+            self.log_lr()
+            self.log_loss(loss, input_.num_graphs)
+            self.log_metrics(backbone_out, target, input_.num_graphs)
 
         return loss
 
@@ -117,11 +118,8 @@ class Model(pl.LightningModule):
 
     def _should_log_metrics(self) -> bool:
         step = self.global_step
-        if step < 100:
-            return True
-        if step < 1000:
-            return step % 10 == 0
-        return step % 50 == 0
+        interval = min(100, max(1, step // 100))
+        return step % interval == 0
 
 
 @contextmanager
