@@ -105,14 +105,14 @@ def run_experiment(config: fdl.Config):
 
 
 def flatten_config(config: fdl.Config) -> dict[str, any]:
-    """Flatten a fiddle config into a dict with '/'-separated paths."""
+    """Flatten a fiddle config into a dict with dot-separated paths."""
     from fiddle import daglish
 
     flat = {}
     for value, path in daglish.iterate(config):
         if isinstance(value, fdl.Config):
             continue
-        key = daglish.path_str(path).lstrip(".").replace(".", "/")
+        key = daglish.path_str(path).lstrip(".")
         flat[key] = value
     return flat
 
@@ -128,7 +128,9 @@ def _log_config(logger, config: fdl.Config):
         f.flush()
         logger.log_artifact(f.name, artifact_path="")
 
-    logger.log_hyperparams(flatten_config(config))
+    flat_config = flatten_config(config)
+    for k, w in flat_config.items():
+        logger.log_hyperparams({k: w})
 
 
 @contextmanager
