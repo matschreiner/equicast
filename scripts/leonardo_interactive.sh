@@ -1,4 +1,4 @@
-i#!/bin/bash
+#!/bin/bash
 # Interactive shell on Leonardo
 # Usage: ./scripts/leonardo_interactive.sh [gpus] [cpus]
 #   gpus: number of GPUs (default: 0)
@@ -12,4 +12,5 @@ if [ "$GPUS" -gt 0 ]; then
     GPU_FLAG="--gres=gpu:$GPUS"
 fi
 
+echo "Requesting: ${GPUS} GPU(s), ${CPUS} CPU(s), 1h"
 srun --nodes=1 --ntasks=1 $GPU_FLAG --cpus-per-task=$CPUS --time=01:00:00 --partition=boost_usr_prod --account=deste_340_26 --pty bash
