@@ -16,6 +16,12 @@ def load_model(model_cls, checkpoint_provider):
     return from_checkpoint(model_cls, checkpoint_provider)
 
 
+def get_timeseries(dataset, num_samples=50):
+    input_timeseries = [dataset[i]["input"] for i in range(num_samples)]
+    target_timeseries = [dataset[i]["target"] for i in range(num_samples)]
+    return input_timeseries, target_timeseries
+
+
 def main():
     dataset_path = "/home/masc/storage/era5-o96-2024-tail200-6h.zarr"
     #  Scheduler
@@ -30,7 +36,8 @@ def main():
 
     graph_provider = StaticGraphProvider(graph_path="graph/aifs-graphcast-unnormed.pt")
     dataset = AnemoiDataset(path=dataset_path, graph_provider=graph_provider, subsample=1)
-    timeseries = [dataset[i]["input"] for i in range(50)]
+
+    input_timeseries, target_timeseries = get_timeseries(dataset)
 
     logger = fdl.Config(
         MLFlowLogger,
@@ -59,7 +66,8 @@ def main():
     cfg = fdl.Config(
         experiments.ForecastConfig,
         forecaster=forecaster,
-        timeseries=timeseries,
+        input_timeseries=input_timeseries,
+        target_timeseries=target_timeseries,
         logger=logger,
         model_id=model_id,
     )
