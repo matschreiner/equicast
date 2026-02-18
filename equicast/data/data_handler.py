@@ -71,6 +71,9 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def to_cf(self, graph: Any):
         raise NotImplementedError
 
+    def save_outputs_to_cf(self, graphs: list[Any], path: str):
+        raise NotImplementedError
+
 
 class GraphDataHandler(BaseDataHandler):
     """DataHandler for graph data."""

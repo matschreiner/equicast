@@ -74,10 +74,13 @@ def flatten_config(config: fdl.Config) -> dict[str, any]:
 def _log_config(logger, config: fdl.Config):
     """Log the fiddle config as a YAML artifact and flat hyperparams."""
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, prefix="config_") as f:
-        f.write(dump_yaml(config))
-        f.flush()
-        logger.log_artifact(f.name, artifact_path="")
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, prefix="config_") as f:
+            f.write(dump_yaml(config))
+            f.flush()
+            logger.log_artifact(f.name, artifact_path="")
+    except Exception:
+        pass
 
     flat_config = flatten_config(config)
     for k, w in flat_config.items():

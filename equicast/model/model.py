@@ -25,6 +25,10 @@ class EquivariantMSELoss(torch.nn.Module):
         return scalar_loss + vector_loss
 
 
+# Alias for backwards compatibility with old checkpoints
+equivariant_loss_fn = EquivariantMSELoss
+
+
 class Model(pl.LightningModule):
     """
     Model that handles preprocessing (scaling, feature routing) internally.
@@ -75,10 +79,13 @@ class Model(pl.LightningModule):
     def training_step(self, batch, _):
         input_ = batch["input"]
         input_ = self.data_handler.prepare_backbone_input(input_)  # type: ignore
+
         target = batch["target"]
         target = self.data_handler.prepare_backbone_target(target)  # type: ignore
+
         backbone_out = self.backbone.forward(input_)  # type: ignore
         loss = self.loss(backbone_out, target)
+
         if self._should_log_metrics():
             self.log_lr()
             self.log_loss(loss, input_.num_graphs)

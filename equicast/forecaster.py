@@ -29,7 +29,7 @@ class Forecaster:
             List of predictions (model handles scaling internally)
         """
         input_ = timeseries[0]
-        predictions = []
+        forecast = []
 
         with torch.no_grad():
             for next_ in tqdm(timeseries[1:], desc="Forecasting"):
@@ -38,6 +38,6 @@ class Forecaster:
                     next_,
                 )
 
-                predictions.append(prediction)
+                forecast.append(prediction)
 
-        return predictions
+        return forecast

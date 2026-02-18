@@ -22,5 +22,8 @@ class ForecastConfig(ExperimentConfig):
         output_dir = f"forecasts/{self.model_id}"
         predictions = self.forecaster.forecast(timeseries=self.input_timeseries)
 
-        self.data_handler.save_outputs_to_cf(predictions, path=os.path.join(output_dir, "predictions"))
-        self.data_handler.save_outputs_to_cf(self.target_timeseries, path=os.path.join(output_dir, "ground_truth"))
+        predictions_path = os.path.join(output_dir, "predictions")
+        target_path = os.path.join(output_dir, "ground_truth")
+
+        self.data_handler.save_outputs_to_cf(predictions, predictions_path)
+        self.data_handler.save_outputs_to_cf(self.target_timeseries, target_path)

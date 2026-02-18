@@ -17,10 +17,10 @@ def load_model(model_cls, checkpoint_provider):
 
 
 def get_data_handler(model):
-    return model.backbone.data_handler
+    return model.data_handler
 
 
-def get_timeseries(dataset, num_samples=1):
+def get_timeseries(dataset, num_samples=10):
     input_timeseries = [dataset[i]["input"] for i in range(num_samples)]
     target_timeseries = [dataset[i]["target"] for i in range(num_samples)]
     return input_timeseries, target_timeseries
