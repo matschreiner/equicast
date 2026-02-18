@@ -48,7 +48,11 @@ module load python/3.11.7
 cd {project_dir}
 source venv/bin/activate
 
-srun {train_cmd}
+export PYTHONFAULTHANDLER=1
+export TORCH_DISTRIBUTED_DEBUG=INFO
+export NCCL_DEBUG=WARN
+
+srun --output={job_dir}/rank-%t.out --error={job_dir}/rank-%t.err {train_cmd}
 """
 
 JOBS_DIR = Path(__file__).resolve().parent.parent / "jobs"
