@@ -65,6 +65,10 @@ def default_model(dataset_path, feature_config_path):
 
 
 def main():
+    # NOTE: DATASET_PATH is passed to both default_model and default_dataloader.
+    # Fiddlers that change the dataset must update both:
+    #   cfg.model.backbone.data_handler.dataset_path = new_path
+    #   cfg.dataloader.dataset.path = new_path
     logger = default_logger()
     cfg = fdl.Config(
         TrainConfig,
