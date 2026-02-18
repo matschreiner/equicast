@@ -18,6 +18,7 @@ class TrainConfig(ExperimentConfig):
     ckpt_path: str | None = None
 
     def run(self):
+        self.logger.log_hyperparams({"num_parameters": sum(p.numel() for p in self.model.parameters())})
         self.trainer.fit(
             self.model,
             self.dataloader,

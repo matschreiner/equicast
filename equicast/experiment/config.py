@@ -55,7 +55,6 @@ def run_experiment(config: fdl.Config):
     experiment = fdl.build(config)
     experiment.logger.log_hyperparams(get_git_info())
     experiment.logger.log_hyperparams(get_hardware_info())
-    experiment.logger.log_hyperparams({"num_parameters": sum(p.numel() for p in experiment.model.parameters())})
     _log_config(experiment.logger, config)
     experiment.run()
 
