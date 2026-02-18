@@ -2,7 +2,7 @@
 
 import fiddle as fdl
 
-from equicast import experiments
+from equicast import experiment
 from equicast.checkpoint import RsyncCheckpointProvider
 from equicast.data.dataset.dataset import AnemoiDataset
 from equicast.data.graph_provider import StaticGraphProvider
@@ -64,7 +64,7 @@ def main():
     )
 
     cfg = fdl.Config(
-        experiments.ForecastConfig,
+        experiment.ForecastConfig,
         forecaster=forecaster,
         input_timeseries=input_timeseries,
         target_timeseries=target_timeseries,
@@ -72,7 +72,7 @@ def main():
         model_id=model_id,
     )
 
-    experiments.run_experiment(cfg)
+    experiment.run_experiment(cfg)
 
 
 if __name__ == "__main__":
