@@ -1,15 +1,69 @@
-"""Forecast from a trained model checkpoint."""
+"""Forecast from a trained model checkpoint.
+
+Usage:
+    python config/forecast.py <run_name>
+"""
+
+import sys
 
 import fiddle as fdl
 
-from equicast import experiment
-from equicast.checkpoint import RsyncCheckpointProvider
-from equicast.data.dataset.dataset import AnemoiDataset
-from equicast.data.graph_provider import StaticGraphProvider
+from equicast import data, experiment
+from equicast.checkpoint import MLFlowCheckpointProvider
 from equicast.forecaster import Forecaster
 from equicast.logger import MLFlowLogger
 from equicast.model import Model
 from equicast.model.from_checkpoint import from_checkpoint
+
+DATASET_PATH = "/home/masc/storage/era5-o96-2024-tail200-6h.zarr"
+GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
+
+
+def default_logger():
+    return fdl.Config(MLFlowLogger, experiment_name="equicast")
+
+
+def default_model(run_id):
+    checkpoint_provider = fdl.Config(
+        MLFlowCheckpointProvider,
+        run_id=run_id,
+        checkpoint_name="latest",
+    )
+    return fdl.Config(load_model, model_cls=Model, checkpoint_provider=checkpoint_provider)
+
+
+def default_forecaster(model, logger):
+    return fdl.Config(Forecaster, model=model, logger=logger)
+
+
+def default_data_handler(model):
+    return fdl.Config(get_data_handler, model)
+
+
+def default_dataset(dataset_path, graph_path):
+    graph_provider = fdl.Config(data.StaticGraphProvider, graph_path=graph_path)
+    return fdl.Config(data.AnemoiDataset, path=dataset_path, graph_provider=graph_provider, subsample=1)
+
+
+def main():
+    run_name = sys.argv[1]
+    run_id = resolve_run(run_name)
+
+    logger = default_logger()
+    model = default_model(run_id)
+    dataset = default_dataset(DATASET_PATH, GRAPH_PATH)
+
+    cfg = fdl.Config(
+        experiment.ForecastConfig,
+        forecaster=default_forecaster(model, logger),
+        input_timeseries=fdl.Config(get_input_timeseries, dataset=dataset),
+        target_timeseries=fdl.Config(get_target_timeseries, dataset=dataset),
+        data_handler=default_data_handler(model),
+        logger=logger,
+        model_id=run_name,
+    )
+
+    experiment.run_experiment(cfg)
 
 
 def load_model(model_cls, checkpoint_provider):
@@ -20,69 +74,23 @@ def get_data_handler(model):
     return model.data_handler
 
 
-def get_timeseries(dataset, num_samples=10):
-    input_timeseries = [dataset[i]["input"] for i in range(num_samples)]
-    target_timeseries = [dataset[i]["target"] for i in range(num_samples)]
-    return input_timeseries, target_timeseries
+def get_input_timeseries(dataset, num_samples=50):
+    return [dataset[i]["input"] for i in range(num_samples)]
 
 
-def main():
-    dataset_path = "/home/masc/storage/era5-o96-2024-tail200-6h.zarr"
-    #  Scheduler
-    checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/mlruns/394873961037717851/80a28951aa9941578184d78d870e663e/checkpoints/latest.ckpt"
-    # EMA
-    #  checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/mlruns/394873961037717851/bbfe37a6679f490abf1487be55124d16/checkpoints/latest.ckpt"
-    # VANILLA
-    #  checkpoint_path = "/leonardo/home/userexternal/jschrei1/equicast/mlruns/394873961037717851/a7004148bd5a4a2fae6062725d8dc090/checkpoints/latest.ckpt"
+def get_target_timeseries(dataset, num_samples=50):
+    return [dataset[i]["target"] for i in range(num_samples)]
 
-    model_id = checkpoint_path.split("/")[-3]  # MLflow run ID
-    host = "leonardo"
 
-    graph_provider = StaticGraphProvider(graph_path="graph/aifs-graphcast-unnormed.pt")
-    dataset = AnemoiDataset(path=dataset_path, graph_provider=graph_provider, subsample=1)
-
-    input_timeseries, target_timeseries = get_timeseries(dataset)
-
-    logger = fdl.Config(
-        MLFlowLogger,
-        experiment_name="masc1",
-        tracking_uri="https://mlflow.dmidev.org/",
+def resolve_run(run_name: str) -> str:
+    import mlflow
+    runs = mlflow.search_runs(
+        filter_string=f"attributes.run_name = '{run_name}'",
+        search_all_experiments=True,
     )
-
-    checkpoint_provider = fdl.Config(
-        RsyncCheckpointProvider,
-        remote_path=checkpoint_path,
-        host=host,
-    )
-
-    model = fdl.Config(
-        load_model,
-        model_cls=Model,
-        checkpoint_provider=checkpoint_provider,
-    )
-
-    data_handler = fdl.Config(
-        get_data_handler,
-        model,
-    )
-
-    forecaster = fdl.Config(
-        Forecaster,
-        model=model,
-        logger=logger,
-    )
-
-    cfg = fdl.Config(
-        experiment.ForecastConfig,
-        forecaster=forecaster,
-        input_timeseries=input_timeseries,
-        target_timeseries=target_timeseries,
-        data_handler=data_handler,
-        logger=logger,
-        model_id=model_id,
-    )
-
-    experiment.run_experiment(cfg)
+    if runs.empty:
+        raise ValueError(f"No run found with name '{run_name}'")
+    return runs.iloc[0]["run_id"]
 
 
 if __name__ == "__main__":
