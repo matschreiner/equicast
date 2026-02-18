@@ -78,7 +78,7 @@ class TimeDeltaCheckpoint(Callback):
         trainer.save_checkpoint(filepath)
         print(f"Saved checkpoint: {filepath}")
 
-        if trainer.logger and hasattr(trainer.logger, "after_save_checkpoint"):
+        if trainer.is_global_zero and trainer.logger and hasattr(trainer.logger, "after_save_checkpoint"):
             trainer.logger.after_save_checkpoint(self)
 
     def _maybe_save_best(self, trainer):
