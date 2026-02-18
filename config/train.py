@@ -19,6 +19,7 @@ def default_logger():
     return fdl.Config(
         MLFlowLogger,
         experiment_name="equicast",
+        tracking_uri="sqlite:///mlflow/mlflow.db",
         artifact_location="mlflow/artifacts",
     )
 
