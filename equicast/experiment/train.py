@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pytorch_lightning import Trainer
 from torch.utils.data import DataLoader
 
-from equicast.experiments.config import ExperimentConfig
+from equicast.experiment.config import ExperimentConfig
 from equicast.logger import BaseLogger
 from equicast.model import Model
 

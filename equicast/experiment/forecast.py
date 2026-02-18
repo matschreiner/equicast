@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from equicast.data.data_handler import BaseDataHandler
-from equicast.experiments.config import ExperimentConfig
+from equicast.experiment.config import ExperimentConfig
 from equicast.forecaster import Forecaster
 from equicast.logger import BaseLogger
 
