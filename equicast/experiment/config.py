@@ -1,9 +1,11 @@
 import argparse
 import importlib
+import tempfile
 from abc import ABC, abstractmethod
 
 import fiddle as fdl
-from fiddle import graphviz
+from fiddle import daglish, graphviz
+from fiddle.experimental.yaml_serialization import dump_yaml
 
 from equicast.utils import get_git_info, get_hardware_info
 
@@ -60,7 +62,6 @@ def run_experiment(config: fdl.Config):
 
 def flatten_config(config: fdl.Config) -> dict[str, any]:
     """Flatten a fiddle config into a dict with dot-separated paths."""
-    from fiddle import daglish
 
     flat = {}
     for value, path in daglish.iterate(config):
@@ -73,9 +74,6 @@ def flatten_config(config: fdl.Config) -> dict[str, any]:
 
 def _log_config(logger, config: fdl.Config):
     """Log the fiddle config as a YAML artifact and flat hyperparams."""
-    import tempfile
-
-    from fiddle.experimental.yaml_serialization import dump_yaml
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, prefix="config_") as f:
         f.write(dump_yaml(config))
