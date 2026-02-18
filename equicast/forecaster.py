@@ -1,7 +1,4 @@
-import os
-
 import torch
-import xarray as xr
 from tqdm import tqdm
 
 from equicast.logger import BaseLogger
@@ -20,7 +17,7 @@ class Forecaster:
         self.model = model
         self.logger = logger
 
-    def forecast(self, timeseries, output_dir="test_output"):
+    def forecast(self, timeseries):
         """
         Autoregressively forecast over the given timeseries.
 
@@ -33,7 +30,6 @@ class Forecaster:
         """
         input_ = timeseries[0]
         predictions = []
-        ground_truth = [frame.clone() for frame in timeseries[1:]]
 
         with torch.no_grad():
             for next_ in tqdm(timeseries[1:], desc="Forecasting"):
@@ -44,13 +40,4 @@ class Forecaster:
 
                 predictions.append(prediction)
 
-        self._save_zarr(predictions, output_dir, "predictions.zarr")
-        self._save_zarr(ground_truth, output_dir, "input_timeseries.zarr")
-
         return predictions
-
-    def _save_zarr(self, timeseries, output_dir, filename):
-        os.makedirs(output_dir, exist_ok=True)
-        path = os.path.join(output_dir, filename)
-        ds = xr.concat([self.model.data_handler.to_cf(frame) for frame in timeseries], dim="time")  # type: ignore
-        ds.to_zarr(path, mode="w")
