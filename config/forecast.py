@@ -42,7 +42,7 @@ def default_data_handler(model):
 
 def default_dataset(dataset_path, graph_path):
     graph_provider = fdl.Config(data.StaticGraphProvider, graph_path=graph_path)
-    return fdl.Config(data.AnemoiDataset, path=dataset_path, graph_provider=graph_provider, subsample=1)
+    return fdl.Config(data.AnemoiDataset, path=dataset_path, graph_provider=graph_provider, step=1)
 
 
 def main():

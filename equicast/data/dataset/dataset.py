@@ -16,19 +16,19 @@ class AnemoiDataset(Dataset):
         self,
         path: str,
         graph_provider: BaseGraphProvider,
-        subsample: int = 1,
+        step: int = 1,
     ):
         super().__init__()
         self.data = open_dataset(path)
         self.graph_provider = graph_provider
-        self.subsample = subsample
+        self.step = step
 
     def __len__(self):
-        return (len(self.data) - self.subsample) // self.subsample
+        return len(self.data) - self.step
 
     def __getitem__(self, idx):
-        input_idx = idx * self.subsample
-        target_idx = input_idx + self.subsample
+        input_idx = idx
+        target_idx = idx + self.step
         input_data = self.data[input_idx].squeeze()
         target_data = self.data[target_idx].squeeze()
 

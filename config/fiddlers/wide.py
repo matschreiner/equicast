@@ -1,7 +1,7 @@
 import fiddle as fdl
 
-from equicast.logger import MLFlowLogger
 from equicast.model.backbones.painn import PaiNN
+from equicast.model.schedulers import WarmupCosineAnnealingLR
 
 
 def fiddler(cfg: fdl.Config) -> None:
@@ -17,4 +17,10 @@ def fiddler(cfg: fdl.Config) -> None:
         ],
         input_nodes="grid",
         hidden_dim=256,
+    )
+
+    cfg.model.scheduler_factory = fdl.Partial(
+        WarmupCosineAnnealingLR,
+        warmup_steps=5000,
+        total_steps=500000,
     )
