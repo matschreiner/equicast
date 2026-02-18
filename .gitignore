@@ -16,3 +16,4 @@ timeseries.pt
 timeseries_raw.npz
 forecasts
 mlflow
+jobs
