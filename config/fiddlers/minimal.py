@@ -24,13 +24,4 @@ def fiddler(cfg: fdl.Config) -> None:
         hidden_dim=4,
     )
 
-    logger = fdl.Config(
-        MLFlowLogger,
-        tracking_uri="sqlite:///mlflow/mlflow.db",
-        experiment_name="continue",
-    )
-
     cfg.dataloader.num_workers = 0
-
-    cfg.logger = logger
-    cfg.trainer.logger = logger
