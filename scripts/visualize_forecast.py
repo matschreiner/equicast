@@ -19,8 +19,8 @@ def main():
     parser.add_argument("feature", help="Feature name to visualize")
     args = parser.parse_args()
 
-    pred_ds = xr.open_zarr(os.path.join(args.forecast_dir, "predictions.zarr"))
-    truth_ds = xr.open_zarr(os.path.join(args.forecast_dir, "input_timeseries.zarr"))
+    pred_ds = xr.open_dataset(os.path.join(args.forecast_dir, "forecast.zarr"))
+    truth_ds = xr.open_dataset(os.path.join(args.forecast_dir, "target_forecast.zarr"))
 
     lat = pred_ds["latitude"].values
     lon = pred_ds["longitude"].values

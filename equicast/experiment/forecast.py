@@ -20,10 +20,10 @@ class ForecastConfig(ExperimentConfig):
 
     def run(self):
         output_dir = f"forecasts/{self.model_id}"
-        predictions = self.forecaster.forecast(timeseries=self.input_timeseries)
+        forecast = self.forecaster.forecast(timeseries=self.input_timeseries)
 
-        predictions_path = os.path.join(output_dir, "predictions")
-        target_path = os.path.join(output_dir, "ground_truth")
+        forecast_path = os.path.join(output_dir, "forecast.zarr")
+        target_path = os.path.join(output_dir, "target_forecast.zarr")
 
-        self.data_handler.save_outputs_to_cf(predictions, predictions_path)
-        self.data_handler.save_outputs_to_cf(self.target_timeseries, target_path)
+        self.data_handler.outputs_to_zarr(forecast, forecast_path)
+        self.data_handler.outputs_to_zarr(self.target_timeseries, target_path)

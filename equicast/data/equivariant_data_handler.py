@@ -166,11 +166,10 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         ds.attrs["Conventions"] = "CF-1.8"
         return ds
 
-    def save_outputs_to_cf(self, graphs: list[Data], path: str):
-        os.makedirs(path, exist_ok=True)
-        for i, graph in enumerate(graphs):
-            ds = self.to_cf(graph)
-            ds.to_netcdf(os.path.join(path, f"{i:04d}.nc"))
+    def outputs_to_zarr(self, graphs: list[Data], path: str):
+        datasets = [self.to_cf(graph) for graph in graphs]
+        combined = xr.concat(datasets, dim="time")
+        combined.to_zarr(path, mode="w")
 
     def _get_vector_idxs(self, vector_config: dict[str, list[str]]) -> list[tuple[int, int]]:
         """Get (u_idx, v_idx) pairs for each vector feature."""
