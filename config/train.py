@@ -19,6 +19,7 @@ def default_logger():
     return fdl.Config(
         MLFlowLogger,
         experiment_name="equicast",
+        artifact_location="mlflow/artifacts",
     )
 
 
