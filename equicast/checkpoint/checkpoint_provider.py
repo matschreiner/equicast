@@ -115,11 +115,22 @@ class MLFlowCheckpointProvider(CheckpointProvider):
         self.checkpoint_name = checkpoint_name if checkpoint_name.endswith(".ckpt") else checkpoint_name + ".ckpt"
 
     def get_checkpoint(self) -> str:
-        artifact_path = os.path.join(CHECKPOINT_PATH, self.checkpoint_name)
+        artifact_path = self._find_artifact(self.checkpoint_name)
 
         local_path = self.client.download_artifacts(
             self.run_id,
             artifact_path,
             dst_path=".",
         )
+
         return local_path
+
+    def _find_artifact(self, name: str) -> str:
+        for artifact in self.client.list_artifacts(self.run_id):
+            if artifact.is_dir:
+                for child in self.client.list_artifacts(self.run_id, artifact.path):
+                    if os.path.basename(child.path) == name:
+                        return child.path
+            elif os.path.basename(artifact.path) == name:
+                return artifact.path
+        raise FileNotFoundError(f"Artifact '{name}' not found in run {self.run_id}")
