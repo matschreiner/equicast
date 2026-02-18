@@ -4,7 +4,7 @@ import fiddle as fdl
 import matplotlib.pyplot as plt
 
 from equicast import data
-from equicast.experiments.config import vis_config
+from equicast.experiment.config import vis_config
 from equicast.visualization import (
     make_video_with_vectors,
     plot_field_with_vectors,

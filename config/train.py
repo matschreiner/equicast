@@ -2,10 +2,10 @@ import fiddle as fdl
 from pytorch_lightning import Trainer
 from torch_geometric.loader import DataLoader
 
-from equicast import data, experiments
+from equicast import data, experiment
 from equicast.callbacks import StepTimer, TimeDeltaCheckpoint
 from equicast.data import EquivariantGraphDataHandler, FeatureConfig
-from equicast.experiments import TrainConfig
+from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.model.backbones.painn import PaiNN
 from equicast.model.model import EquivariantMSELoss, Model
@@ -113,7 +113,7 @@ def main():
         logger,
     )
 
-    experiments.run_experiment(cfg)
+    experiment.run_experiment(cfg)
 
 
 if __name__ == "__main__":
