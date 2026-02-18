@@ -1,7 +1,5 @@
 import fiddle as fdl
 
-from equicast.logger import MLFlowLogger
-
 
 def fiddler(cfg: fdl.Config) -> None:
     leonardo_era5 = (
@@ -14,11 +12,3 @@ def fiddler(cfg: fdl.Config) -> None:
     cfg.dataloader.num_workers = 7
     cfg.dataloader.batch_size = 1
     cfg.trainer.strategy = "ddp"
-
-    logger = fdl.Config(
-        MLFlowLogger,
-        tracking_uri="sqlite:///mlflow/mlflow.db",
-        experiment_name="equicast",
-    )
-    cfg.logger = logger
-    cfg.trainer.logger = logger
