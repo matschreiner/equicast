@@ -26,7 +26,7 @@ def fiddler(cfg: fdl.Config) -> None:
 
     logger = fdl.Config(
         MLFlowLogger,
-        tracking_uri="file:./mlruns",
+        tracking_uri="sqlite:///mlflow/mlflow.db",
         experiment_name="continue",
     )
 
