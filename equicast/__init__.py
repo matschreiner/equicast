@@ -3,6 +3,7 @@ import lovely_tensors as lt
 import torch
 
 lt.monkey_patch()
+torch.set_float32_matmul_precision("medium")
 
 DTYPE = torch.float32
 CHECKPOINT_PATH = "checkpoints"
