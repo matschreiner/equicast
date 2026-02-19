@@ -1,91 +1,80 @@
-from typing import Optional
-
 import torch
-from torch_geometric.nn.conv import MessagePassing
+from torch import nn
+from torch_geometric.utils import scatter
 
 from equicast.data.feature_indices import FeatureIndices
+from equicast.model.layers.embedding import PositionalEmbedder
 from equicast.model.layers.mlp import MLP
 
 
-class GNN(torch.nn.Module):
-    def __init__(self, feature_indices: FeatureIndices, grid_nodes="grid", edge_dim: int = 3):
-        super().__init__()
-        self.conv = GraphConv(in_dim=feature_indices.in_dim, out_dim=feature_indices.out_dim, edge_dim=edge_dim)
-        self.grid_nodes = grid_nodes
-
-    def forward(self, graph):
-        residual = graph[self.grid_nodes].residual
-        x = self.conv(
-            graph[self.grid_nodes].input,
-            graph[self.grid_nodes, "to", self.grid_nodes],
-        )
-
-        return x + residual
-
-
-class EncProcDec(torch.nn.Module):
-    """Encoder-Processor-Decoder using GraphConv layers with grid-mesh structure."""
-
+class GNN(nn.Module):
     def __init__(
         self,
         feature_indices: FeatureIndices,
-        grid_nodes: str = "grid",
-        mesh_nodes: str = "mesh",
-        hidden_dim: int = 256,
-        edge_dim: int = 3,
-        use_residual: bool = True,
+        edges: list[tuple[str, str, str]],
+        input_nodes: str = "grid",
+        hidden_dim: int = 64,
+        aggr: str = "mean",
+        edge_dir_dim: int = 2,
     ):
         super().__init__()
-        self.grid_nodes = grid_nodes
-        self.mesh_nodes = mesh_nodes
-        self.use_residual = use_residual
-        self.encoder = GraphConv(in_dim=feature_indices.in_dim, out_dim=hidden_dim, edge_dim=edge_dim)
-        self.processor1 = GraphConv(in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim)
-        self.processor2 = GraphConv(in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim)
-        self.decoder = GraphConv(in_dim=hidden_dim, out_dim=feature_indices.out_dim, edge_dim=edge_dim)
+        self.edges = edges
+        self.input_nodes = input_nodes
 
-    def forward(self, graph):
-        mesh_edges = graph[self.mesh_nodes, "to", self.mesh_nodes]
+        self.embed_in = MLP(in_dim=feature_indices.in_dim, out_dim=hidden_dim)
+        self.embed_out = MLP(in_dim=hidden_dim, out_dim=feature_indices.out_dim)
+        self.blocks = nn.ModuleList([Block(hidden_dim, aggr=aggr, edge_dir_dim=edge_dir_dim) for _ in edges])
 
-        x = self.encoder(
-            graph[self.grid_nodes].input,
-            graph[self.grid_nodes, "to", self.mesh_nodes],
-        )
-        x = x + self.processor1(x, mesh_edges)
-        x = x + self.processor2(x, mesh_edges)
-        out = self.decoder(x, graph[self.mesh_nodes, "to", self.grid_nodes])
+    def forward(self, graph) -> torch.Tensor:
+        scalar = self.embed_in(graph[self.input_nodes].input)
 
-        if self.use_residual:
-            out = out + graph[self.grid_nodes].residual
+        for block, edge in zip(self.blocks, self.edges):
+            scalar = block(scalar, graph[edge])
 
-        return out
+        return self.embed_out(scalar) + graph[self.input_nodes].residual
 
 
-class GraphConv(MessagePassing):
-    def __init__(self, in_dim: int, out_dim: int, edge_dim: int = 3, aggr: str = "mean"):
-        super().__init__(aggr=aggr)
-        self.message_mlp = MLP(
-            in_dim=2 * in_dim + edge_dim,
-            out_dim=out_dim,
-        )
-        self.update_mlp = MLP(
-            in_dim=out_dim + in_dim,
-            out_dim=out_dim,
-        )
+class MessagePassing(nn.Module):
+    def __init__(self, hidden_dim: int, aggr: str = "mean", edge_dir_dim: int = 2):
+        super().__init__()
+        self.aggr = aggr
+        self.message_mlp = MLP(in_dim=2 * hidden_dim + edge_dir_dim, out_dim=hidden_dim)
 
     def forward(
         self,
-        x: torch.Tensor,
-        edge_storage: dict,
-        _: Optional[tuple[int, int]] = None,
+        scalar: torch.Tensor,
+        edge_index: torch.Tensor,
+        positional_embedding: torch.Tensor,
+        edge_dirs: torch.Tensor,
     ) -> torch.Tensor:
-        edge_index = edge_storage["edge_index"].long()
-        edge_attr = torch.cat([edge_storage["edge_dirs"], edge_storage["edge_length"]], dim=-1)
+        src, dst = edge_index
+        scalar_j = scalar[src]
+        msg = torch.cat([scalar_j, positional_embedding, edge_dirs], dim=-1)
+        scalar_msg = self.message_mlp(msg)
 
-        return self.propagate(x=x, edge_index=edge_index, edge_attr=edge_attr)
+        num_nodes = scalar.size(0)
+        return scatter(scalar_msg, dst, dim=0, dim_size=num_nodes, reduce=self.aggr)
 
-    def message(self, x_j, x_i, edge_attr):  # type: ignore
-        return self.message_mlp(torch.cat([x_i, x_j, edge_attr], dim=-1))
 
-    def update(self, inputs: torch.Tensor, x: torch.Tensor) -> torch.Tensor:  # type: ignore
-        return self.update_mlp(torch.cat([inputs, x], dim=-1))
+class Update(nn.Module):
+    def __init__(self, hidden_dim: int):
+        super().__init__()
+        self.mlp = MLP(in_dim=hidden_dim, out_dim=hidden_dim)
+
+    def forward(self, scalar: torch.Tensor) -> torch.Tensor:
+        return self.mlp(scalar)
+
+
+class Block(nn.Module):
+    def __init__(self, hidden_dim: int, aggr: str = "mean", edge_dir_dim: int = 2):
+        super().__init__()
+        self.embed_edge_length = PositionalEmbedder(hidden_dim)
+        self.message_passing = MessagePassing(hidden_dim, aggr, edge_dir_dim)
+        self.update = Update(hidden_dim)
+
+    def forward(self, scalar: torch.Tensor, edges) -> torch.Tensor:
+        edge_index = edges["edge_index"].long()
+        edge_emb = self.embed_edge_length(edges.edge_length)
+        d_scalar = self.message_passing(scalar, edge_index, edge_emb, edges.edge_dirs)
+        scalar = scalar + d_scalar
+        return scalar + self.update(scalar)
