@@ -49,6 +49,7 @@ def default_dataset(dataset_path, graph_path):
 def main():
     run_name = sys.argv[1]
     run_id = resolve_run(run_name)
+    num_samples = 40
 
     logger = default_logger()
     model = default_model(run_id)
@@ -57,8 +58,8 @@ def main():
     cfg = fdl.Config(
         experiment.ForecastConfig,
         forecaster=default_forecaster(model, logger),
-        input_timeseries=fdl.Config(get_input_timeseries, dataset=dataset),
-        target_timeseries=fdl.Config(get_target_timeseries, dataset=dataset),
+        input_timeseries=fdl.Config(get_input_timeseries, dataset=dataset, num_samples=num_samples),
+        target_timeseries=fdl.Config(get_target_timeseries, dataset=dataset, num_samples=num_samples),
         data_handler=default_data_handler(model),
         logger=logger,
         model_id=run_name,
@@ -85,6 +86,7 @@ def get_target_timeseries(dataset, num_samples=50):
 
 def resolve_run(run_name: str) -> str:
     import mlflow
+
     runs = mlflow.search_runs(
         filter_string=f"attributes.run_name = '{run_name}'",
         search_all_experiments=True,
