@@ -72,8 +72,10 @@ class Model(pl.LightningModule):
         input_ = input_.clone()
         next_ = next_.clone()
 
-        pred = self.forward(input_)
-        next_ = self.data_handler.update_state_with_prediction(next_, pred)  # type: ignore
+        input_ = self.data_handler.prepare_backbone_input(input_)  # type: ignore
+        backbone_out = self.backbone.forward(input_)  # type: ignore
+        pred = self.data_handler.update_state_with_backbone_output(input_.clone(), backbone_out)  # type: ignore
+        next_ = self.data_handler.update_state_with_backbone_output(next_, backbone_out)  # type: ignore
         return next_, pred
 
     def training_step(self, batch, _):

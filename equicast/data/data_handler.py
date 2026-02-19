@@ -57,9 +57,6 @@ class BaseDataHandler(torch.nn.Module, ABC):
         raw[..., self.out_idxs] = values
 
     @abstractmethod
-    def update_state_with_prediction(self, state: Any, pred_state: Any) -> Any: ...
-
-    @abstractmethod
     def prepare_backbone_input(self, data: Any) -> Any: ...
 
     @abstractmethod
@@ -104,11 +101,6 @@ class GraphDataHandler(BaseDataHandler):
     def update_state_with_backbone_output(self, state: Data, backbone_output: torch.Tensor) -> Data:
         denormalized = self.normalizer.denormalize_output(backbone_output)
         self.set_output_scalars(state[self.nodes].data, denormalized)
-        return state
-
-    def update_state_with_prediction(self, state: Data, pred_state: Data) -> Data:
-        pred = self.get_output_scalars(pred_state[self.nodes].data)
-        self.set_output_scalars(state[self.nodes].data, pred)
         return state
 
     def to_cf(self, graph: Data) -> "xr.Dataset":
