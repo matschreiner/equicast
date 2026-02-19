@@ -35,12 +35,7 @@ class AnemoiDataset(Dataset):
         input_graph = self.graph_provider.get_graph(idx)
         target_graph = self.graph_provider.get_graph(idx)
 
-        #  graph_path = "graph/aifs-graphcast-unnormed.pt"
-        #  input_graph = torch.load(graph_path, weights_only=False)
-        #  target_graph = torch.load(graph_path, weights_only=False)
-
-        input_graph["grid"].data = torch.from_numpy(input_data).T
-
-        target_graph["grid"].data = torch.from_numpy(target_data).T
+        input_graph["grid"].data = torch.from_numpy(input_data.T)
+        target_graph["grid"].data = torch.from_numpy(target_data.T)
 
         return {"input": input_graph, "target": target_graph}
