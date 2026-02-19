@@ -51,9 +51,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
     ):
         super().__init__(dataset_path, feature_config)
         self.nodes = nodes
-        self._vectors_in_eq_out = (
-            self.feature_index.in_vector_idxs == self.feature_index.out_vector_idxs
-        )
+        self._vectors_in_eq_out = self.feature_index.in_vector_idxs == self.feature_index.out_vector_idxs
 
         # Create normalizers
         data = open_dataset(dataset_path)
@@ -99,11 +97,9 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         state: Data,
         backbone_output: Any,
     ) -> Data:
-        # Denormalize scalars
         denormalized = self.normalizer.denormalize_output(backbone_output["scalar"])
         self.set_output_scalars(state[self.nodes].data, denormalized)
 
-        # Denormalize and unpack vectors
         vectors = self.vector_normalizer.denormalize_vectors(backbone_output["vector"])
         self.set_output_vectors(state[self.nodes].data, vectors)
 
