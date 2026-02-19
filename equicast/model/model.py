@@ -72,12 +72,13 @@ class Model(pl.LightningModule):
 
     def step_forward(self, input_, next_):
         input_ = input_.clone()
+        pred = input_.clone()
         next_ = next_.clone()
 
         input_ = self.data_handler.prepare_backbone_input(input_)
         backbone_out = self.backbone(input_)
 
-        pred = self.data_handler.update_state_with_backbone_output(input_.clone(), backbone_out)
+        pred = self.data_handler.update_state_with_backbone_output(pred, backbone_out)
         next_ = self.data_handler.update_state_with_backbone_output(next_, backbone_out)
         return next_, pred
 
