@@ -18,10 +18,18 @@ mlflow.set_tracking_uri(TRACKING_URI)
 
 
 def _create_experiment_named(self, name, artifact_location=None, tags=None):
-    """Use experiment name as ID for portable, human-readable experiment directories."""
+    """Use experiment name as ID and relative artifact location for portability."""
+    import os
     self._check_root_dir()
     self._validate_experiment_does_not_exist(name)
-    return self._create_experiment_with_id(name, name, artifact_location, tags)
+    exp_id = self._create_experiment_with_id(name, name, None, tags)
+    meta_path = os.path.join(self.root_directory, name, "meta.yaml")
+    with open(meta_path) as f:
+        meta = yaml.safe_load(f)
+    meta["artifact_location"] = f"{TRACKING_URI}/{name}"
+    with open(meta_path, "w") as f:
+        yaml.dump(meta, f)
+    return exp_id
 
 
 _FileStore.create_experiment = _create_experiment_named
