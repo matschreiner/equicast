@@ -50,7 +50,7 @@ class Model(pl.LightningModule):
     ):
         super().__init__()
         with ignore_backbone_warning():
-            self.save_hyperparameters()
+            self.save_hyperparameters(ignore=["loss_fn"])
 
         self.backbone = torch.compile(backbone) if compile_backbone else backbone
         self.data_handler = data_handler
