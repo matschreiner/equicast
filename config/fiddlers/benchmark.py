@@ -14,6 +14,7 @@ def fiddler(cfg: fdl.Config) -> None:
         BenchmarkDataset,
         samples_path="resources/samples",
         graph_provider=graph_provider,
+        length=10000,
     )
 
     #  val_dataset = fdl.Config(
@@ -30,5 +31,6 @@ def fiddler(cfg: fdl.Config) -> None:
     cfg.dataloader.num_workers = 0
     cfg.dataloader.shuffle = False
 
+    cfg.trainer.max_epochs = 1
     cfg.trainer.callbacks = [fdl.Config(StepTimer)]
     cfg.logger.experiment_name = "benchmark"
