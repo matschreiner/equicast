@@ -6,6 +6,26 @@ from pytorch_lightning import Callback
 from equicast import CHECKPOINT_PATH
 
 
+class CheckpointSaver:
+    def __init__(self, dirpath: str, logger=None):
+        self.dirpath = dirpath
+        self.logger = logger
+        os.makedirs(dirpath, exist_ok=True)
+
+    def save(self, trainer, filename: str):
+        filepath = os.path.join(self.dirpath, filename)
+        trainer.save_checkpoint(filepath)
+        if trainer.is_global_zero and self.logger and hasattr(self.logger, "after_save_checkpoint"):
+            print(f"Saving checkpoint: {filepath}")
+            self.logger.after_save_checkpoint(filepath)
+
+    @classmethod
+    def from_trainer(cls, trainer) -> "CheckpointSaver":
+        run_id = getattr(trainer.logger, "run_id", None) or time.strftime("%Y%m%d_%H%M%S")
+        dirpath = os.path.join(CHECKPOINT_PATH, run_id)
+        return cls(dirpath, trainer.logger)
+
+
 class TimeDeltaCheckpoint(Callback):
     """
     Checkpoint callback with time-based adaptive intervals.
@@ -41,10 +61,9 @@ class TimeDeltaCheckpoint(Callback):
     def on_train_start(self, trainer, pl_module):
         self.start_time = time.time()
         self.last_save_time = self.start_time
-        self._dirpath = os.path.join(CHECKPOINT_PATH, self._run_id(trainer))
-        os.makedirs(self._dirpath, exist_ok=True)
+        self.saver = CheckpointSaver.from_trainer(trainer)
         if self.save_initial:
-            self._save_checkpoint(trainer, "initial.ckpt")
+            self.saver.save(trainer, "initial.ckpt")
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         now = time.time()
@@ -53,7 +72,7 @@ class TimeDeltaCheckpoint(Callback):
 
         if since_last_save >= self._get_interval(elapsed):
             self._maybe_save_best(trainer)
-            self._save_checkpoint(trainer, "latest.ckpt")
+            self.saver.save(trainer, "latest.ckpt")
             self.last_save_time = now
 
     def _get_interval(self, elapsed: float) -> float:
@@ -64,20 +83,8 @@ class TimeDeltaCheckpoint(Callback):
         else:
             return self.phase3_interval
 
-    def _run_id(self, trainer) -> str:
-        if trainer.logger and hasattr(trainer.logger, "run_id"):
-            return trainer.logger.run_id
-        return time.strftime("%Y%m%d_%H%M%S")
-
-    def _save_checkpoint(self, trainer, filename: str):
-        filepath = os.path.join(self._dirpath, filename)
-        trainer.save_checkpoint(filepath)
-        if trainer.is_global_zero and trainer.logger and hasattr(trainer.logger, "upload_checkpoint"):
-            print(f"Saving checkpoint: {filepath}")
-            trainer.logger.upload_checkpoint(filepath)
-
     def _maybe_save_best(self, trainer):
         current_loss = trainer.callback_metrics.get(self.monitor)
         if current_loss is not None and current_loss < self.best_loss:
             self.best_loss = current_loss
-            self._save_checkpoint(trainer, "best.ckpt")
+            self.saver.save(trainer, "best.ckpt")
