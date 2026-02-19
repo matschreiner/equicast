@@ -7,7 +7,7 @@ torch.set_float32_matmul_precision("medium")
 
 DTYPE = torch.float32
 CHECKPOINT_PATH = "checkpoints"
-TRACKING_URI = "sqlite:///mlflow/mlflow.db"
+TRACKING_URI = "mlflow"
 
 mlflow.set_tracking_uri(TRACKING_URI)
 
