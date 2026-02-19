@@ -4,10 +4,7 @@ Equivariant graph neural network for weather forecasting on ERA5 data.
 
 ## Overview
 
-Equicast trains GNN-based weather models on ERA5 reanalysis data using an encoder–processor–decoder architecture over an icosahedral mesh graph (GraphCast-style). Two model families are supported:
-
-- **PaiNN** — SE(3)-equivariant model trained with an equivariant MSE loss
-- **DiffusionPaiNN** — DDPM model using a cosine noise schedule
+Equicast trains GNN-based weather models on ERA5 reanalysis data using an encoder–processor–decoder architecture over an icosahedral mesh graph (GraphCast-style). The backbone is **PaiNN** — an SE(3)-equivariant GNN trained with an equivariant MSE loss.
 
 Data handling uses [anemoi-datasets](https://github.com/ecmwf/anemoi-datasets) and [anemoi-graphs](https://github.com/ecmwf/anemoi-graphs). Experiments are configured with [Fiddle](https://github.com/google/fiddle) and tracked with MLFlow.
 
@@ -21,16 +18,10 @@ Dependencies (installed automatically): `mlflow`, `anemoi-datasets`, `anemoi-gra
 
 ## Usage
 
-### Train deterministic model (PaiNN)
+### Train
 
 ```bash
 python config/train.py
-```
-
-### Train diffusion model (DiffusionPaiNN)
-
-```bash
-python config/diffusion_train.py
 ```
 
 To customise hyperparameters, pass a fiddler — a Python snippet that mutates the Fiddle config:
@@ -53,7 +44,7 @@ python config/forecast.py <run_name>
 config/          Training and forecast entry points + fiddlers
 equicast/
   data/          Dataset, graph attachment, normalization, data handlers
-  model/         Model Lightning module, backbones (PaiNN, DiffusionPaiNN), diffusion utilities
+  model/         Model Lightning module and PaiNN backbone
   experiment/    TrainConfig, ForecastConfig, run_experiment
   forecaster.py  Autoregressive rollout
   logger/        MLFlow logger wrapper
