@@ -22,7 +22,7 @@ def fiddler(cfg: fdl.Config) -> None:
         feature_index=feature_index,
         edges=cfg.model.backbone.edges,
         input_nodes="grid",
-        hidden_dim=int(cfg.model.backbone.hidden_dim * 1.5),
+        hidden_dim=int(cfg.model.backbone.hidden_dim * 1.6),
     )
     cfg.model.data_handler = fdl.Config(
         data.GraphDataHandler,
