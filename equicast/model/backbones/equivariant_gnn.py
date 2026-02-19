@@ -3,7 +3,7 @@
 import torch
 from torch import nn
 
-from equicast.data.feature_indices import FeatureIndices
+from equicast.data.feature_index import FeatureIndex
 from equicast.model.layers.equivariant_conv import EquivariantBlock
 from equicast.model.layers.mlp import MLP
 
@@ -13,7 +13,7 @@ class EquivariantGNN(nn.Module):
 
     def __init__(
         self,
-        feature_indices: FeatureIndices,
+        feature_index: FeatureIndex,
         grid_nodes: str = "grid",
         hidden_dim: int = 256,
     ):
@@ -21,10 +21,10 @@ class EquivariantGNN(nn.Module):
         self.grid_nodes = grid_nodes
 
         # Dimensions
-        scalar_in_dim = feature_indices.in_dim
-        scalar_out_dim = feature_indices.out_dim
-        in_vector_dim = feature_indices.in_vector_dim
-        out_vector_dim = feature_indices.out_vector_dim
+        scalar_in_dim = feature_index.in_dim
+        scalar_out_dim = feature_index.out_dim
+        in_vector_dim = feature_index.in_vector_dim
+        out_vector_dim = feature_index.out_vector_dim
 
         # Encoder: project to hidden dim
         self.scalar_encoder = MLP(in_dim=scalar_in_dim, out_dim=hidden_dim)

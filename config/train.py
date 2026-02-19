@@ -2,10 +2,10 @@ import fiddle as fdl
 from pytorch_lightning import Trainer
 from torch_geometric.loader import DataLoader
 
-from equicast import data, experiment
+from equicast import TRACKING_URI, data, experiment
 from equicast.callbacks import StepTimer, TimeDeltaCheckpoint
 from equicast.data import EquivariantGraphDataHandler, FeatureConfig
-from equicast.data.feature_indices import FeatureIndices
+from equicast.data.feature_index import FeatureIndex
 from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.model.backbones.painn import PaiNN
@@ -20,7 +20,7 @@ def default_logger():
     return fdl.Config(
         MLFlowLogger,
         experiment_name="equicast",
-        tracking_uri="sqlite:///mlflow/mlflow.db",
+        tracking_uri=TRACKING_URI,
         artifact_location="mlflow/artifacts",
     )
 
@@ -31,6 +31,7 @@ def default_trainer(logger):
         logger=logger,
         log_every_n_steps=1,
         gradient_clip_val=1.0,
+        enable_checkpointing=False,  # don't use default checkpointing
         callbacks=[
             fdl.Config(TimeDeltaCheckpoint, save_initial=True),
             fdl.Config(StepTimer),
@@ -51,14 +52,14 @@ def default_model(dataset_path, feature_config_path):
         feature_config=feature_config,
         dataset_path=dataset_path,
     )
-    feature_indices = fdl.Config(
-        FeatureIndices.from_dataset,
+    feature_index = fdl.Config(
+        FeatureIndex.from_dataset,
         dataset_path=dataset_path,
         feature_config=feature_config,
     )
     backbone = fdl.Config(
         PaiNN,
-        feature_indices=feature_indices,
+        feature_index=feature_index,
         edges=[
             ("grid", "to", "mesh"),
             ("mesh", "to", "mesh"),
@@ -75,7 +76,7 @@ def default_model(dataset_path, feature_config_path):
 def main():
     # NOTE: DATASET_PATH is passed to both default_model and default_dataloader.
     # Fiddlers that change the dataset must update both:
-    #   cfg.model.backbone.feature_indices.dataset_path = new_path
+    #   cfg.model.backbone.feature_index.dataset_path = new_path
     #   cfg.model.data_handler.dataset_path = new_path
     #   cfg.dataloader.dataset.path = new_path
     logger = default_logger()

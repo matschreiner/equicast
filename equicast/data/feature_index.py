@@ -3,7 +3,7 @@ import torch
 from equicast.data.feature_config import FeatureConfig
 
 
-class FeatureIndices:
+class FeatureIndex:
     """Holds feature indices for model input/output."""
 
     def __init__(self, feature_config: FeatureConfig, name_to_index: dict[str, int]):
@@ -44,7 +44,7 @@ class FeatureIndices:
         return len(self.out_vector_idxs)
 
     @classmethod
-    def from_dataset(cls, dataset_path: str, feature_config: FeatureConfig) -> "FeatureIndices":
+    def from_dataset(cls, dataset_path: str, feature_config: FeatureConfig) -> "FeatureIndex":
         from anemoi.datasets import open_dataset
 
         return cls(feature_config, open_dataset(dataset_path).name_to_index)

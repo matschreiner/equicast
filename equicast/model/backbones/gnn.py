@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch_geometric.utils import scatter
 
-from equicast.data.feature_indices import FeatureIndices
+from equicast.data.feature_index import FeatureIndex
 from equicast.model.layers.embedding import PositionalEmbedder
 from equicast.model.layers.mlp import MLP
 
@@ -10,7 +10,7 @@ from equicast.model.layers.mlp import MLP
 class GNN(nn.Module):
     def __init__(
         self,
-        feature_indices: FeatureIndices,
+        feature_index: FeatureIndex,
         edges: list[tuple[str, str, str]],
         input_nodes: str = "grid",
         hidden_dim: int = 64,
@@ -21,8 +21,8 @@ class GNN(nn.Module):
         self.edges = edges
         self.input_nodes = input_nodes
 
-        self.embed_in = MLP(in_dim=feature_indices.in_dim, out_dim=hidden_dim)
-        self.embed_out = MLP(in_dim=hidden_dim, out_dim=feature_indices.out_dim)
+        self.embed_in = MLP(in_dim=feature_index.in_dim, out_dim=hidden_dim)
+        self.embed_out = MLP(in_dim=hidden_dim, out_dim=feature_index.out_dim)
         self.blocks = nn.ModuleList([Block(hidden_dim, aggr=aggr, edge_dir_dim=edge_dir_dim) for _ in edges])
 
     def forward(self, graph) -> torch.Tensor:

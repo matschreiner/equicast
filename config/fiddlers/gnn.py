@@ -11,15 +11,15 @@ FEATURE_CONFIG_PATH = "config/features/base.yaml"
 def fiddler(cfg: fdl.Config) -> None:
     dataset_path = cfg.model.data_handler.dataset_path
     feature_config = fdl.Config(FeatureConfig.from_yaml, path=FEATURE_CONFIG_PATH)
-    feature_indices = fdl.Config(
-        FeatureIndices.from_dataset,
+    feature_index = fdl.Config(
+        FeatureIndex.from_dataset,
         dataset_path=dataset_path,
         feature_config=feature_config,
     )
 
     cfg.model.backbone = fdl.Config(
         GNN,
-        feature_indices=feature_indices,
+        feature_index=feature_index,
         edges=cfg.model.backbone.edges,
         input_nodes="grid",
         hidden_dim=int(cfg.model.backbone.hidden_dim * 1.471),

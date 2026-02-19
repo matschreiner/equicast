@@ -9,7 +9,7 @@ from anemoi.datasets import open_dataset
 from torch_geometric.data import Data
 
 from equicast.data.feature_config import FeatureConfig
-from equicast.data.feature_indices import FeatureIndices
+from equicast.data.feature_index import FeatureIndex
 from equicast.data.normalizer import Normalizer
 from equicast.utils.utils import cast_dict
 
@@ -26,7 +26,7 @@ class BaseDataHandler(torch.nn.Module, ABC):
         self.statistics: dict[str, torch.Tensor] = cast_dict(data.statistics, torch.Tensor)
         self.name_to_index: dict[str, int] = data.name_to_index
 
-        self.feature_indices = FeatureIndices(
+        self.feature_index = FeatureIndex(
             feature_config=feature_config,
             name_to_index=self.name_to_index,
         )
@@ -41,11 +41,11 @@ class BaseDataHandler(torch.nn.Module, ABC):
 
     @property
     def in_idxs(self) -> list[int]:
-        return self.feature_indices.in_idxs
+        return self.feature_index.in_idxs
 
     @property
     def out_idxs(self) -> list[int]:
-        return self.feature_indices.out_idxs
+        return self.feature_index.out_idxs
 
     def get_input_scalars(self, raw: torch.Tensor) -> torch.Tensor:
         return raw[..., self.in_idxs]

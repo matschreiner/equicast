@@ -52,12 +52,12 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         super().__init__(dataset_path, feature_config)
         self.nodes = nodes
         self._vectors_in_eq_out = (
-            self.feature_indices.in_vector_idxs == self.feature_indices.out_vector_idxs
+            self.feature_index.in_vector_idxs == self.feature_index.out_vector_idxs
         )
 
         # Create normalizers
         data = open_dataset(dataset_path)
-        vector_mean_norm = compute_vector_mean_norm(data, self.feature_indices.out_vector_idxs)
+        vector_mean_norm = compute_vector_mean_norm(data, self.feature_index.out_vector_idxs)
 
         self.normalizer = Normalizer(self.statistics, self.in_idxs, self.out_idxs)
         self.vector_normalizer = VectorNormalizer(vector_mean_norm)
@@ -117,7 +117,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         # Collect all output indices: scalars + vector components
         vector_idxs = []
-        for u_idx, v_idx in self.feature_indices.out_vector_idxs:
+        for u_idx, v_idx in self.feature_index.out_vector_idxs:
             vector_idxs.extend([u_idx, v_idx])
         all_idxs = self.out_idxs + vector_idxs
 
@@ -159,17 +159,17 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         return torch.stack([u_components, v_components], dim=-1)
 
     def get_input_vectors(self, raw: torch.Tensor) -> torch.Tensor:
-        return self._pack_vectors(raw, self.feature_indices.in_vector_idxs)
+        return self._pack_vectors(raw, self.feature_index.in_vector_idxs)
 
     def get_output_vectors(self, raw: torch.Tensor) -> torch.Tensor:
-        return self._pack_vectors(raw, self.feature_indices.out_vector_idxs)
+        return self._pack_vectors(raw, self.feature_index.out_vector_idxs)
 
     def set_output_vectors(self, raw: torch.Tensor, vectors: torch.Tensor) -> None:
-        if not self.feature_indices.out_vector_idxs:
+        if not self.feature_index.out_vector_idxs:
             return
 
-        u_idxs = [pair[0] for pair in self.feature_indices.out_vector_idxs]
-        v_idxs = [pair[1] for pair in self.feature_indices.out_vector_idxs]
+        u_idxs = [pair[0] for pair in self.feature_index.out_vector_idxs]
+        v_idxs = [pair[1] for pair in self.feature_index.out_vector_idxs]
 
         raw[..., u_idxs] = vectors[..., 0]
         raw[..., v_idxs] = vectors[..., 1]

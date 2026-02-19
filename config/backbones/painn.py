@@ -6,10 +6,10 @@ from equicast.model.backbones.painn import PaiNN
 torch.set_float32_matmul_precision("medium")
 
 
-def backbone_config(feature_indices):
+def backbone_config(feature_index):
     return fdl.Config(
         PaiNN,
-        feature_indices=feature_indices,
+        feature_index=feature_index,
         edges=[
             ("grid", "to", "mesh"),
             ("mesh", "to", "mesh"),

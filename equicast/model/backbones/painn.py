@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from torch_geometric.utils import scatter
 
-from equicast.data.feature_indices import FeatureIndices
+from equicast.data.feature_index import FeatureIndex
 from equicast.model.layers.embedding import PositionalEmbedder
 from equicast.model.layers.equivariant_conv import EquivariantLinear
 from equicast.model.layers.mlp import MLP
@@ -109,7 +109,7 @@ class PaiNNBlock(nn.Module):
 class PaiNN(nn.Module):
     def __init__(
         self,
-        feature_indices: FeatureIndices,
+        feature_index: FeatureIndex,
         edges: list[tuple[str, str, str]],
         input_nodes: str = "grid",
         hidden_dim: int = 64,
@@ -119,10 +119,10 @@ class PaiNN(nn.Module):
         self.edges = edges
         self.input_nodes = input_nodes
 
-        scalar_in_dim = feature_indices.in_dim
-        scalar_out_dim = feature_indices.out_dim
-        in_vector_dim = feature_indices.in_vector_dim
-        out_vector_dim = feature_indices.out_vector_dim
+        scalar_in_dim = feature_index.in_dim
+        scalar_out_dim = feature_index.out_dim
+        in_vector_dim = feature_index.in_vector_dim
+        out_vector_dim = feature_index.out_vector_dim
 
         self.embed_scalar_in = MLP(in_dim=scalar_in_dim, out_dim=hidden_dim)
         self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=scalar_out_dim)
