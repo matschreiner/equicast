@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.utilities.types import LRSchedulerConfigType, OptimizerLRSchedulerConfig
 
+from equicast.data.data_handler import BaseDataHandler
 from equicast.metrics import BaseMetricsTracker
 
 
@@ -43,7 +44,7 @@ class Model(pl.LightningModule):
         optimizer_factory: Callable = default_optimizer_factory,
         scheduler_factory: Callable | None = None,
         metrics_tracker: BaseMetricsTracker | None = None,
-        loss_fn: torch.nn.Module = None,
+        loss_fn: torch.nn.Module = MSELoss(),
         compile_backbone: bool = True,
     ):
         super().__init__()
@@ -51,11 +52,11 @@ class Model(pl.LightningModule):
             self.save_hyperparameters()
 
         self.backbone = torch.compile(backbone) if compile_backbone else backbone
-        self.data_handler = backbone.data_handler
+        self.data_handler: BaseDataHandler = backbone.data_handler
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory
         self.metrics_tracker = metrics_tracker
-        self.loss_fn = loss_fn or MSELoss()
+        self.loss_fn = loss_fn
 
     @property
     def device(self):
@@ -63,29 +64,30 @@ class Model(pl.LightningModule):
 
     def forward(self, input_):
         input_ = input_.clone()
-        input_ = self.data_handler.prepare_backbone_input(input_)  # type: ignore
-        backbone_out = self.backbone.forward(input_)  # type: ignore
-        output = self.data_handler.update_state_with_backbone_output(input_, backbone_out)  # type: ignore
+        input_ = self.data_handler.prepare_backbone_input(input_)
+        backbone_out = self.backbone(input_)
+        output = self.data_handler.update_state_with_backbone_output(input_, backbone_out)
         return output
 
     def step_forward(self, input_, next_):
         input_ = input_.clone()
         next_ = next_.clone()
 
-        input_ = self.data_handler.prepare_backbone_input(input_)  # type: ignore
-        backbone_out = self.backbone.forward(input_)  # type: ignore
-        pred = self.data_handler.update_state_with_backbone_output(input_.clone(), backbone_out)  # type: ignore
-        next_ = self.data_handler.update_state_with_backbone_output(next_, backbone_out)  # type: ignore
+        input_ = self.data_handler.prepare_backbone_input(input_)
+        backbone_out = self.backbone(input_)
+
+        pred = self.data_handler.update_state_with_backbone_output(input_.clone(), backbone_out)
+        next_ = self.data_handler.update_state_with_backbone_output(next_, backbone_out)
         return next_, pred
 
     def training_step(self, batch, _):
         input_ = batch["input"]
-        input_ = self.data_handler.prepare_backbone_input(input_)  # type: ignore
+        input_ = self.data_handler.prepare_backbone_input(input_)
 
         target = batch["target"]
-        target = self.data_handler.prepare_backbone_target(target)  # type: ignore
+        target = self.data_handler.prepare_backbone_target(target)
 
-        backbone_out = self.backbone.forward(input_)  # type: ignore
+        backbone_out = self.backbone(input_)
         loss = self.loss(backbone_out, target)
 
         if self._should_log_metrics():
