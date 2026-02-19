@@ -21,7 +21,6 @@ def default_logger():
         MLFlowLogger,
         experiment_name="equicast",
         tracking_uri=TRACKING_URI,
-        artifact_location="mlflow/artifacts",
     )
 
 
