@@ -13,12 +13,9 @@ class MLFlowLogger(MLFlowLoggerParent):
         except MlflowException:
             pass  # Ignore duplicate params when resuming a run
 
-    def after_save_checkpoint(self, checkpoint_callback):
-        if checkpoint_callback.dirpath is None or checkpoint_callback.filename is None:
-            return
-        local_path = os.path.join(checkpoint_callback.dirpath, checkpoint_callback.filename + ".ckpt")
+    def after_save_checkpoint(self, filepath: str):
         try:
-            self.log_artifact(local_path, artifact_path=CHECKPOINT_PATH)
+            self.log_artifact(filepath, artifact_path=CHECKPOINT_PATH)
         except Exception as e:
             print(f"Warning: Could not upload checkpoint to MLflow: {e}")
 

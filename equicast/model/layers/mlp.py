@@ -17,7 +17,6 @@ class MLP(torch.nn.Module):
         if hidden_dim is None:
             hidden_dim = out_dim
 
-        # Save the original out_dim before it gets shadowed in the loop
         final_out_dim = out_dim
 
         layers = []

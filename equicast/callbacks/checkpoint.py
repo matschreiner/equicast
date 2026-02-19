@@ -73,6 +73,7 @@ class TimeDeltaCheckpoint(Callback):
         filepath = os.path.join(self._dirpath, filename)
         trainer.save_checkpoint(filepath)
         if trainer.is_global_zero and trainer.logger and hasattr(trainer.logger, "upload_checkpoint"):
+            print(f"Saving checkpoint: {filepath}")
             trainer.logger.upload_checkpoint(filepath)
 
     def _maybe_save_best(self, trainer):
