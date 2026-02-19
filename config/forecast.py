@@ -8,7 +8,7 @@ import sys
 
 import fiddle as fdl
 
-from equicast import data, experiment
+from equicast import TRACKING_URI, data, experiment
 from equicast.checkpoint import MLFlowCheckpointProvider
 from equicast.forecaster import Forecaster
 from equicast.logger import MLFlowLogger
@@ -26,6 +26,7 @@ def default_logger():
 def default_model(run_id):
     checkpoint_provider = fdl.Config(
         MLFlowCheckpointProvider,
+        tracking_uri=TRACKING_URI,
         run_id=run_id,
         checkpoint_name="latest",
     )
