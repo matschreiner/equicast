@@ -82,6 +82,20 @@ class Model(pl.LightningModule):
         next_ = self.data_handler.update_state_with_backbone_output(next_, backbone_out)
         return next_, pred
 
+    def validation_step(self, batch, _):
+        input_ = batch["input"]
+        input_ = self.data_handler.prepare_backbone_input(input_)
+
+        target = batch["target"]
+        target = self.data_handler.prepare_backbone_target(target)
+
+        backbone_out = self.backbone(input_)
+        loss = self.loss(backbone_out, target)
+
+        self.log("val/loss", loss, logger=True, prog_bar=False,
+                 on_step=False, on_epoch=True, batch_size=input_.num_graphs)
+        return loss
+
     def training_step(self, batch, _):
         input_ = batch["input"]
         input_ = self.data_handler.prepare_backbone_input(input_)

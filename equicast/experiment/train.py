@@ -14,6 +14,7 @@ class TrainConfig(ExperimentConfig):
     trainer: Trainer
     dataloader: DataLoader
     logger: BaseLogger
+    val_dataloader: DataLoader | None = None
     experiment_name: str = "train"
     ckpt_path: str | None = None
 
@@ -22,6 +23,7 @@ class TrainConfig(ExperimentConfig):
         self.trainer.fit(
             self.model,
             self.dataloader,
+            val_dataloaders=self.val_dataloader,
             ckpt_path=self.ckpt_path,
             weights_only=False,
         )
