@@ -43,14 +43,6 @@ def compute_vector_mean_norm(
 class EquivariantGraphDataHandler(BaseDataHandler):
     """DataHandler that packs vector features (e.g., wind) into [n, num_vectors, 2] tensors."""
 
-    @property
-    def in_vector_dim(self) -> int:
-        return len(self.in_vector_idxs)
-
-    @property
-    def out_vector_dim(self) -> int:
-        return len(self.out_vector_idxs)
-
     def __init__(
         self,
         dataset_path: str,
@@ -59,18 +51,13 @@ class EquivariantGraphDataHandler(BaseDataHandler):
     ):
         super().__init__(dataset_path, feature_config)
         self.nodes = nodes
-
-        # Build vector index pairs (u_idx, v_idx) for input/output
-        forcing_vector_idxs = self._get_vector_idxs(feature_config.forcing_vector)
-        prognostic_vector_idxs = self._get_vector_idxs(feature_config.prognostic_vector)
-        diagnostic_vector_idxs = self._get_vector_idxs(feature_config.diagnostic_vector)
-        self.in_vector_idxs = forcing_vector_idxs + prognostic_vector_idxs
-        self.out_vector_idxs = prognostic_vector_idxs + diagnostic_vector_idxs
-        self._vectors_in_eq_out = self.in_vector_idxs == self.out_vector_idxs
+        self._vectors_in_eq_out = (
+            self.feature_indices.in_vector_idxs == self.feature_indices.out_vector_idxs
+        )
 
         # Create normalizers
         data = open_dataset(dataset_path)
-        vector_mean_norm = compute_vector_mean_norm(data, self.out_vector_idxs)
+        vector_mean_norm = compute_vector_mean_norm(data, self.feature_indices.out_vector_idxs)
 
         self.normalizer = Normalizer(self.statistics, self.in_idxs, self.out_idxs)
         self.vector_normalizer = VectorNormalizer(vector_mean_norm)
@@ -130,7 +117,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         # Collect all output indices: scalars + vector components
         vector_idxs = []
-        for u_idx, v_idx in self.out_vector_idxs:
+        for u_idx, v_idx in self.feature_indices.out_vector_idxs:
             vector_idxs.extend([u_idx, v_idx])
         all_idxs = self.out_idxs + vector_idxs
 
@@ -158,16 +145,6 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         combined = xr.concat(datasets, dim="time")
         combined.to_zarr(path, mode="w")
 
-    def _get_vector_idxs(self, vector_config: dict[str, list[str]]) -> list[tuple[int, int]]:
-        """Get (u_idx, v_idx) pairs for each vector feature."""
-        return [
-            (
-                self.name_to_index[components[0]],
-                self.name_to_index[components[1]],
-            )
-            for components in vector_config.values()
-        ]
-
     def _pack_vectors(self, raw: torch.Tensor, vector_idxs: list[tuple[int, int]]) -> torch.Tensor:
         """Pack vector components into [..., num_vectors, 2] tensor."""
         if not vector_idxs:
@@ -182,17 +159,17 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         return torch.stack([u_components, v_components], dim=-1)
 
     def get_input_vectors(self, raw: torch.Tensor) -> torch.Tensor:
-        return self._pack_vectors(raw, self.in_vector_idxs)
+        return self._pack_vectors(raw, self.feature_indices.in_vector_idxs)
 
     def get_output_vectors(self, raw: torch.Tensor) -> torch.Tensor:
-        return self._pack_vectors(raw, self.out_vector_idxs)
+        return self._pack_vectors(raw, self.feature_indices.out_vector_idxs)
 
     def set_output_vectors(self, raw: torch.Tensor, vectors: torch.Tensor) -> None:
-        if not self.out_vector_idxs:
+        if not self.feature_indices.out_vector_idxs:
             return
 
-        u_idxs = [pair[0] for pair in self.out_vector_idxs]
-        v_idxs = [pair[1] for pair in self.out_vector_idxs]
+        u_idxs = [pair[0] for pair in self.feature_indices.out_vector_idxs]
+        v_idxs = [pair[1] for pair in self.feature_indices.out_vector_idxs]
 
         raw[..., u_idxs] = vectors[..., 0]
         raw[..., v_idxs] = vectors[..., 1]

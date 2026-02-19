@@ -3,15 +3,14 @@ from typing import Optional
 import torch
 from torch_geometric.nn.conv import MessagePassing
 
+from equicast.data.feature_indices import FeatureIndices
 from equicast.model.layers.mlp import MLP
 
 
 class GNN(torch.nn.Module):
-    def __init__(self, data_handler, grid_nodes="grid", edge_dim: int = 3):
+    def __init__(self, feature_indices: FeatureIndices, grid_nodes="grid", edge_dim: int = 3):
         super().__init__()
-        self.data_handler = data_handler
-
-        self.conv = GraphConv(in_dim=data_handler.in_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim)
+        self.conv = GraphConv(in_dim=feature_indices.in_dim, out_dim=feature_indices.out_dim, edge_dim=edge_dim)
         self.grid_nodes = grid_nodes
 
     def forward(self, graph):
@@ -29,7 +28,7 @@ class EncProcDec(torch.nn.Module):
 
     def __init__(
         self,
-        data_handler,
+        feature_indices: FeatureIndices,
         grid_nodes: str = "grid",
         mesh_nodes: str = "mesh",
         hidden_dim: int = 256,
@@ -37,15 +36,13 @@ class EncProcDec(torch.nn.Module):
         use_residual: bool = True,
     ):
         super().__init__()
-        self.data_handler = data_handler
-
         self.grid_nodes = grid_nodes
         self.mesh_nodes = mesh_nodes
         self.use_residual = use_residual
-        self.encoder = GraphConv(in_dim=data_handler.in_dim, out_dim=hidden_dim, edge_dim=edge_dim)
+        self.encoder = GraphConv(in_dim=feature_indices.in_dim, out_dim=hidden_dim, edge_dim=edge_dim)
         self.processor1 = GraphConv(in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim)
         self.processor2 = GraphConv(in_dim=hidden_dim, out_dim=hidden_dim, edge_dim=edge_dim)
-        self.decoder = GraphConv(in_dim=hidden_dim, out_dim=data_handler.out_dim, edge_dim=edge_dim)
+        self.decoder = GraphConv(in_dim=hidden_dim, out_dim=feature_indices.out_dim, edge_dim=edge_dim)
 
     def forward(self, graph):
         mesh_edges = graph[self.mesh_nodes, "to", self.mesh_nodes]

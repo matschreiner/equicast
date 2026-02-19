@@ -14,7 +14,7 @@ def fiddler(cfg: fdl.Config) -> None:
 
     cfg.model.backbone = fdl.Config(
         PaiNN,
-        data_handler=cfg.model.backbone.data_handler,
+        feature_indices=cfg.model.backbone.feature_indices,
         edges=[
             ("grid", "to", "mesh"),
             ("mesh", "to", "mesh"),

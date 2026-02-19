@@ -3,6 +3,7 @@
 import torch
 from torch import nn
 
+from equicast.data.feature_indices import FeatureIndices
 from equicast.model.layers.equivariant_conv import EquivariantBlock
 
 
@@ -11,18 +12,17 @@ class SimpleEquivariantGNN(nn.Module):
 
     def __init__(
         self,
-        data_handler,
+        feature_indices: FeatureIndices,
         grid_nodes: str = "grid",
         hidden_dim: int = 32,
     ):
         super().__init__()
-        self.data_handler = data_handler
         self.grid_nodes = grid_nodes
 
-        scalar_in_dim = data_handler.in_dim
-        scalar_out_dim = data_handler.out_dim
-        in_vector_dim = data_handler.in_vector_dim
-        out_vector_dim = data_handler.out_vector_dim
+        scalar_in_dim = feature_indices.in_dim
+        scalar_out_dim = feature_indices.out_dim
+        in_vector_dim = feature_indices.in_vector_dim
+        out_vector_dim = feature_indices.out_vector_dim
 
         # Linear projections to common hidden_dim
         self.scalar_encoder = nn.Linear(scalar_in_dim, hidden_dim)

@@ -5,6 +5,7 @@ from typing import Optional
 import torch
 from torch_geometric.nn.conv import MessagePassing
 
+from equicast.data.feature_indices import FeatureIndices
 from equicast.model.layers.mlp import MLP
 
 
@@ -22,7 +23,7 @@ class Graphcast(torch.nn.Module):
 
     def __init__(
         self,
-        data_handler,
+        feature_indices: FeatureIndices,
         hidden_dim: int = 256,
         num_processor_layers: int = 16,
         num_input_steps: int = 2,
@@ -33,12 +34,11 @@ class Graphcast(torch.nn.Module):
         mesh2grid_edge_dim: int = 0,
     ):
         super().__init__()
-        self.data_handler = data_handler
 
         # Calculate input/output dimensions
         # Input: num_input_steps timesteps concatenated (GraphCast uses 2 steps)
-        in_dim = num_input_steps * data_handler.in_dim
-        out_dim = data_handler.out_dim
+        in_dim = num_input_steps * feature_indices.in_dim
+        out_dim = feature_indices.out_dim
 
         self.grid_nodes = grid_nodes
         self.mesh_nodes = mesh_nodes

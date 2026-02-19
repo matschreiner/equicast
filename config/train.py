@@ -5,12 +5,13 @@ from torch_geometric.loader import DataLoader
 from equicast import data, experiment
 from equicast.callbacks import StepTimer, TimeDeltaCheckpoint
 from equicast.data import EquivariantGraphDataHandler, FeatureConfig
+from equicast.data.feature_indices import FeatureIndices
 from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.model.backbones.painn import PaiNN
 from equicast.model.model import EquivariantMSELoss, Model
 
-DATASET_PATH = "/home/masc/storage/era5-o96-2024-tail200-6h.zarr"
+DATASET_PATH = "storage/era5-o96-2024-tail200-6h.zarr"
 GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
 FEATURE_CONFIG_PATH = "config/features/base_equivariant.yaml"
 
@@ -50,9 +51,14 @@ def default_model(dataset_path, feature_config_path):
         feature_config=feature_config,
         dataset_path=dataset_path,
     )
+    feature_indices = fdl.Config(
+        FeatureIndices.from_dataset,
+        dataset_path=dataset_path,
+        feature_config=feature_config,
+    )
     backbone = fdl.Config(
         PaiNN,
-        data_handler=data_handler,
+        feature_indices=feature_indices,
         edges=[
             ("grid", "to", "mesh"),
             ("mesh", "to", "mesh"),
@@ -63,13 +69,14 @@ def default_model(dataset_path, feature_config_path):
         input_nodes="grid",
         hidden_dim=128,
     )
-    return fdl.Config(Model, backbone=backbone, loss_fn=fdl.Config(EquivariantMSELoss))
+    return fdl.Config(Model, backbone=backbone, data_handler=data_handler, loss_fn=fdl.Config(EquivariantMSELoss))
 
 
 def main():
     # NOTE: DATASET_PATH is passed to both default_model and default_dataloader.
     # Fiddlers that change the dataset must update both:
-    #   cfg.model.backbone.data_handler.dataset_path = new_path
+    #   cfg.model.backbone.feature_indices.dataset_path = new_path
+    #   cfg.model.data_handler.dataset_path = new_path
     #   cfg.dataloader.dataset.path = new_path
     logger = default_logger()
     cfg = fdl.Config(
