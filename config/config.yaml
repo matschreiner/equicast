@@ -1,3 +1,2 @@
 tracking_uri: "mlflow"
 checkpoint_dir: "checkpoints"
-default_checkpoint_name: "latest"

@@ -8,10 +8,11 @@ lt.monkey_patch()
 torch.set_float32_matmul_precision("medium")
 
 DTYPE = torch.float32
-CHECKPOINT_PATH = "checkpoints"
 
-with open("config/mlflow_config.yaml") as _f:
-    TRACKING_URI = yaml.safe_load(_f)["mlflow"]["tracking_uri"]
+with open("config/config.yaml") as _f:
+    _cfg = yaml.safe_load(_f)
+    TRACKING_URI = _cfg["tracking_uri"]
+    CHECKPOINT_PATH = _cfg["checkpoint_dir"]
 
 mlflow.set_tracking_uri(TRACKING_URI)
 
