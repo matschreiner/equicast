@@ -12,16 +12,6 @@ def fiddler(cfg: fdl.Config) -> None:
         total_steps=100,
     )
 
-    cfg.model.backbone = fdl.Config(
-        PaiNN,
-        feature_index=cfg.model.backbone.feature_index,
-        edges=[
-            ("grid", "to", "mesh"),
-            ("mesh", "to", "mesh"),
-            ("mesh", "to", "grid"),
-        ],
-        input_nodes="grid",
-        hidden_dim=4,
-    )
+    cfg.model.backbone.hidden_dim = 4
 
     cfg.dataloader.num_workers = 0

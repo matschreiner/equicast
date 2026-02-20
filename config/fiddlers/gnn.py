@@ -2,6 +2,7 @@ import fiddle as fdl
 
 from equicast import data
 from equicast.data import FeatureConfig, FeatureIndex
+from equicast.metrics import WeatherBenchTracker
 from equicast.model.backbones.gnn import GNN
 from equicast.model.model import MSELoss
 
@@ -30,3 +31,4 @@ def fiddler(cfg: fdl.Config) -> None:
         dataset_path=dataset_path,
     )
     cfg.model.loss_fn = fdl.Config(MSELoss)
+    cfg.model.metrics_tracker = fdl.Config(WeatherBenchTracker, data_handler=cfg.model.data_handler)
