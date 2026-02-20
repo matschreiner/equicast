@@ -26,6 +26,10 @@ def fix_artifact_location(experiment_name: str):
 
 
 class MLFlowLogger(MLFlowLoggerParent):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        fix_artifact_location(self._experiment_name)
+
     def log_hyperparams(self, params):
         try:
             super().log_hyperparams(params)

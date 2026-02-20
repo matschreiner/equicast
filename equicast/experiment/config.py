@@ -7,7 +7,6 @@ import fiddle as fdl
 from fiddle import daglish, graphviz
 from fiddle.experimental.yaml_serialization import dump_yaml
 
-from equicast.logger.mlflow import fix_artifact_location
 from equicast.utils import get_git_info, get_hardware_info
 
 
