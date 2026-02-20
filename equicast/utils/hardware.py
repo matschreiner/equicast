@@ -1,12 +1,14 @@
 """Hardware info for experiment tracking."""
 
 import os
+import socket
 
 import torch
 
 
 def get_hardware_info() -> dict:
     info = {
+        "host": socket.gethostname(),
         "num_cpus": os.cpu_count(),
         "num_gpus": torch.cuda.device_count(),
     }
