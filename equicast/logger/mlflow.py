@@ -50,10 +50,15 @@ class MLFlowLogger(MLFlowLoggerParent):
         fix_artifact_location(self._experiment_name)
 
     def log_hyperparams(self, params):
+        first_call = not self._initialized
         try:
             super().log_hyperparams(params)
         except MlflowException:
             pass  # Ignore duplicate params when resuming a run
+        if first_call:
+            import mlflow
+            run_name = mlflow.get_run(self.run_id).info.run_name
+            print(f"\nMLflow run: {run_name}  |  id: {self.run_id}\n")
 
     def after_save_checkpoint(self, filepath: str):
         try:
