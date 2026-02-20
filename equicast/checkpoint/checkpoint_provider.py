@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class CheckpointProvider(ABC):
     @abstractmethod
     def get_checkpoint(self) -> str:
-        """Loads the checkpoint data from the specified path."""
+        """Return a local path to the checkpoint file."""
         pass
 
 
@@ -29,18 +29,28 @@ class LocalCheckpointProvider(CheckpointProvider):
 
 
 class RemoteCheckpointProvider(CheckpointProvider):
-    """Load checkpoint from a remote server via SSH/SCP."""
+    """Load checkpoint from a remote server via SCP or rsync."""
 
-    def __init__(self, remote_path: str, host: str, local_cache_dir: str = None):
+    def __init__(
+        self,
+        remote_path: str,
+        host: str,
+        local_cache_dir: str | None = None,
+        method: str = "scp",
+    ):
         """
         Args:
             remote_path: Path to checkpoint on remote server
             host: SSH host (e.g., "ohm", "user@ohm")
             local_cache_dir: Local directory to cache the checkpoint (default: temp dir)
+            method: Transfer method, "scp" or "rsync"
         """
+        if method not in ("scp", "rsync"):
+            raise ValueError(f"method must be 'scp' or 'rsync', got {method!r}")
         self.remote_path = remote_path
         self.host = host
         self.local_cache_dir = local_cache_dir or tempfile.gettempdir()
+        self.method = method
         self.local_path = None
 
     def get_checkpoint(self) -> str:
@@ -49,88 +59,60 @@ class RemoteCheckpointProvider(CheckpointProvider):
             return self.local_path
 
         os.makedirs(self.local_cache_dir, exist_ok=True)
-
         checkpoint_name = os.path.basename(self.remote_path)
         self.local_path = os.path.join(self.local_cache_dir, checkpoint_name)
-
         remote_spec = f"{self.host}:{self.remote_path}"
-        logger.info(f"Fetching checkpoint from {remote_spec}")
+        logger.info(f"Fetching checkpoint from {remote_spec} via {self.method}")
         logger.info(f"Destination: {self.local_path}")
 
         try:
-            subprocess.run(
-                ["scp", remote_spec, self.local_path],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
+            if self.method == "scp":
+                subprocess.run(
+                    ["scp", remote_spec, self.local_path],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            else:
+                subprocess.run(
+                    ["rsync", "-P", remote_spec, self.local_path],
+                    check=True,
+                )
             size_mb = os.path.getsize(self.local_path) / (1024 * 1024)
             logger.info(f"Checkpoint downloaded: {size_mb:.1f} MB")
         except subprocess.CalledProcessError as e:
-            logger.error(f"SCP failed: {e.stderr}")
-            raise RuntimeError(f"Failed to copy checkpoint from {remote_spec}: {e.stderr}")
-
-        return self.local_path
-
-
-class RsyncCheckpointProvider(CheckpointProvider):
-    """Load checkpoint from a remote server via rsync."""
-
-    def __init__(self, remote_path: str, host: str):
-        """
-        Args:
-            remote_path: Path to checkpoint on remote server
-            host: SSH host (e.g., "ohm")
-        """
-        self.remote_path = remote_path
-        self.host = host
-        self.local_path = os.path.join(tempfile.gettempdir(), os.path.basename(remote_path))
-
-    def get_checkpoint(self) -> str:
-        remote_spec = f"{self.host}:{self.remote_path}"
-        logger.info(f"Syncing checkpoint from {remote_spec}")
-        logger.info(f"Destination: {self.local_path}")
-
-        try:
-            subprocess.run(
-                ["rsync", "-P", remote_spec, self.local_path],
-                check=True,
-            )
-            size_mb = os.path.getsize(self.local_path) / (1024 * 1024)
-            logger.info(f"Checkpoint synced: {size_mb:.1f} MB")
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Rsync failed: {e}")
-            raise RuntimeError(f"Failed to rsync checkpoint from {remote_spec}: {e}")
+            raise RuntimeError(f"Failed to fetch checkpoint from {remote_spec}: {e}")
 
         return self.local_path
 
 
 class MLFlowCheckpointProvider(CheckpointProvider):
+    """Load checkpoint from an MLflow run."""
+
     def __init__(self, tracking_uri: str, run_id: str, checkpoint_name: str):
         from mlflow.tracking import MlflowClient
 
         self.client = MlflowClient(tracking_uri=tracking_uri)
         self.run_id = run_id
-
         self.checkpoint_name = checkpoint_name if checkpoint_name.endswith(".ckpt") else checkpoint_name + ".ckpt"
 
     def get_checkpoint(self) -> str:
         artifact_path = self._find_artifact(self.checkpoint_name)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            local_path = self.client.download_artifacts(self.run_id, artifact_path, dst_path=tmp_dir)
+            # Copy out of the temp dir so it survives the context manager
+            import shutil
+            dest = os.path.join(tempfile.gettempdir(), self.checkpoint_name)
+            shutil.copy2(local_path, dest)
+        return dest
 
-        local_path = self.client.download_artifacts(
-            self.run_id,
-            artifact_path,
-            dst_path=".",
-        )
-
-        return local_path
-
-    def _find_artifact(self, name: str) -> str:
-        for artifact in self.client.list_artifacts(self.run_id):
+    def _find_artifact(self, name: str, path: str = "") -> str:
+        for artifact in self.client.list_artifacts(self.run_id, path or None):
             if artifact.is_dir:
-                for child in self.client.list_artifacts(self.run_id, artifact.path):
-                    if os.path.basename(child.path) == name:
-                        return child.path
+                try:
+                    return self._find_artifact(name, artifact.path)
+                except FileNotFoundError:
+                    continue
             elif os.path.basename(artifact.path) == name:
                 return artifact.path
         raise FileNotFoundError(f"Artifact '{name}' not found in run {self.run_id}")
