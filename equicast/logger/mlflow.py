@@ -47,7 +47,8 @@ def resolve_run(run_name_or_id: str) -> str:
 class MLFlowLogger(MLFlowLoggerParent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        fix_artifact_location(self._experiment_name)
+        if self.rank == 0:
+            fix_artifact_location(self._experiment_name)
 
     def log_hyperparams(self, params):
         first_call = not self._initialized
@@ -55,7 +56,7 @@ class MLFlowLogger(MLFlowLoggerParent):
             super().log_hyperparams(params)
         except MlflowException:
             pass  # Ignore duplicate params when resuming a run
-        if first_call:
+        if first_call and self.rank == 0:
             import mlflow
             run_name = mlflow.get_run(self.run_id).info.run_name
             line = f"MLflow run: {run_name}  |  id: {self.run_id}  |  experiment: {self._experiment_name}"
