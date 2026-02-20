@@ -33,14 +33,6 @@ class BaseDataHandler(torch.nn.Module, ABC):
         )
 
     @property
-    def in_dim(self) -> int:
-        return len(self.feature_config.forcing) + len(self.feature_config.prognostic)
-
-    @property
-    def out_dim(self) -> int:
-        return len(self.feature_config.prognostic) + len(self.feature_config.diagnostic)
-
-    @property
     def in_idxs(self) -> list[int]:
         return self.feature_index.in_idxs
 

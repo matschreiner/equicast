@@ -1,6 +1,5 @@
 """Custom profilers for equicast."""
 
-import re
 from pathlib import Path
 
 from pytorch_lightning.profilers import PyTorchProfiler, SimpleProfiler
@@ -15,11 +14,9 @@ class LoggingProfiler(SimpleProfiler):
 
     def summary(self) -> str:
         summary_text = super().summary()
-        #  summary_text = filter_and_order_profiler_summary(summary_text)
         self._log_summary(summary_text)
         return ""
 
-    #
     def _log_summary(self, summary_text: str):
         """Upload profiler summary to logger."""
         if self._output_file:
@@ -83,20 +80,3 @@ class CUDAProfiler(PyTorchProfiler):
         for trace_file in dirpath.glob(f"{self.filename}*.json"):
             self._logger.log_artifact(str(trace_file), artifact_path="profiler")
 
-
-def filter_and_order_profiler_summary(text, thresh=1e-2):
-    sections = re.split(r"\n(?=Profile stats for:)", text)
-    kept = []
-
-    for section in sections:
-        m = re.search(r"in ([0-9.]+) seconds", section)
-        if not m:
-            continue
-
-        total_time = float(m.group(1))
-        if total_time >= thresh:
-            kept.append((total_time, section))
-
-    kept.sort(key=lambda x: x[0], reverse=True)
-
-    return "\n".join(section for _, section in kept)

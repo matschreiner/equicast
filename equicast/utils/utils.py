@@ -1,4 +1,3 @@
-import hashlib
 from typing import Any, Callable
 
 
@@ -22,19 +21,3 @@ def cast_dict(x: Any, target_type: Callable) -> Any:
     else:
         return target_type(x)
 
-
-def hash_statedict(state_dict: dict) -> str:
-    """
-    Compute SHA256 hash of a PyTorch state dict.
-
-    Args:
-        state_dict: PyTorch model state dictionary
-
-    Returns:
-        Hexadecimal hash string
-    """
-    hasher = hashlib.sha256()
-    for key in sorted(state_dict.keys()):
-        hasher.update(key.encode("utf-8"))
-        hasher.update(state_dict[key].cpu().numpy().tobytes())
-    return hasher.hexdigest()
