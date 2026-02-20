@@ -92,6 +92,14 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         return {"scalar": scalar_target, "vector": vector_target}
 
+    def to_raw(self, backbone_output: dict) -> torch.Tensor:
+        scalar = self.normalizer.denormalize_output(backbone_output["scalar"])
+        vectors = self.vector_normalizer.denormalize_vectors(backbone_output["vector"])
+        raw = torch.zeros(scalar.shape[0], self.num_features, device=scalar.device, dtype=scalar.dtype)
+        self.set_output_scalars(raw, scalar)
+        self.set_output_vectors(raw, vectors)
+        return raw
+
     def update_state_with_backbone_output(
         self,
         state: Data,

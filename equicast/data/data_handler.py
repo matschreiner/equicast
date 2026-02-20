@@ -25,6 +25,7 @@ class BaseDataHandler(torch.nn.Module, ABC):
         data = open_dataset(dataset_path)
         self.statistics: dict[str, torch.Tensor] = cast_dict(data.statistics, torch.Tensor)
         self.name_to_index: dict[str, int] = data.name_to_index
+        self.num_features: int = max(self.name_to_index.values()) + 1
 
         self.feature_index = FeatureIndex(
             feature_config=feature_config,
@@ -60,10 +61,16 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def prepare_backbone_input(self, data: Any) -> Any: ...
 
     @abstractmethod
-    def update_state_with_backbone_output(self, state: Any, backbone_output: torch.Tensor) -> Any: ...
+    def update_state_with_backbone_output(self, state: Any, backbone_output: Any) -> Any: ...
 
     @abstractmethod
-    def prepare_backbone_target(self, data: Any) -> torch.Tensor: ...
+    def prepare_backbone_target(self, data: Any) -> Any: ...
+
+    @abstractmethod
+    def to_raw(self, backbone_output: Any) -> torch.Tensor:
+        """Denormalize backbone output into a full feature tensor [nodes, num_features],
+        indexed by name_to_index."""
+        ...
 
     def to_cf(self, graph: Any):
         raise NotImplementedError
@@ -102,6 +109,12 @@ class GraphDataHandler(BaseDataHandler):
         denormalized = self.normalizer.denormalize_output(backbone_output)
         self.set_output_scalars(state[self.nodes].data, denormalized)
         return state
+
+    def to_raw(self, backbone_output: torch.Tensor) -> torch.Tensor:
+        scalar = self.normalizer.denormalize_output(backbone_output)
+        raw = torch.zeros(scalar.shape[0], self.num_features, device=scalar.device, dtype=scalar.dtype)
+        self.set_output_scalars(raw, scalar)
+        return raw
 
     def to_cf(self, graph: Data) -> "xr.Dataset":
         """Convert a graph state to a CF-compliant xarray Dataset."""

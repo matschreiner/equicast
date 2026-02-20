@@ -92,8 +92,9 @@ class Model(pl.LightningModule):
         backbone_out = self.backbone(input_)
         loss = self.loss(backbone_out, target)
 
-        self.log("val/loss", loss, logger=True, prog_bar=False,
-                 on_step=False, on_epoch=True, batch_size=input_.num_graphs)
+        self.log(
+            "val/loss", loss, logger=True, prog_bar=False, on_step=False, on_epoch=True, batch_size=input_.num_graphs
+        )
         return loss
 
     def training_step(self, batch, _):
@@ -109,7 +110,13 @@ class Model(pl.LightningModule):
         if self._should_log_metrics():
             self.log_lr()
             self.log_loss(loss, input_.num_graphs)
-            self.log_metrics(backbone_out, target, input_.num_graphs)
+
+            if self.metrics_tracker is not None:
+                pred = self.data_handler.update_state_with_backbone_output(input_, backbone_out)
+                metrics = self.metrics_tracker.compute_metrics(pred, target)
+                self.log_dict(
+                    metrics,
+                )
 
         return loss
 

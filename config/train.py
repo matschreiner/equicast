@@ -8,6 +8,7 @@ from equicast.data import EquivariantGraphDataHandler, FeatureConfig
 from equicast.data.feature_index import FeatureIndex
 from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
+from equicast.metrics import WeatherBenchTracker
 from equicast.model.backbones.painn import PaiNN
 from equicast.model.model import EquivariantMSELoss, Model
 
@@ -69,7 +70,14 @@ def default_model(dataset_path, feature_config_path):
         input_nodes="grid",
         hidden_dim=128,
     )
-    return fdl.Config(Model, backbone=backbone, data_handler=data_handler, loss_fn=fdl.Config(EquivariantMSELoss))
+    metrics_tracker = fdl.Config(WeatherBenchTracker, data_handler=data_handler)
+    return fdl.Config(
+        Model,
+        backbone=backbone,
+        data_handler=data_handler,
+        loss_fn=fdl.Config(EquivariantMSELoss),
+        metrics_tracker=metrics_tracker,
+    )
 
 
 def main():
