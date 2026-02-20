@@ -1,3 +1,4 @@
+import sys
 from dataclasses import dataclass
 
 from pytorch_lightning import Trainer
@@ -19,7 +20,10 @@ class TrainConfig(ExperimentConfig):
     ckpt_path: str | None = None
 
     def run(self):
-        self.logger.log_hyperparams({"num_parameters": sum(p.numel() for p in self.model.parameters())})
+        self.logger.log_hyperparams({
+            "num_parameters": sum(p.numel() for p in self.model.parameters()),
+            "command": " ".join(sys.argv),
+        })
         self.trainer.fit(
             self.model,
             self.dataloader,
