@@ -1,9 +1,28 @@
 import os
 
+import yaml
 from mlflow.exceptions import MlflowException
 from pytorch_lightning.loggers import MLFlowLogger as MLFlowLoggerParent
 
-from equicast import CHECKPOINT_PATH
+from equicast import CHECKPOINT_PATH, TRACKING_URI
+
+
+def fix_artifact_location(experiment_name: str):
+    """Rewrite meta.yaml artifact_location to the local tracking URI.
+
+    Needed when an experiment was created on a different machine (e.g. Leonardo)
+    and its meta.yaml still points to that machine's absolute path.
+    """
+    meta_path = os.path.join(TRACKING_URI, experiment_name, "meta.yaml")
+    if not os.path.exists(meta_path):
+        return
+    with open(meta_path) as f:
+        meta = yaml.safe_load(f)
+    expected = f"{TRACKING_URI}/{experiment_name}"
+    if meta.get("artifact_location") != expected:
+        meta["artifact_location"] = expected
+        with open(meta_path, "w") as f:
+            yaml.dump(meta, f)
 
 
 class MLFlowLogger(MLFlowLoggerParent):
