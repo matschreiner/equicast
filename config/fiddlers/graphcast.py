@@ -4,7 +4,7 @@ from equicast import data
 from equicast.data import FeatureConfig, FeatureIndex
 from equicast.metrics import WeatherBenchTracker
 from equicast.model.backbones.graphcast import GraphCast
-from equicast.model.model import MSELoss
+from equicast.model.losses import MSELoss
 
 FEATURE_CONFIG_PATH = "config/features/base.yaml"
 

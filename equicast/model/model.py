@@ -8,22 +8,11 @@ from pytorch_lightning.utilities.types import LRSchedulerConfigType, OptimizerLR
 
 from equicast.data.data_handler import BaseDataHandler
 from equicast.metrics import BaseMetricsTracker
+from equicast.model.losses import EquivariantMSELoss, MSELoss
 
 
 def default_optimizer_factory(params):
     return torch.optim.Adam(params, lr=1e-3)
-
-
-class MSELoss(torch.nn.Module):
-    def forward(self, backbone_out, backbone_target):
-        return torch.nn.functional.mse_loss(backbone_out, backbone_target)
-
-
-class EquivariantMSELoss(torch.nn.Module):
-    def forward(self, backbone_out, backbone_target):
-        scalar_loss = torch.nn.functional.mse_loss(backbone_out["scalar"], backbone_target["scalar"])
-        vector_loss = torch.nn.functional.mse_loss(backbone_out["vector"], backbone_target["vector"])
-        return scalar_loss + vector_loss
 
 
 # Alias for backwards compatibility with old checkpoints

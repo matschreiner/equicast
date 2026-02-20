@@ -10,7 +10,8 @@ from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.metrics import WeatherBenchTracker
 from equicast.model.backbones.painn import PaiNN
-from equicast.model.model import EquivariantMSELoss, Model
+from equicast.model.losses import EquivariantMSELoss
+from equicast.model.model import Model
 
 DATASET_PATH = "storage/era5-o96-2024-tail200-6h.zarr"
 GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
