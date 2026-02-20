@@ -4,7 +4,7 @@ from equicast.model.schedulers import WarmupCosineAnnealingLR
 
 
 def fiddler(cfg: fdl.Config) -> None:
-    cfg.model.backbone.hidden_dim = 256
+    cfg.model.backbone.hidden_dim = int(256 * 1.5)
 
     cfg.model.backbone.edges = [
         ("grid", "to", "mesh"),
