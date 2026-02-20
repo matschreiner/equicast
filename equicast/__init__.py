@@ -1,8 +1,11 @@
-import yaml
-import mlflow
+import os
+
 import lovely_tensors as lt
 import torch
+import yaml
 from mlflow.store.tracking.file_store import FileStore as _FileStore
+
+import mlflow
 
 lt.monkey_patch()
 torch.set_float32_matmul_precision("medium")
@@ -19,7 +22,7 @@ mlflow.set_tracking_uri(TRACKING_URI)
 
 def _create_experiment_named(self, name, artifact_location=None, tags=None):
     """Use experiment name as ID and relative artifact location for portability."""
-    import os
+
     self._check_root_dir()
     self._validate_experiment_does_not_exist(name)
     exp_id = self._create_experiment_with_id(name, name, None, tags)
