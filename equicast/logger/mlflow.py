@@ -58,7 +58,8 @@ class MLFlowLogger(MLFlowLoggerParent):
         if first_call:
             import mlflow
             run_name = mlflow.get_run(self.run_id).info.run_name
-            print(f"\nMLflow run: {run_name}  |  id: {self.run_id}\n")
+            line = f"MLflow run: {run_name}  |  id: {self.run_id}  |  experiment: {self._experiment_name}"
+            print(f"\n{line}\n{'-' * len(line)}\n")
 
     def after_save_checkpoint(self, filepath: str):
         try:

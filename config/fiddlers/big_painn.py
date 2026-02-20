@@ -17,8 +17,8 @@ def fiddler(cfg: fdl.Config) -> None:
         ("mesh", "to", "grid"),
     ]
 
-    cfg.model.scheduler_factory = fdl.Partial(
-        WarmupCosineAnnealingLR,
-        warmup_steps=10000,
-        total_steps=450000,
-    )
+    #  cfg.model.scheduler_factory = fdl.Partial(
+    #      WarmupCosineAnnealingLR,
+    #      warmup_steps=10000,
+    #      total_steps=450000,
+    #  )
