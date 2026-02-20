@@ -1,7 +1,7 @@
 """Forecast from a trained model checkpoint.
 
 Usage:
-    python config/forecast.py <run_name>
+    python config/forecast.py <run_name_or_id>
 """
 
 import sys
@@ -12,6 +12,7 @@ from equicast import TRACKING_URI, data, experiment
 from equicast.checkpoint import MLFlowCheckpointProvider
 from equicast.forecaster import Forecaster
 from equicast.logger import MLFlowLogger
+from equicast.logger.mlflow import resolve_run
 from equicast.model import Model
 from equicast.model.from_checkpoint import from_checkpoint
 
@@ -47,8 +48,8 @@ def default_dataset(dataset_path, graph_path):
 
 
 def main():
-    run_name = sys.argv[1]
-    run_id = resolve_run(run_name)
+    run_name_or_id = sys.argv[1]
+    run_id = resolve_run(run_name_or_id)
     num_samples = 40
 
     logger = default_logger()
@@ -62,7 +63,7 @@ def main():
         target_timeseries=fdl.Config(get_target_timeseries, dataset=dataset, num_samples=num_samples),
         data_handler=default_data_handler(model),
         logger=logger,
-        model_id=run_name,
+        model_id=run_name_or_id,
     )
 
     experiment.run_experiment(cfg)
@@ -82,18 +83,6 @@ def get_input_timeseries(dataset, num_samples=50):
 
 def get_target_timeseries(dataset, num_samples=50):
     return [dataset[i]["target"] for i in range(num_samples)]
-
-
-def resolve_run(run_name: str) -> str:
-    import mlflow
-
-    runs = mlflow.search_runs(
-        filter_string=f"attributes.run_name = '{run_name}'",
-        search_all_experiments=True,
-    )
-    if runs.empty:
-        raise ValueError(f"No run found with name '{run_name}'")
-    return runs.iloc[0]["run_id"]
 
 
 if __name__ == "__main__":

@@ -25,6 +25,25 @@ def fix_artifact_location(experiment_name: str):
             yaml.dump(meta, f)
 
 
+def resolve_run(run_name_or_id: str) -> str:
+    """Resolve a run name or ID to a run ID."""
+    import mlflow
+
+    try:
+        run = mlflow.get_run(run_name_or_id)
+        return run.info.run_id
+    except MlflowException:
+        pass
+
+    runs = mlflow.search_runs(
+        filter_string=f"attributes.run_name = '{run_name_or_id}'",
+        search_all_experiments=True,
+    )
+    if runs.empty:
+        raise ValueError(f"No run found with name or id '{run_name_or_id}'")
+    return runs.iloc[0]["run_id"]
+
+
 class MLFlowLogger(MLFlowLoggerParent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
