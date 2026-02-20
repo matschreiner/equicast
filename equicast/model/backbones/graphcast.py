@@ -13,7 +13,7 @@ from torch import nn
 from torch_geometric.utils import scatter
 
 from equicast.data.feature_index import FeatureIndex
-from equicast.model.layers.embedding import PositionalEmbedder
+from equicast.model.layers.positional_embedding import PositionalEmbedder
 from equicast.model.layers.mlp import MLP
 
 
