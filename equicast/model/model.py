@@ -129,6 +129,11 @@ class Model(pl.LightningModule):
     def log_loss(self, loss, batch_size):
         self.log("train/loss", loss, logger=True, prog_bar=True, on_step=True, on_epoch=False, batch_size=batch_size)
 
+    def on_before_optimizer_step(self, optimizer):
+        if self._should_log_metrics():
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=float("inf"))
+            self.log("train/grad_norm", grad_norm, logger=True, prog_bar=False, on_step=True, on_epoch=False)
+
     def log_lr(self):
         lr = get_lr(self)
         self.log("train/lr", lr, logger=True, prog_bar=True, on_step=True, on_epoch=False)
