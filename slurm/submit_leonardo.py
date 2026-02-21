@@ -43,6 +43,7 @@ TEMPLATE = """\
 #SBATCH --time={time}
 #SBATCH --output={job_dir}/slurm-%j.out
 #SBATCH --error={job_dir}/slurm-%j.err
+{begin_line}
 
 module load python/3.11.7
 cd {project_dir}
@@ -83,6 +84,7 @@ def main():
     parser.add_argument("--job-name", default="equicast", help="Job name (default: equicast)")
     parser.add_argument("--partition", default="boost_usr_prod")
     parser.add_argument("--account", default="deste_340_26")
+    parser.add_argument("--begin", type=int, default=None, metavar="HOURS", help="Defer start by N hours")
     parser.add_argument("--dry-run", action="store_true", help="Print the script instead of submitting")
     args = parser.parse_args(our_args)
 
@@ -96,6 +98,7 @@ def main():
     train_cmd = " ".join(cmd_args)
     job_dir_remote = "{}/jobs/{:04d}".format(PROJECT_DIR, idx)
 
+    begin_line = "#SBATCH --begin=now+{}hours".format(args.begin) if args.begin else ""
     script = TEMPLATE.format(
         job_name=args.job_name,
         partition=args.partition,
@@ -106,6 +109,7 @@ def main():
         job_dir=job_dir_remote,
         project_dir=PROJECT_DIR,
         train_cmd=train_cmd,
+        begin_line=begin_line,
     )
 
     (job_dir / "submit.sbatch").write_text(script)
