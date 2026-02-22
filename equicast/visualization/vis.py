@@ -561,9 +561,8 @@ def make_comparison_video(
     vmin=None,
     vmax=None,
     cmap="viridis",
-    figsize=(16, 18),
+    figsize=(16, 12),
     dpi=100,
-    show_error=True,
     **kwargs,
 ):
     predictions = np.asarray(predictions)
@@ -575,28 +574,19 @@ def make_comparison_video(
     if vmax is None:
         vmax = targets.max()
 
-    # ------- Create figure -------
-    n_panels = 3 if show_error else 2
-    if figsize == (16, 18) and not show_error:
-        figsize = (16, 12)
-
     fig, axes = plt.subplots(
-        n_panels,
+        2,
         1,
         figsize=figsize,
         subplot_kw=dict(projection=ccrs.PlateCarree()),
     )
 
-    if n_panels == 2:
-        axes = list(axes)
-
-    # ------- Use plot_field() for all initial images -------
-    # Prediction panel
+    # Forecast panel
     _, im_pred = plot_field(
         predictions[0],
         latlon,
         ax=axes[0],
-        title="Prediction",
+        title="Forecast",
         vmin=vmin,
         vmax=vmax,
         cmap=cmap,
@@ -613,46 +603,20 @@ def make_comparison_video(
         cmap=cmap,
     )
 
-    # Error panel (optional)
-    if show_error:
-        _, im_err = plot_field(
-            predictions[0] - targets[0],
-            latlon,
-            ax=axes[2],
-            title="Error (Pred - Truth)",
-            vmin=vmin,
-            vmax=vmax,
-            cmap=cmap,
-        )
-    else:
-        im_err = None
-
-    lat = latlon[:, 0]
-    lon = latlon[:, 1]
-    if np.abs(lat).max() <= np.pi / 2 + 0.1:
-        lat = lat * 180 / np.pi
-        lon = lon * 180 / np.pi
-    lon = ((lon + 180) % 360) - 180
-
     def update(frame_idx):
         im_pred.set_array(predictions[frame_idx])
         im_tgt.set_array(targets[frame_idx])
-        if show_error:
-            im_err.set_array(predictions[frame_idx] - targets[frame_idx])
 
         if callable(title_template):
             title = title_template(frame_idx)
         else:
             title = title_template.format(frame=frame_idx)
 
-        axes[0].set_title(f"Prediction – {title}")
+        axes[0].set_title(f"Forecast – {title}")
         axes[1].set_title(f"Ground Truth – {title}")
-        if show_error:
-            axes[2].set_title(f"Error – {title}")
 
         return ()
 
-    # ------- Create animation -------
     anim = FuncAnimation(
         fig,
         update,
@@ -661,7 +625,6 @@ def make_comparison_video(
         blit=False,
     )
 
-    # ------- Save -------
     plt.tight_layout()
     if output_path.endswith(".gif"):
         anim.save(output_path, writer="pillow", fps=fps, dpi=dpi)
