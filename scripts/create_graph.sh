@@ -10,4 +10,4 @@ fi
 name="$1"
 
 anemoi-graphs create "${name}.yaml" "${name}.pt" --overwrite
-anemoi-graphs inspect "${name}.pt" "${name}"
+anemoi-graphs inspect "${name}.pt" "${name}" 2>&1 | tee "${name}/summary.txt"
