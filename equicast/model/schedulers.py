@@ -1,7 +1,7 @@
 """Custom learning rate schedulers."""
 
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
+from torch.optim.lr_scheduler import ConstantLR, CosineAnnealingLR, LinearLR, SequentialLR
 
 
 class WarmupCosineAnnealingLR(SequentialLR):
@@ -71,11 +71,19 @@ class WarmupCosineAnnealingLR(SequentialLR):
             last_epoch=last_epoch,
         )
 
-        # Chain them together
+        # Phase 3: Hold at eta_min forever
+        base_lr = optimizer.param_groups[0]["lr"]
+        constant_scheduler = ConstantLR(
+            optimizer,
+            factor=eta_min,
+            total_iters=10**9,
+            last_epoch=last_epoch,
+        )
+
         super().__init__(
             optimizer,
-            schedulers=[warmup_scheduler, cosine_scheduler],
-            milestones=[warmup_steps],
+            schedulers=[warmup_scheduler, cosine_scheduler, constant_scheduler],
+            milestones=[warmup_steps, total_steps],
             last_epoch=last_epoch,
         )
 
