@@ -13,5 +13,5 @@ def fiddler(cfg: fdl.Config) -> None:
     )
 
     cfg.model.backbone.hidden_dim = 4
-
     cfg.dataloader.num_workers = 0
+    cfg.logger.experiment_name = "minimal"
