@@ -8,8 +8,16 @@ OUT = "one_frame.zarr"
 src = zarr.open(DATASET, mode="r")
 dst = zarr.open(OUT, mode="w")
 
-zarr.copy_all(src, dst)
-dst["data"][-1:] = src["data"][-1:]
-dst["data"].resize(1, *src["data"].shape[1:])
+dst.attrs.update(src.attrs)
 
-print(f"Saved last frame to {OUT}")
+for name, item in src.items():
+    if name == "data":
+        print(f"Slicing data[-1:] from shape {item.shape}...")
+        dst.create_dataset("data", data=src["data"][-1:], chunks=(1, *src["data"].chunks[1:]))
+        print(f"  done, saved shape {dst['data'].shape}")
+    else:
+        print(f"Copying {name} {item.shape}...")
+        zarr.copy(item, dst, name=name)
+        print(f"  done")
+
+print(f"Saved to {OUT}")
