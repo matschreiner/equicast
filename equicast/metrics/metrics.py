@@ -34,14 +34,10 @@ class WeatherBenchTracker(BaseMetricsTracker):
         self.data_handler = data_handler
         n2i = data_handler.name_to_index
         self.scalar_idxs = {name: n2i[name] for name in self.SCALAR_VARIABLES}
-        self.wind_idxs = {
-            f"wind_{u.split('_')[1]}": (n2i[u], n2i[v])
-            for u, v in self.WIND_COMPONENTS
-        }
+        self.wind_idxs = {f"wind_{u.split('_')[1]}": (n2i[u], n2i[v]) for u, v in self.WIND_COMPONENTS}
 
     def compute_metrics(self, pred, target) -> dict[str, torch.Tensor]:
-        nodes = self.data_handler.nodes
-        pred_raw = pred[nodes].data
+        pred_raw = self.data_handler.to_raw(pred)
         target_raw = self.data_handler.to_raw(target)
 
         metrics = {}

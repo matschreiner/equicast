@@ -99,14 +99,7 @@ class Model(pl.LightningModule):
         if self._should_log_metrics():
             self.log_lr()
             self.log_loss(loss, input_.num_graphs)
-
-            if self.metrics_tracker is not None:
-                pred = self.data_handler.update_state_with_backbone_output(input_, backbone_out)
-
-                metrics = self.metrics_tracker.compute_metrics(pred, target)
-                self.log_dict(
-                    metrics,
-                )
+            self.log_metrics(backbone_out, target)
 
         return loss
 
@@ -138,12 +131,12 @@ class Model(pl.LightningModule):
         lr = get_lr(self)
         self.log("train/lr", lr, logger=True, prog_bar=True, on_step=True, on_epoch=False)
 
-    def log_metrics(self, backbone_out, backbone_target, batch_size):
+    def log_metrics(self, backbone_out, backbone_target):
         if self.metrics_tracker is None:
             return
 
         metrics = self.metrics_tracker.compute_metrics(backbone_out, backbone_target)
-        self.log_dict(metrics, logger=True, prog_bar=True, on_step=True, on_epoch=False, batch_size=batch_size)
+        self.log_dict(metrics, logger=True, prog_bar=True, on_step=True, on_epoch=False)
 
     def _should_log_metrics(self) -> bool:
         step = self.global_step
