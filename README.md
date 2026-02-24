@@ -94,8 +94,9 @@ loss = loss_fn(backbone_output_t2, backbone_target_t2)
 ```
 backbone_input_t1     = prepare_backbone_input(physical_representation)
 backbone_output_t2    = backbone(backbone_input_t1)
-updated_physical_representation_t2 = update_with_output(physical_representation_t2, backbone_output_t2) # updated with prognostic/forcing fields from the backbone output
-cf_compliant_data_t2  = to_cf(updated_physical_representation_t2)           # optional
+# overwrites forcing and prognostic fields in physical_representation_t2 with predictions from the backbone
+updated_physical_representation_t2 = update_with_output(physical_representation_t2, backbone_output_t2) 
+cf_compliant_data_t2  = to_cf(updated_physical_representation_t2)
 ```
 This ensures the prediction is in physical space and CF-compliant, and is agnostic to architectural details and data processing.
 
@@ -103,8 +104,8 @@ This ensures the prediction is in physical space and CF-compliant, and is agnost
 ```
 backbone_input_t1  = prepare_backbone_input(physical_representation_t1)
 backbone_output_t2 = backbone(backbone_input_t1)
-updated_physical_representation_t2 = update_with_output(physical_representation_t2, backbone_output_t2)
 # overwrites forcing and prognostic fields in physical_representation_t2 with predictions from the backbone
+updated_physical_representation_t2 = update_with_output(physical_representation_t2, backbone_output_t2)
 
 backbone_input_t2  = prepare_backbone_input(updated_physical_representation_t2)
 backbone_output_t3 = backbone(backbone_input_t2)
