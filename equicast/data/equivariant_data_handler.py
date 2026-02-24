@@ -161,6 +161,14 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         return torch.stack([u_components, v_components], dim=-1)
 
+    @property
+    def in_vector_dim(self) -> int:
+        return self.feature_index.in_vector_dim
+
+    @property
+    def out_vector_dim(self) -> int:
+        return self.feature_index.out_vector_dim
+
     def get_input_vectors(self, raw: torch.Tensor) -> torch.Tensor:
         return self._pack_vectors(raw, self.feature_index.in_vector_idxs)
 

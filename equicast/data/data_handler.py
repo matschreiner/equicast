@@ -40,6 +40,14 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def out_idxs(self) -> list[int]:
         return self.feature_index.out_idxs
 
+    @property
+    def in_dim(self) -> int:
+        return self.feature_index.in_dim
+
+    @property
+    def out_dim(self) -> int:
+        return self.feature_index.out_dim
+
     def get_input_scalars(self, raw: torch.Tensor) -> torch.Tensor:
         return raw[..., self.in_idxs]
 
@@ -48,6 +56,11 @@ class BaseDataHandler(torch.nn.Module, ABC):
 
     def set_output_scalars(self, raw: torch.Tensor, values: torch.Tensor) -> None:
         raw[..., self.out_idxs] = values
+
+    def prepare_training_batch(self, batch: list) -> tuple:
+        input_ = self.prepare_backbone_input(batch[0])
+        target = self.prepare_backbone_target(batch[1])
+        return input_, target
 
     @abstractmethod
     def prepare_backbone_input(self, data: Any) -> Any: ...
