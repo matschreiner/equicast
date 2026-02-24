@@ -64,7 +64,7 @@ Handle the data pipeline.
 - `prepare_backbone_input`: `physical_representation -> backbone_in_representation`
 - `prepare_backbone_target`: `physical_representation -> backbone_target_representation`
 - `update_with_output`: `physical_representation, backbone_out_representation -> physical_representation`
-    overwrite fields in the physical representation with the backbone output, so we can write predictions back to physical space even though some features are missing from the output
+    overwrite fields in the physical representation with the backbone output, so we can write predictions back to physical space even though some features are missing from backbone output
 - `to_cf`: `physical_representation -> cf_compliant_data`
     maps from physical representation to a CF-compliant format for visualisation and benchmarking.
 
@@ -103,10 +103,10 @@ This ensures the prediction is in physical space and CF-compliant, and is agnost
 ```
 backbone_input_t1  = prepare_backbone_input(physical_representation_t1)
 backbone_output_t2 = backbone(backbone_input_t1)
-physical_representation_t2   = update_with_output(physical_representation_t2, backbone_output_t2)
+updated_physical_representation_t2 = update_with_output(physical_representation_t2, backbone_output_t2)
 # overwrites forcing and prognostic fields in physical_representation_t2 with predictions from the backbone
 
-backbone_input_t2  = prepare_backbone_input(physical_representation_t2)
+backbone_input_t2  = prepare_backbone_input(updated_physical_representation_t2)
 backbone_output_t3 = backbone(backbone_input_t2)
 ...
 ```
