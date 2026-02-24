@@ -1,7 +1,7 @@
 # Introduction
 Equicast is a framework for training and running physical forecasting models. The central design principle is modularity:
 model architecture, data pipeline, dataset, and training logic are fully decoupled. All major dependencies are injected, and
-the framework is built on interface segregation — components depend on abstract base classes rather than concrete
+the framework is built on interface segregation - components depend on abstract base classes rather than concrete
 implementations. As long as the interface defined by those base classes is satisfied, autoregressive training and prediction,
 multistep training, and integration with CF-compliant tools all follow without any additional glue code.
 
@@ -15,7 +15,7 @@ multistep training, and integration with CF-compliant tools all follow without a
 Read and return a timeseries of the physical representation of data. For example this can be graph based or image based. 
 
 **Functions:**
-- `__getitem__`: `idx: int -> list[physical_representation]` — return a timeseries of n frames of data in its physical representation, starting from frame idx.
+- `__getitem__`: `idx: int -> list[physical_representation]` - return a timeseries of n frames of data in its physical representation, starting from frame idx.
 
 **Instantiation parameters:**
 - `datasource`: a datasource object responsible for reading data.
@@ -34,7 +34,7 @@ Map `backbone_input_data` to `backbone_output_data`.
 
 **Second responsibility (possibly):**
 Conditional sampling given an input.
-For generative models the forward pass used in training is generally different from the sampling process — e.g. skipping the
+For generative models the forward pass used in training is generally different from the sampling process - e.g. skipping the
 encoder in a VAE, or SDE/ODE solving in score-based models.
 
 **Functions:**
@@ -45,7 +45,7 @@ encoder in a VAE, or SDE/ODE solving in score-based models.
 Preferably Python primitives.
 
 **Notes:**
-Should also be agnostic towards the data pipeline — should only receive input and produce an output. Input can also include noise
+Should also be agnostic towards the data pipeline - should only receive input and produce an output. Input can also include noise
 for training a VAE/diffusion backbone or communication groups for sharding.
 The backbone shouldn't be responsible for anything other than mapping input to output. It should ideally instantiate from Python
 primitives. It should handle all processing logic including residual connections, etc., and shouldn't know what is physical space vs.
@@ -70,8 +70,8 @@ Handle the data pipeline.
 - Data statistics.
 
 **Notes:**
-Since input and output data for the backbone may be different — different feature sets, number of input frames, injected noise for
-generative models, etc. — we need different processing for inputs and outputs. This data handler makes sure that the backbone
+Since input and output data for the backbone may be different - different feature sets, number of input frames, injected noise for
+generative models, etc. - we need different processing for inputs and outputs. This data handler makes sure that the backbone
 model can interface cleanly with the dataset producing timeseries with any representation of physical data.
 
 Since the abstract backbone makes no assumptions about the data format, this class can also be used to handle sharding and calculate communication groups, 
@@ -121,15 +121,15 @@ This logic can be used for both multistep training and downstream inference.
 **Instantiation parameters:**
 - `backbone`: a backbone object.
 - `data_handler`: a data handler object.
-- `loss`: loss function that matches the task — KL loss for VAEs, MSE for deterministic models, EquivariantMSE for equivariant models, CRPS, etc.
+- `loss`: loss function that matches the task - KL loss for VAEs, MSE for deterministic models, EquivariantMSE for equivariant models, CRPS, etc.
 - `optimization_factory`: factory for creating the model optimizer.
 - `scheduler_factory`: factory for creating the learning rate scheduler.
 
 **Notes:**
 Owning the `data_handler` and `backbone` creates a portable model that knows how to process any `physical_representation`
 and perform downstream tasks, decoupled from the training dataset. To integrate a backbone from another framework, implement
-a `data_handler` with the four abstract functions — `prepare_backbone_input`, `prepare_backbone_target`,
-`update_with_output`, and `to_cf` — and it will work with the same model and training loop while strictly containing all
+a `data_handler` with the four abstract functions - `prepare_backbone_input`, `prepare_backbone_target`,
+`update_with_output`, and `to_cf` - and it will work with the same model and training loop while strictly containing all
 architectural decisions within the backbone.
 
 
@@ -147,16 +147,16 @@ from the anemoi dataset on `graph['grid'].data`.
 `forward(graph) -> dict[str, Tensor]`
 
 **Required attributes on `graph['grid']`:**
-- `input_scalar`:    `Tensor [n_nodes, in_scalar_dim]`   — z-normalized scalar fields (forcing + prognostic)
-- `input_vector`:    `Tensor [n_nodes, in_vector_dim, 2]` — norm-normalized vector pairs (forcing + prognostic)
-- `residual_scalar`: `Tensor [n_nodes, out_scalar_dim]`  — normalized prognostic + diagnostic scalars (residual)
-- `residual_vector`: `Tensor [n_nodes, out_vector_dim, 2]` — normalized output vector pairs (residual)
+- `input_scalar`:    `Tensor [n_nodes, in_scalar_dim]`   - z-normalized scalar fields (forcing + prognostic)
+- `input_vector`:    `Tensor [n_nodes, in_vector_dim, 2]` - norm-normalized vector pairs (forcing + prognostic)
+- `residual_scalar`: `Tensor [n_nodes, out_scalar_dim]`  - normalized prognostic + diagnostic scalars (residual)
+- `residual_vector`: `Tensor [n_nodes, out_vector_dim, 2]` - normalized output vector pairs (residual)
 
 Each edge type in the graph also requires `edge_index [2, n_edges]`, `edge_dirs [n_edges, 2]`, and `edge_length [n_edges]`.
 
 **Output:**
-- `'scalar'`: `Tensor [n_nodes, out_scalar_dim]`   — scalar predictions with residual added
-- `'vector'`: `Tensor [n_nodes, out_vector_dim, 2]` — vector predictions with residual added
+- `'scalar'`: `Tensor [n_nodes, out_scalar_dim]`   - scalar predictions with residual added
+- `'vector'`: `Tensor [n_nodes, out_vector_dim, 2]` - vector predictions with residual added
 
 The forward pass runs PaiNN message-passing blocks over each edge type in sequence, then adds the learned increments
 to `residual_scalar` and `residual_vector` before returning.
@@ -172,7 +172,7 @@ into `input_vector [n_nodes, in_vector_dim, 2]` with norm-normalized magnitudes;
 target vector pairs into `'vector'` in a dictionary, matching the shapes of PaiNN's output tensors.
 
 `update_with_output` takes PaiNN's `{'scalar', 'vector'}` output, denormalizes them, and writes the predicted fields back
-into physical space on the graph — unpacking `vector` back to `u_p` / `v_p` components.
+into physical space on the graph - unpacking `vector` back to `u_p` / `v_p` components.
 
 `to_cf` maps the graph data back to a CF-compliant format.
 
@@ -194,13 +194,13 @@ from the anemoi dataset on `graph['grid'].data`.
 `forward(graph) -> dict[str, Tensor]`
 
 **Required attributes on `graph['grid']`:**
-- `input_scalar`:    `Tensor [n_nodes, in_scalar_dim]`  — z-normalized scalar fields (forcing + prognostic)
-- `residual_scalar`: `Tensor [n_nodes, out_scalar_dim]` — normalized prognostic + diagnostic scalars (residual)
+- `input_scalar`:    `Tensor [n_nodes, in_scalar_dim]`  - z-normalized scalar fields (forcing + prognostic)
+- `residual_scalar`: `Tensor [n_nodes, out_scalar_dim]` - normalized prognostic + diagnostic scalars (residual)
 
 Each edge type in the graph also requires `edge_index [2, n_edges]`, `edge_dirs [n_edges, 2]`, and `edge_length [n_edges]`.
 
 **Output:**
-- `'scalar'`: `Tensor [n_nodes, out_scalar_dim]` — scalar predictions with residual added
+- `'scalar'`: `Tensor [n_nodes, out_scalar_dim]` - scalar predictions with residual added
 
 ### Data handler
 
@@ -223,7 +223,7 @@ Computes scalar MSE between `output['scalar']` and `target['scalar']`.
 
 ## Possible future pipelines
 
-- **Multidomain models** — the graph provider supplies graphs from multiple domains while the backbone stays the same. Only thing that needs updating is the dataset.
-- **Sharding** — the data handler shards the graph and calculates communication groups; the backbone implements a sharded forward pass with all-reduce and/or all-gather ops as needed.
-- **Image-based models** — the dataset produces image-based data, the backbone is a CNN or U-Net, and the data handler converts physical data to and from image format.
+- **Multidomain models** - the graph provider supplies graphs from multiple domains while the backbone stays the same. Only thing that needs updating is the dataset.
+- **Sharding** - the data handler shards the graph and calculates communication groups; the backbone implements a sharded forward pass with all-reduce and/or all-gather ops as needed.
+- **Image-based models** - the dataset produces image-based data, the backbone is a CNN or U-Net, and the data handler converts physical data to and from image format.
 
