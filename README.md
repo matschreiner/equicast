@@ -30,7 +30,7 @@ to downstream tasks.
 ## backbone
 
 **Responsibility:**
-Map `backbone_input_data` to `backbone_output_data`.
+Map `backbone_in_representation` to `backbone_out_representation`.
 
 **Second responsibility (possibly):**
 Conditional sampling given an input.
@@ -38,8 +38,8 @@ For generative models the forward pass used in training is generally different f
 encoder in a VAE, or SDE/ODE solving in score-based models.
 
 **Functions:**
-- `forward`: `backbone_in_data -> backbone_out_data`
-- `predict` (possibly): `backbone_in_data -> backbone_out_data`
+- `forward`: `backbone_in_representation -> backbone_out_representation`
+- `predict` (possibly): `backbone_in_representation -> backbone_out_representation`
 
 **Instantiation parameters:**
 Preferably Python primitives.
@@ -61,9 +61,9 @@ this is strictly not necessary and reduces portability of the backbones since th
 Handle the data pipeline.
 
 **Functions:**
-- `prepare_backbone_input`: `physical_representation -> backbone_in_data`
-- `prepare_backbone_target`: `physical_representation -> backbone_target_data`
-- `update_with_output`: `physical_representation, backbone_out_data -> physical_representation`
+- `prepare_backbone_input`: `physical_representation -> backbone_in_representation`
+- `prepare_backbone_target`: `physical_representation -> backbone_target_representation`
+- `update_with_output`: `physical_representation, backbone_out_representation -> physical_representation`
 - `to_cf`: `physical_representation -> cf_compliant_data`
 
 **Instantiation parameters:**
@@ -81,19 +81,19 @@ a few examples of how the data_handler enables different pipelines with the back
 
 ### Training pipeline
 ```
-backbone_input  = prepare_backbone_input(physical_representation)
-backbone_target = prepare_backbone_target(physical_representation)
-backbone_output = backbone(backbone_input)
+backbone_input_t1  = prepare_backbone_input(physical_representation_t1)
+backbone_target_t2 = prepare_backbone_target(physical_representation_t2)
+backbone_output_t2 = backbone(backbone_input_t1)
 
-loss = loss_fn(backbone_output, backbone_target)
+loss = loss_fn(backbone_output_t2, backbone_target_t2)
 ```
 
 ### Prediction pipeline
 ```
-backbone_input     = prepare_backbone_input(physical_representation)
-backbone_output    = backbone(backbone_input)
-physical_representation_next = update_with_output(physical_representation, backbone_output)
-cf_compliant_data  = to_cf(physical_representation_next)           # optional
+backbone_input_t1     = prepare_backbone_input(physical_representation)
+backbone_output_t2    = backbone(backbone_input_t1)
+physical_representation_next_t2 = update_with_output(physical_representation_t2, backbone_output_t2)
+cf_compliant_data_t2  = to_cf(physical_representation_next_t2)           # optional
 ```
 This ensures the prediction is in physical space and CF-compliant, and is agnostic to architectural details and data processing.
 
@@ -109,7 +109,7 @@ backbone_output_t3 = backbone(backbone_input_t2)
 ```
 This logic can be used for both multistep training and downstream inference.
 
-`to_cf` maps physical data to a CF-compliant format, so we can interface our model cleanly with external visualisation and benchmarking tools.
+`to_cf` maps the physical representation of data to a CF-compliant format, so we can interface our model cleanly with external visualisation and benchmarking tools.
 
 
 ## Model
@@ -129,8 +129,8 @@ This logic can be used for both multistep training and downstream inference.
 Owning the `data_handler` and `backbone` creates a portable model that knows how to process any `physical_representation`
 and perform downstream tasks, decoupled from the training dataset. To integrate a backbone from another framework, implement
 a `data_handler` with the four abstract functions - `prepare_backbone_input`, `prepare_backbone_target`,
-`update_with_output`, and `to_cf` - and it will work with the same model and training loop while strictly containing all
-architectural decisions within the backbone.
+`update_with_output`, and `to_cf` that interfaces the model with the dataset, and it will work with the same model and training loop while strictly containing all
+architectural details within the backbone.
 
 
 # Bespoke pipelines
@@ -140,17 +140,17 @@ architectural decisions within the backbone.
 ### Dataset
 
 Graphs are created with anemoi-graphs. The data input node names are `'grid'` by default and the dataset puts node features
-from the anemoi dataset on `graph['grid'].data`.
+from the anemoi dataset on `graph['grid'].data`. This is the physical representation of the data. 
 
 ### PaiNN backbone
 
 `forward(graph) -> dict[str, Tensor]`
 
 **Required attributes on `graph['grid']`:**
-- `input_scalar`:    `Tensor [n_nodes, in_scalar_dim]`   - z-normalized scalar fields (forcing + prognostic)
-- `input_vector`:    `Tensor [n_nodes, in_vector_dim, 2]` - norm-normalized vector pairs (forcing + prognostic)
-- `residual_scalar`: `Tensor [n_nodes, out_scalar_dim]`  - normalized prognostic + diagnostic scalars (residual)
-- `residual_vector`: `Tensor [n_nodes, out_vector_dim, 2]` - normalized output vector pairs (residual)
+- `input_scalar`:    `Tensor [n_nodes, in_scalar_dim]`   - z-normalized scalar fields (forcing + prognostic scalars)
+- `input_vector`:    `Tensor [n_nodes, in_vector_dim, 2]` - norm-normalized vector fields (forcing + prognostic vectors)
+- `residual_scalar`: `Tensor [n_nodes, out_scalar_dim]`  - normalized residual scalar fields (prognostic + diagnostic scalars) 
+- `residual_vector`: `Tensor [n_nodes, out_vector_dim, 2]` - normalized residual vector fields (prognostic + diagnostic vectors)
 
 Each edge type in the graph also requires `edge_index [2, n_edges]`, `edge_dirs [n_edges, 2]`, and `edge_length [n_edges]`.
 
@@ -226,4 +226,3 @@ Computes scalar MSE between `output['scalar']` and `target['scalar']`.
 - **Multidomain models** - the graph provider supplies graphs from multiple domains while the backbone stays the same. Only thing that needs updating is the dataset.
 - **Sharding** - the data handler shards the graph and calculates communication groups; the backbone implements a sharded forward pass with all-reduce and/or all-gather ops as needed.
 - **Image-based models** - the dataset produces image-based data, the backbone is a CNN or U-Net, and the data handler converts physical data to and from image format.
-
