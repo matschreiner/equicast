@@ -12,10 +12,10 @@ multistep training, and integration with CF-compliant tools all follow without a
 ## dataset
 
 **Responsibility:**
-Read and return a timeseries of n 'physical' frames in any format — graph based, image based, or other formats.
+Read and return a timeseries of the physical representation of data. For example this can be graph based or image based. 
 
 **Functions:**
-- `__getitem__`: `idx: int -> list[physical_data]` — return a timeseries of n 'physical' frames in any format, starting from frame idx.
+- `__getitem__`: `idx: int -> list[physical_representation]` — return a timeseries of n frames of data in its physical representation, starting from frame idx.
 
 **Instantiation parameters:**
 - `datasource`: a datasource object responsible for reading data.
@@ -46,13 +46,13 @@ Preferably Python primitives.
 
 **Notes:**
 Should also be agnostic towards the data pipeline — should only receive input and produce an output. Input can also include noise
-for training a VAE/diffusion backbone.
+for training a VAE/diffusion backbone or communication groups for sharding.
 The backbone shouldn't be responsible for anything other than mapping input to output. It should ideally instantiate from Python
-primitives. It should handle all processing logic including residual connections, etc., and should know what is physical space vs.
+primitives. It should handle all processing logic including residual connections, etc., and shouldn't know what is physical space vs.
 model space. Shouldn't be responsible for any orchestration or normalization.
-Although current backbones take a data handler/feature index at instantiation simply to fetch in/out dimensions from those,
-this is strictly not necessary and reduces portability of the backbones since they cannot instantiate in other frameworks
-that don't have the `data_handler` concept.
+
+Even though the ideal is to instantiate only from primitives, the current backbones take a data handler/feature index at instantiation simply to delegate calculation of input/output dimensions to those,
+this is strictly not necessary and reduces portability of the backbones since they cannot instantiate in other frameworks that don't have the `data_handler` concept.
 
 
 ## data_handler
@@ -61,10 +61,10 @@ that don't have the `data_handler` concept.
 Handle the data pipeline.
 
 **Functions:**
-- `prepare_backbone_input`: `physical_data -> backbone_in_data`
-- `prepare_backbone_target`: `physical_data -> backbone_target_data`
-- `update_with_output`: `physical_data, backbone_out_data -> physical_data`
-- `to_cf`: `physical_data -> cf_compliant_data`
+- `prepare_backbone_input`: `physical_representation -> backbone_in_data`
+- `prepare_backbone_target`: `physical_representation -> backbone_target_data`
+- `update_with_output`: `physical_representation, backbone_out_data -> physical_representation`
+- `to_cf`: `physical_representation -> cf_compliant_data`
 
 **Instantiation parameters:**
 - Data statistics.
@@ -74,14 +74,15 @@ Since input and output data for the backbone may be different — different feat
 generative models, etc. — we need different processing for inputs and outputs. This data handler makes sure that the backbone
 model can interface cleanly with the dataset producing timeseries with any representation of physical data.
 
-Since the abstract backbone makes no assumptions about the data format, this class can also be used as the single source of truth
-to handle sharding and calculate communication groups, which can be passed along to a backbone that implements the sharding
-functionality as well.
+Since the abstract backbone makes no assumptions about the data format, this class can also be used to handle sharding and calculate communication groups, 
+which can be passed along to a backbone that implements sharding functionality.
+
+a few examples of how the data_handler enables different pipelines with the backbone
 
 ### Training pipeline
 ```
-backbone_input  = prepare_backbone_input(physical_data)
-backbone_target = prepare_backbone_target(physical_data)
+backbone_input  = prepare_backbone_input(physical_representation)
+backbone_target = prepare_backbone_target(physical_representation)
 backbone_output = backbone(backbone_input)
 
 loss = loss_fn(backbone_output, backbone_target)
@@ -89,20 +90,20 @@ loss = loss_fn(backbone_output, backbone_target)
 
 ### Prediction pipeline
 ```
-backbone_input     = prepare_backbone_input(physical_data)
+backbone_input     = prepare_backbone_input(physical_representation)
 backbone_output    = backbone(backbone_input)
-physical_data_next = update_with_output(physical_data, backbone_output)
-cf_compliant_data  = to_cf(physical_data_next)           # optional
+physical_representation_next = update_with_output(physical_representation, backbone_output)
+cf_compliant_data  = to_cf(physical_representation_next)           # optional
 ```
 This ensures the prediction is in physical space and CF-compliant, and is agnostic to architectural details and data processing.
 
 ### Autoregressive prediction
 ```
-backbone_input_t1  = prepare_backbone_input(physical_data_t1)
+backbone_input_t1  = prepare_backbone_input(physical_representation_t1)
 backbone_output_t2 = backbone(backbone_input_t1)
-physical_data_t2   = update_with_output(physical_data_t1, backbone_output_t2)
+physical_representation_t2   = update_with_output(physical_representation_t1, backbone_output_t2)
 
-backbone_input_t2  = prepare_backbone_input(physical_data_t2)
+backbone_input_t2  = prepare_backbone_input(physical_representation_t2)
 backbone_output_t3 = backbone(backbone_input_t2)
 ...
 ```
@@ -111,7 +112,7 @@ This logic can be used for both multistep training and downstream inference.
 `to_cf` maps physical data to a CF-compliant format, so we can interface our model cleanly with external visualisation and benchmarking tools.
 
 
-## model
+## Model
 
 **Responsibility:**
 1. Orchestration of `data_handler` and `backbone` in the training pipeline.
@@ -121,20 +122,15 @@ This logic can be used for both multistep training and downstream inference.
 - `backbone`: a backbone object.
 - `data_handler`: a data handler object.
 - `loss`: loss function that matches the task — KL loss for VAEs, MSE for deterministic models, EquivariantMSE for equivariant models, CRPS, etc.
+- `optimization_factory`: factory for creating the model optimizer.
+- `scheduler_factory`: factory for creating the learning rate scheduler.
 
 **Notes:**
-Owning the `data_handler` and `backbone` creates a portable model that knows how to process physical data and perform downstream
-tasks, decoupled from the dataset it was trained on.
-Since both are injected into the model there is no coupling between the core model and the data pipeline or the backbone
-architecture. Because the model follows the principle of interface segregation — i.e. only depends on abstract functions from the
-`data_handler` and the `backbone` — it can be used to perform autoregressive predictions, multistep training, or other downstream
-tasks using any format for the physical data and any backbone architecture, while being able to output CF-compliant output.
-
-
-By following these concepts, multiple architectural features become available within the backbone without any bespoke logic in
-the model class. To integrate a backbone from another framework, implement a `data_handler` with the four abstract functions —
-`prepare_backbone_input`, `prepare_backbone_target`, `update_with_output`, and `to_cf` — and it will work with the same model
-and training loop while strictly containing all architectural decisions within the backbone.
+Owning the `data_handler` and `backbone` creates a portable model that knows how to process any `physical_representation`
+and perform downstream tasks, decoupled from the training dataset. To integrate a backbone from another framework, implement
+a `data_handler` with the four abstract functions — `prepare_backbone_input`, `prepare_backbone_target`,
+`update_with_output`, and `to_cf` — and it will work with the same model and training loop while strictly containing all
+architectural decisions within the backbone.
 
 
 # Bespoke pipelines
