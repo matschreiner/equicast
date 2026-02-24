@@ -1,5 +1,12 @@
-Core classes of the framework are
+Equicast is a framework for training and running physical forecasting models. The central design principle is modularity:
+model architecture, data pipeline, dataset, and training logic are fully decoupled. All major dependencies are injected, and
+the framework is built on interface segregation — components depend on abstract base classes rather than concrete
+implementations. As long as the interface defined by those base classes is satisfied, autoregressive training and prediction,
+multistep training, and integration with CF-compliant tools all follow without any additional glue code.
 
+
+
+# Core classes
 
 ## dataset
 
@@ -180,19 +187,46 @@ Computes scalar MSE between `output['scalar']` and `target['scalar']`, plus a sq
 
 ## Standard graph model pipeline
 
-Graphs are created with anemoi-graphs. `prepare_backbone_input` packs all physical scalar fields as node features,
-z-normalizes them, and attaches them to `graph['grid'].x`. Prognostic features are also saved as `'residual_scalar'`.
-There are no vector features — all fields are treated as scalars.
+### Dataset
 
-`prepare_backbone_target` packs the target prognostic and diagnostic scalar fields from the next timestep into
-`'scalar_output'` on the graph.
+Graphs are created with anemoi-graphs. The data input node names are `'grid'` by default and the dataset puts node features
+from the anemoi dataset on `graph['grid'].data`.
 
-The backbone outputs `{'scalar': Tensor [n_nodes, n_out_features]}`. `update_with_output` denormalizes and writes the
-predicted scalars back into physical space on the graph. `to_cf` maps `graph['grid'].x` back to a CF-compliant format.
+### Backbone
+
+`forward(graph) -> dict[str, Tensor]`
+
+**Required attributes on `graph['grid']`:**
+- `input_scalar`:    `Tensor [n_nodes, in_scalar_dim]`  — z-normalized scalar fields (forcing + prognostic)
+- `residual_scalar`: `Tensor [n_nodes, out_scalar_dim]` — normalized prognostic + diagnostic scalars (residual)
+
+Each edge type in the graph also requires `edge_index [2, n_edges]`, `edge_dirs [n_edges, 2]`, and `edge_length [n_edges]`.
+
+**Output:**
+- `'scalar'`: `Tensor [n_nodes, out_scalar_dim]` — scalar predictions with residual added
+
+### Data handler
+
+`prepare_backbone_input` packs all physical scalar fields as node features, z-normalizes them into
+`input_scalar [n_nodes, in_scalar_dim]`, and attaches them to `graph['grid']`. Prognostic and diagnostic fields are also
+written to `residual_scalar` so the backbone can apply a residual connection. There are no vector features.
+
+`prepare_backbone_target` takes the next timestep and extracts normalized target scalars into `'scalar'` in a dictionary,
+matching the shape of the backbone's output tensor.
+
+`update_with_output` takes the backbone's `{'scalar'}` output, denormalizes it, and writes the predicted fields back into
+physical space on the graph.
+
+`to_cf` maps the graph data back to a CF-compliant format.
+
+### Loss
+
+Computes scalar MSE between `output['scalar']` and `target['scalar']`.
 
 
 ## Possible future pipelines
 
-- **Multidomain models** — the graph provider supplies graphs from multiple domains while the backbone stays the same.
+- **Multidomain models** — the graph provider supplies graphs from multiple domains while the backbone stays the same. Only thing that needs updating is the dataset.
 - **Sharding** — the data handler shards the graph and calculates communication groups; the backbone implements a sharded forward pass with all-reduce and/or all-gather ops as needed.
 - **Image-based models** — the dataset produces image-based data, the backbone is a CNN or U-Net, and the data handler converts physical data to and from image format.
+
