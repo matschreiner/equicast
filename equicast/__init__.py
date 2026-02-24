@@ -1,13 +1,11 @@
 import os
 
-import lovely_tensors as lt
 import torch
 import yaml
 from mlflow.store.tracking.file_store import FileStore as _FileStore
 
 import mlflow
 
-lt.monkey_patch()
 torch.set_float32_matmul_precision("medium")
 
 DTYPE = torch.float32
