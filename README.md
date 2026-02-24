@@ -101,7 +101,8 @@ This ensures the prediction is in physical space and CF-compliant, and is agnost
 ```
 backbone_input_t1  = prepare_backbone_input(physical_representation_t1)
 backbone_output_t2 = backbone(backbone_input_t1)
-physical_representation_t2   = update_with_output(physical_representation_t1, backbone_output_t2)
+physical_representation_t2   = update_with_output(physical_representation_t2, backbone_output_t2)
+# overwrites forcing and prognostic fields in physical_representation_t2 with the predicted next step
 
 backbone_input_t2  = prepare_backbone_input(physical_representation_t2)
 backbone_output_t3 = backbone(backbone_input_t2)
