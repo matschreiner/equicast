@@ -193,6 +193,6 @@ predicted scalars back into physical space on the graph. `to_cf` maps `graph['gr
 
 ## Possible future pipelines
 
-# Multidomain models - datasets graph_provider provides graphs from multiple domains while backbone stays the same.
-# Sharding - datahandler shards graph and calculates communication groups, backbone implements sharded forward pass with all-reduce and/or all-gather ops as needed.
-# Image-based models - dataset produces image-based data, backbone is a CNN or U-Net, data handler processes physical data into images and back.
+- **Multidomain models** — the graph provider supplies graphs from multiple domains while the backbone stays the same.
+- **Sharding** — the data handler shards the graph and calculates communication groups; the backbone implements a sharded forward pass with all-reduce and/or all-gather ops as needed.
+- **Image-based models** — the dataset produces image-based data, the backbone is a CNN or U-Net, and the data handler converts physical data to and from image format.
