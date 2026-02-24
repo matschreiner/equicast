@@ -182,7 +182,7 @@ Computes scalar MSE between `output['scalar']` and `target['scalar']`, plus a sq
 `output['vector']` and `target['vector']`.
 
 
-## Standard graph model pipeline
+## Standard Message Passing / Transformer backbone pipeline
 
 ### Dataset
 
@@ -190,7 +190,7 @@ Graphs are created with anemoi-graphs. The data input node names are `'grid'` by
 from the anemoi dataset on `graph['grid'].data`.
 
 ### Backbone
-
+MPNN / Transformer
 `forward(graph) -> dict[str, Tensor]`
 
 **Required attributes on `graph['grid']`:**
