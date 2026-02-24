@@ -5,7 +5,6 @@ from torch_geometric.loader import DataLoader
 from equicast import TRACKING_URI, data, experiment
 from equicast.callbacks import StepTimer, TimeDeltaCheckpoint
 from equicast.data import EquivariantGraphDataHandler, FeatureConfig
-from equicast.data.feature_index import FeatureIndex
 from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.metrics import WeatherBenchTracker
@@ -53,14 +52,9 @@ def default_model(dataset_path, feature_config_path):
         feature_config=feature_config,
         dataset_path=dataset_path,
     )
-    feature_index = fdl.Config(
-        FeatureIndex.from_dataset,
-        dataset_path=dataset_path,
-        feature_config=feature_config,
-    )
     backbone = fdl.Config(
         PaiNN,
-        feature_index=feature_index,
+        data_handler=data_handler,
         edges=[
             ("grid", "to", "mesh"),
             ("mesh", "to", "mesh"),
@@ -84,8 +78,7 @@ def default_model(dataset_path, feature_config_path):
 def main():
     # NOTE: DATASET_PATH is passed to both default_model and default_dataloader.
     # Fiddlers that change the dataset must update both:
-    #   cfg.model.backbone.feature_index.dataset_path = new_path
-    #   cfg.model.data_handler.dataset_path = new_path
+    #   cfg.model.data_handler.dataset_path = new_path  (backbone shares the same object)
     #   cfg.dataloader.dataset.path = new_path
     logger = default_logger()
     cfg = fdl.Config(
