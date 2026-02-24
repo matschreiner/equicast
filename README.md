@@ -1,3 +1,4 @@
+# Introduction
 Equicast is a framework for training and running physical forecasting models. The central design principle is modularity:
 model architecture, data pipeline, dataset, and training logic are fully decoupled. All major dependencies are injected, and
 the framework is built on interface segregation — components depend on abstract base classes rather than concrete
