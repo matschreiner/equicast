@@ -9,6 +9,7 @@ class AnemoiDataset(Dataset):
     """
     Dataset that loads raw weather data without preprocessing.
 
+    Returns no_frames consecutive frames spaced by step timesteps.
     Preprocessing (scaling, feature routing) is handled by the Model.
     """
 
@@ -16,26 +17,28 @@ class AnemoiDataset(Dataset):
         self,
         path: str,
         graph_provider: BaseGraphProvider,
+        no_frames: int = 2,
         step: int = 1,
+        node_name="grid",
     ):
         super().__init__()
         self.data = open_dataset(path)
         self.graph_provider = graph_provider
+        self.no_frames = no_frames
         self.step = step
+        self.node_name = node_name
 
     def __len__(self):
-        return len(self.data) - self.step
+        return len(self.data) - (self.no_frames - 1) * self.step
 
     def __getitem__(self, idx):
-        input_idx = idx
-        target_idx = idx + self.step
-        input_data = self.data[input_idx].squeeze()
-        target_data = self.data[target_idx].squeeze()
+        frames = []
 
-        input_graph = self.graph_provider.get_graph(idx)
-        target_graph = self.graph_provider.get_graph(idx)
+        for i in range(self.no_frames):
+            frame_idx = idx + i * self.step
+            raw = self.data[frame_idx].squeeze()
+            graph = self.graph_provider.get_graph(idx)
+            graph[self.node_name].data = torch.from_numpy(raw.T)
+            frames.append(graph)
 
-        input_graph["grid"].data = torch.from_numpy(input_data.T)
-        target_graph["grid"].data = torch.from_numpy(target_data.T)
-
-        return {"input": input_graph, "target": target_graph}
+        return frames
