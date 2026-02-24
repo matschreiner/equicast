@@ -66,40 +66,39 @@ Since input and output data for the backbone may be different — different feat
 generative models, etc. — we need different processing for inputs and outputs. This data handler makes sure that the backbone
 model can interface cleanly with the dataset producing timeseries with any representation of physical data.
 
-since the abstract backbone makes no assumptions about the data format, this class can also be used as the single source of truth to handle sharding, and calculate communication groups, which can be passed along to a backbone that implements the sharding functionality as well.
+Since the abstract backbone makes no assumptions about the data format, this class can also be used as the single source of truth
+to handle sharding and calculate communication groups, which can be passed along to a backbone that implements the sharding
+functionality as well.
 
-
-
-### Training pipeline:
+### Training pipeline
 ```
-backbone_input_t1 = prepare_backbone_input(physical_data)
-backbone_target_t2 = prepare_backbone_target(physical_data)
+backbone_input  = prepare_backbone_input(physical_data)
+backbone_target = prepare_backbone_target(physical_data)
+backbone_output = backbone(backbone_input)
+
+loss = loss_fn(backbone_output, backbone_target)
+```
+
+### Prediction pipeline
+```
+backbone_input     = prepare_backbone_input(physical_data)
+backbone_output    = backbone(backbone_input)
+physical_data_next = update_with_output(physical_data, backbone_output)
+cf_compliant_data  = to_cf(physical_data_next)           # optional
+```
+This ensures the prediction is in physical space and CF-compliant, and is agnostic to architectural details and data processing.
+
+### Autoregressive prediction
+```
+backbone_input_t1  = prepare_backbone_input(physical_data_t1)
 backbone_output_t2 = backbone(backbone_input_t1)
+physical_data_t2   = update_with_output(physical_data_t1, backbone_output_t2)
 
-loss = loss_fn(backbone_output_t2, backbone_target_t2)
-```
-
-### Prediction pipeline:
-```
-backbone_input_t1 = prepare_backbone_input(physical_data_1)
-backbone_output_t2 = backbone(backbone_input_t1)
-physical_data_t2 (with prediction) = update_with_output(physical_data_t2, backbone_output_t2)
-(possibly) cf_compliant_data_t2 = to_cf(physical_data_t2)
-```
-This ensures that the prediction is in physical space and CF-compliant, and is agnostic to architectural details and data processing.
-
-### Autoregressive prediction:
-```
-backbone_input_t1 = prepare_backbone_input(physical_data_1)
-backbone_output_t2 = backbone(backbone_input_t1)
-physical_data_t2 (with prediction) = update_with_output(physical_data_t2, backbone_output_t2)
-cf_compliant_data_t2 = to_cf(physical_data_t2)
-
-backbone_input_t2 = prepare_backbone_input(physical_data_t2)
+backbone_input_t2  = prepare_backbone_input(physical_data_t2)
 backbone_output_t3 = backbone(backbone_input_t2)
 ...
 ```
-This logic can be used both for multistep training and downstream inference.
+This logic can be used for both multistep training and downstream inference.
 
 `to_cf` maps physical data to a CF-compliant format, so we can interface our model cleanly with external visualisation and benchmarking tools.
 
@@ -116,16 +115,84 @@ This logic can be used both for multistep training and downstream inference.
 - `loss`: loss function that matches the task — KL loss for VAEs, MSE for deterministic models, EquivariantMSE for equivariant models, CRPS, etc.
 
 **Notes:**
-Owning the `data_handler` and `backbone` creates a portable model that knows how to process physical data and perform downstream tasks, decoupled from the dataset it was trained on.
+Owning the `data_handler` and `backbone` creates a portable model that knows how to process physical data and perform downstream
+tasks, decoupled from the dataset it was trained on.
 Since both are injected into the model there is no coupling between the core model and the data pipeline or the backbone
 architecture. Because the model follows the principle of interface segregation — i.e. only depends on abstract functions from the
 `data_handler` and the `backbone` — it can be used to perform autoregressive predictions, multistep training, or other downstream
 tasks using any format for the physical data and any backbone architecture, while being able to output CF-compliant output.
 
 
-By following these concepts, multiple architectural features become available within the backbone without any bespoke logic in the model class.
-To train a model from another framework, implement a `data_handler` with the four abstract functions that interfaces the backbone with the dataset and it will be possible to do 
-autoregressive prediction and training while strictly containing all architectural decisions within the backbone, without any bespoke logic in the model class. This also means that the model class can be used
+By following these concepts, multiple architectural features become available within the backbone without any bespoke logic in
+the model class. To integrate a backbone from another framework, implement a `data_handler` with the four abstract functions —
+`prepare_backbone_input`, `prepare_backbone_target`, `update_with_output`, and `to_cf` — and it will work with the same model
+and training loop while strictly containing all architectural decisions within the backbone.
 
 
+# Bespoke pipelines
 
+## Equivariant model pipeline
+
+### Dataset
+
+Graphs are created with anemoi-graphs. The data input node names are `'grid'` by default and the dataset puts node features
+from the anemoi dataset on `graph['grid'].data`.
+
+### PaiNN backbone
+
+`forward(graph) -> dict[str, Tensor]`
+
+**Required attributes on `graph['grid']`:**
+- `input_scalar`:    `Tensor [n_nodes, in_scalar_dim]`   — z-normalized scalar fields (forcing + prognostic)
+- `input_vector`:    `Tensor [n_nodes, in_vector_dim, 2]` — norm-normalized vector pairs (forcing + prognostic)
+- `residual_scalar`: `Tensor [n_nodes, out_scalar_dim]`  — normalized prognostic + diagnostic scalars (residual)
+- `residual_vector`: `Tensor [n_nodes, out_vector_dim, 2]` — normalized output vector pairs (residual)
+
+Each edge type in the graph also requires `edge_index [2, n_edges]`, `edge_dirs [n_edges, 2]`, and `edge_length [n_edges]`.
+
+**Output:**
+- `'scalar'`: `Tensor [n_nodes, out_scalar_dim]`   — scalar predictions with residual added
+- `'vector'`: `Tensor [n_nodes, out_vector_dim, 2]` — vector predictions with residual added
+
+The forward pass runs PaiNN message-passing blocks over each edge type in sequence, then adds the learned increments
+to `residual_scalar` and `residual_vector` before returning.
+
+### Data handler
+
+`prepare_backbone_input` packs the graph attributes PaiNN expects onto `graph['grid']`: `u_p` and `v_p` pairs are packed
+into `input_vector [n_nodes, in_vector_dim, 2]` with norm-normalized magnitudes; scalar fields are z-normalized into
+`input_scalar [n_nodes, in_scalar_dim]`. Prognostic and diagnostic fields are also written to `residual_scalar` and
+`residual_vector` so PaiNN can apply residual connections.
+
+`prepare_backbone_target` takes the next timestep and extracts normalized target scalars into `'scalar'` and
+target vector pairs into `'vector'` in a dictionary, matching the shapes of PaiNN's output tensors.
+
+`update_with_output` takes PaiNN's `{'scalar', 'vector'}` output, denormalizes them, and writes the predicted fields back
+into physical space on the graph — unpacking `vector` back to `u_p` / `v_p` components.
+
+`to_cf` maps the graph data back to a CF-compliant format.
+
+### Loss
+
+Computes scalar MSE between `output['scalar']` and `target['scalar']`, plus a squared-norm difference between
+`output['vector']` and `target['vector']`.
+
+
+## Standard graph model pipeline
+
+Graphs are created with anemoi-graphs. `prepare_backbone_input` packs all physical scalar fields as node features,
+z-normalizes them, and attaches them to `graph['grid'].x`. Prognostic features are also saved as `'residual_scalar'`.
+There are no vector features — all fields are treated as scalars.
+
+`prepare_backbone_target` packs the target prognostic and diagnostic scalar fields from the next timestep into
+`'scalar_output'` on the graph.
+
+The backbone outputs `{'scalar': Tensor [n_nodes, n_out_features]}`. `update_with_output` denormalizes and writes the
+predicted scalars back into physical space on the graph. `to_cf` maps `graph['grid'].x` back to a CF-compliant format.
+
+
+## Possible future pipelines
+
+# Multidomain models - datasets graph_provider provides graphs from multiple domains while backbone stays the same.
+# Sharding - datahandler shards graph and calculates communication groups, backbone implements sharded forward pass with all-reduce and/or all-gather ops as needed.
+# Image-based models - dataset produces image-based data, backbone is a CNN or U-Net, data handler processes physical data into images and back.
