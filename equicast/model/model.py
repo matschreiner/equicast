@@ -54,9 +54,11 @@ class Model(pl.LightningModule):
 
     def forward(self, input_):
         input_ = input_.clone()
+
         input_ = self.data_handler.prepare_backbone_input(input_)
         backbone_out = self.backbone(input_)
         output = self.data_handler.update_state_with_backbone_output(input_, backbone_out)
+
         return output
 
     def step_forward(self, input_, next_):
@@ -72,11 +74,7 @@ class Model(pl.LightningModule):
         return next_, pred
 
     def validation_step(self, batch, _):
-        input_ = batch["input"]
-        input_ = self.data_handler.prepare_backbone_input(input_)
-
-        target = batch["target"]
-        target = self.data_handler.prepare_backbone_target(target)
+        input_, target = self.data_handler.prepare_training_batch(batch)
 
         backbone_out = self.backbone(input_)
         loss = self.loss(backbone_out, target)
@@ -87,11 +85,7 @@ class Model(pl.LightningModule):
         return loss
 
     def training_step(self, batch, _):
-        input_ = batch["input"]
-        input_ = self.data_handler.prepare_backbone_input(input_)
-
-        target = batch["target"]
-        target = self.data_handler.prepare_backbone_target(target)
+        input_, target = self.data_handler.prepare_training_batch(batch)
 
         backbone_out = self.backbone(input_)
         loss = self.loss(backbone_out, target)
