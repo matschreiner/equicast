@@ -59,25 +59,31 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         self.normalizer = Normalizer(self.statistics, self.in_idxs, self.out_idxs)
         self.vector_normalizer = VectorNormalizer(vector_mean_norm)
 
-    def prepare_backbone_input(self, data: Data) -> Data:
+    def prepare_training_batch(self, batch: list[Data]) -> tuple:
+        input_ = self.prepare_backbone_input(batch[0])  # type: ignore
+        target = self.prepare_backbone_target(batch[1])  # type: ignore
+        return input_, target
+
+    def prepare_backbone_frame(self, data: Data) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         raw = data[self.nodes].data
-
-        # Select then normalize scalars
-        input_scalars = self.get_input_scalars(raw)
+        scalars = self.normalizer.normalize_input(self.get_input_scalars(raw))
+        vectors = self.vector_normalizer.normalize_vectors(self.get_input_vectors(raw))
         output_scalars = self.get_output_scalars(raw)
-        data[self.nodes]["input_scalar"] = self.normalizer.normalize_input(input_scalars)
-        data[self.nodes]["residual_scalar"] = self.normalizer.normalize_output(output_scalars)
-
-        # Pack and normalize vectors
-        norm_input_vectors = self.vector_normalizer.normalize_vectors(self.get_input_vectors(raw))
-        norm_output_vectors = (
+        residual_scalar = self.normalizer.normalize_output(output_scalars)
+        residual_vector = (
             self.vector_normalizer.normalize_vectors(self.get_output_vectors(raw))
             if not self._vectors_in_eq_out
-            else norm_input_vectors
+            else vectors
         )
-        data[self.nodes]["input_vector"] = norm_input_vectors
-        data[self.nodes]["residual_vector"] = norm_output_vectors
 
+        return scalars, vectors, residual_scalar, residual_vector
+
+    def prepare_backbone_input(self, data: Data) -> Data:
+        scalars, vectors, residual_scalar, residual_vector = self.prepare_backbone_frame(data)
+        data[self.nodes]["input_scalar"] = scalars
+        data[self.nodes]["input_vector"] = vectors
+        data[self.nodes]["residual_scalar"] = residual_scalar
+        data[self.nodes]["residual_vector"] = residual_vector
         return data
 
     def prepare_backbone_target(self, data: Data) -> dict[str, torch.Tensor]:
@@ -184,3 +190,43 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         raw[..., u_idxs] = vectors[..., 0]
         raw[..., v_idxs] = vectors[..., 1]
+
+
+class MultiFrameEquivariantGraphDataHandler(EquivariantGraphDataHandler):
+    """Extension of EquivariantGraphDataHandler that supports multiframe inputs/outputs."""
+
+    def __init__(
+        self,
+        dataset_path: str,
+        feature_config: FeatureConfig,
+        nodes: str = "grid",
+        n_input_frames=2,
+    ):
+        self.n_input_frames = n_input_frames
+        super().__init__(dataset_path, feature_config, nodes)
+        self.n_input_frames = n_input_frames
+
+    @property
+    def in_dim(self) -> int:
+        return self.n_input_frames * self.feature_index.in_dim
+
+    @property
+    def in_vector_dim(self) -> int:
+        return self.n_input_frames * self.feature_index.in_vector_dim
+
+    def prepare_training_batch(self, batch: list[Data]) -> tuple:
+        input_ = self.prepare_backbone_input(batch[: self.n_input_frames])  # type: ignore
+        target = self.prepare_backbone_target(batch[self.n_input_frames])  # type: ignore
+        return input_, target
+
+    def prepare_backbone_input(self, frames: list[Data]) -> Data:  # type: ignore
+        frame_data = [self.prepare_backbone_frame(f) for f in frames]
+        all_scalars = [d[0] for d in frame_data]
+        all_vectors = [d[1] for d in frame_data]
+        _, _, residual_scalar, residual_vector = frame_data[-1]
+        data = frames[-1]
+        data[self.nodes]["input_scalar"] = torch.cat(all_scalars, dim=-1)
+        data[self.nodes]["input_vector"] = torch.cat(all_vectors, dim=-2)
+        data[self.nodes]["residual_scalar"] = residual_scalar
+        data[self.nodes]["residual_vector"] = residual_vector
+        return data

@@ -57,10 +57,8 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def set_output_scalars(self, raw: torch.Tensor, values: torch.Tensor) -> None:
         raw[..., self.out_idxs] = values
 
-    def prepare_training_batch(self, batch: list) -> tuple:
-        input_ = self.prepare_backbone_input(batch[0])
-        target = self.prepare_backbone_target(batch[1])
-        return input_, target
+    @abstractmethod
+    def prepare_training_batch(self, batch: list) -> tuple: ...
 
     @abstractmethod
     def prepare_backbone_input(self, data: Any) -> Any: ...
@@ -86,6 +84,11 @@ class BaseDataHandler(torch.nn.Module, ABC):
 
 class GraphDataHandler(BaseDataHandler):
     """DataHandler for graph data."""
+
+    def prepare_training_batch(self, batch: list) -> tuple:
+        input_ = self.prepare_backbone_input(batch[0])
+        target = self.prepare_backbone_target(batch[1])
+        return input_, target
 
     def __init__(
         self,
