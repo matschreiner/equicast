@@ -23,6 +23,6 @@ def fiddler(cfg: fdl.Config) -> None:
 
     cfg.model.data_handler.dataset_path = DATASET_PATH
 
-    cfg.trainer.max_epochs = 1
+    cfg.trainer.max_epochs = 1000
     cfg.trainer.callbacks = [fdl.Config(StepTimer)]
     cfg.logger.experiment_name = "benchmark"
