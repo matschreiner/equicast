@@ -17,6 +17,10 @@ GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
 FEATURE_CONFIG_PATH = "config/features/base_equivariant.yaml"
 
 
+class DatasetPath(fdl.Tag):
+    "Path to the training dataset zarr store."
+
+
 def default_logger():
     return fdl.Config(
         MLFlowLogger,
@@ -39,18 +43,18 @@ def default_trainer(logger):
     )
 
 
-def default_dataloader(dataset_path, graph_path):
+def default_dataloader(graph_path):
     graph_provider = fdl.Config(data.StaticGraphProvider, graph_path=graph_path)
-    dataset = fdl.Config(data.AnemoiDataset, path=dataset_path, graph_provider=graph_provider)
+    dataset = fdl.Config(data.AnemoiDataset, path=DatasetPath.new(default=DATASET_PATH), graph_provider=graph_provider)
     return fdl.Config(DataLoader, dataset, num_workers=8, batch_size=1, shuffle=True)
 
 
-def default_model(dataset_path, feature_config_path):
+def default_model(feature_config_path):
     feature_config = fdl.Config(FeatureConfig.from_yaml, path=feature_config_path)
     data_handler = fdl.Config(
         EquivariantGraphDataHandler,
         feature_config=feature_config,
-        dataset_path=dataset_path,
+        dataset_path=DatasetPath.new(default=DATASET_PATH),
     )
     backbone = fdl.Config(
         PaiNN,
@@ -76,16 +80,12 @@ def default_model(dataset_path, feature_config_path):
 
 
 def main():
-    # NOTE: DATASET_PATH is passed to both default_model and default_dataloader.
-    # Fiddlers that change the dataset must update both:
-    #   cfg.model.data_handler.dataset_path = new_path  (backbone shares the same object)
-    #   cfg.dataloader.dataset.path = new_path
     logger = default_logger()
     cfg = fdl.Config(
         TrainConfig,
-        model=default_model(DATASET_PATH, FEATURE_CONFIG_PATH),
+        model=default_model(FEATURE_CONFIG_PATH),
         trainer=default_trainer(logger),
-        dataloader=default_dataloader(DATASET_PATH, GRAPH_PATH),
+        dataloader=default_dataloader(GRAPH_PATH),
         logger=logger,
     )
 
