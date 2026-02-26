@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Submit an sbatch job on Leonardo with parameterized GPU count.
-
 Usage:
     python slurm/submit_leonardo.py [options] -- command [args...]
 
@@ -80,7 +79,7 @@ def main():
         usage="%(prog)s [options] -- command [args...]",
     )
     parser.add_argument("--gpus", type=int, default=1, help="Number of GPUs (default: 1). Sets ntasks=N, cpus=N*8.")
-    parser.add_argument("--time", default="12:00:00", help="Wall time (default: 12:00:00)")
+    parser.add_argument("--time", default="24:00:00", help="Wall time (default: 24:00:00)")
     parser.add_argument("--job-name", default="equicast", help="Job name (default: equicast)")
     parser.add_argument("--partition", default="boost_usr_prod")
     parser.add_argument("--account", default="deste_340_26")
