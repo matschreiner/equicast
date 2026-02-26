@@ -1,34 +1,26 @@
-"""Save random (input, target) frame pairs from the dataset to disk."""
+"""Save the last 5 frames of the ERA5 zarr dataset as a small benchmark zarr."""
 
-import os
-import random
-
-import torch
 import zarr
 
 DATASET_PATH = "storage/era5-o96-2024-tail200-6h.zarr"
-STEP = 1
-
-
-def save_samples(data, indices: list, out_path: str):
-    os.makedirs(out_path, exist_ok=True)
-    print(f"Saving {len(indices)} frames → {out_path}  (indices: {indices})")
-
-    for i, idx in enumerate(indices):
-        input_data = torch.from_numpy(data[idx, :, 0, :]).T       # [nodes, features]
-        target_data = torch.from_numpy(data[idx + STEP, :, 0, :]).T
-
-        path = f"{out_path}/sample_{i}.pt"
-        torch.save({"input": input_data, "target": target_data}, path)
-        print(f"  Saved {path} ({os.path.getsize(path) / 1e6:.1f} MB)")
+OUT_PATH = "resources/benchmark.zarr"
+N_FRAMES = 5
 
 
 def main():
-    data = zarr.open(DATASET_PATH, "r")["data"]  # [time, features, 1, nodes]
-    all_indices = random.sample(range(len(data) - STEP), 4)
-    train_indices, val_indices = all_indices[:3], all_indices[3:]
-    save_samples(data, indices=train_indices, out_path="resources/samples")
-    save_samples(data, indices=val_indices, out_path="resources/val_samples")
+    src = zarr.open(DATASET_PATH, "r")
+    dst = zarr.open(OUT_PATH, "w")
+
+    for key in src.keys():
+        arr = src[key]
+        if key == "data":
+            # data has shape [time, features, 1, nodes] — slice time dimension
+            dst.array(key, data=arr[-N_FRAMES:], chunks=arr.chunks, dtype=arr.dtype)
+        else:
+            zarr.copy(arr, dst, name=key)
+
+    dst.attrs.update(src.attrs)
+    print(f"Saved {N_FRAMES} frames → {OUT_PATH}")
 
 
 if __name__ == "__main__":
