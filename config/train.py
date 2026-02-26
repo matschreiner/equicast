@@ -2,6 +2,7 @@ import fiddle as fdl
 from pytorch_lightning import Trainer
 from torch_geometric.loader import DataLoader
 
+from config.fiddle_tags import DatasetPath, FeatureConfigPath, GraphPath
 from equicast import TRACKING_URI, data, experiment
 from equicast.callbacks import StepTimer, TimeDeltaCheckpoint
 from equicast.data import EquivariantGraphDataHandler, FeatureConfig
@@ -17,44 +18,25 @@ GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
 FEATURE_CONFIG_PATH = "config/features/base_equivariant.yaml"
 
 
-class DatasetPath(fdl.Tag):
-    "Path to the training dataset zarr store."
+def base_config() -> fdl.Config[TrainConfig]:
+    dataset_path = DatasetPath.new(default=DATASET_PATH)
+    graph_path = GraphPath.new(default=GRAPH_PATH)
+    feature_config_path = FeatureConfigPath.new(default=FEATURE_CONFIG_PATH)
 
-
-def default_logger():
-    return fdl.Config(
+    logger = fdl.Config(
         MLFlowLogger,
         experiment_name="equicast",
         tracking_uri=TRACKING_URI,
     )
 
-
-def default_trainer(logger):
-    return fdl.Config(
-        Trainer,
-        logger=logger,
-        log_every_n_steps=1,
-        gradient_clip_val=1.0,
-        enable_checkpointing=False,  # don't use default checkpointing
-        callbacks=[
-            fdl.Config(TimeDeltaCheckpoint, save_initial=True),
-            fdl.Config(StepTimer),
-        ],
+    feature_config = fdl.Config(
+        FeatureConfig.from_yaml,
+        path=feature_config_path,
     )
-
-
-def default_dataloader(graph_path):
-    graph_provider = fdl.Config(data.StaticGraphProvider, graph_path=graph_path)
-    dataset = fdl.Config(data.AnemoiDataset, path=DatasetPath.new(default=DATASET_PATH), graph_provider=graph_provider)
-    return fdl.Config(DataLoader, dataset, num_workers=8, batch_size=1, shuffle=True)
-
-
-def default_model(feature_config_path):
-    feature_config = fdl.Config(FeatureConfig.from_yaml, path=feature_config_path)
     data_handler = fdl.Config(
         EquivariantGraphDataHandler,
         feature_config=feature_config,
-        dataset_path=DatasetPath.new(default=DATASET_PATH),
+        dataset_path=dataset_path,
     )
     backbone = fdl.Config(
         PaiNN,
@@ -69,26 +51,54 @@ def default_model(feature_config_path):
         input_nodes="grid",
         hidden_dim=128,
     )
-    metrics_tracker = fdl.Config(WeatherBenchTracker, data_handler=data_handler)
-    return fdl.Config(
+    model = fdl.Config(
         Model,
         backbone=backbone,
         data_handler=data_handler,
         loss_fn=fdl.Config(EquivariantMSELoss),
-        metrics_tracker=metrics_tracker,
+        metrics_tracker=fdl.Config(WeatherBenchTracker, data_handler=data_handler),
+    )
+
+    graph_provider = fdl.Config(
+        data.StaticGraphProvider,
+        graph_path=graph_path,
+    )
+    dataset = fdl.Config(
+        data.AnemoiDataset,
+        path=dataset_path,
+        graph_provider=graph_provider,
+    )
+    dataloader = fdl.Config(
+        DataLoader,
+        dataset,
+        num_workers=8,
+        batch_size=1,
+        shuffle=True,
+    )
+
+    trainer = fdl.Config(
+        Trainer,
+        logger=logger,
+        log_every_n_steps=1,
+        gradient_clip_val=1.0,
+        enable_checkpointing=False,
+        callbacks=[
+            fdl.Config(TimeDeltaCheckpoint, save_initial=True),
+            fdl.Config(StepTimer),
+        ],
+    )
+
+    return fdl.Config(
+        TrainConfig,
+        model=model,
+        trainer=trainer,
+        dataloader=dataloader,
+        logger=logger,
     )
 
 
 def main():
-    logger = default_logger()
-    cfg = fdl.Config(
-        TrainConfig,
-        model=default_model(FEATURE_CONFIG_PATH),
-        trainer=default_trainer(logger),
-        dataloader=default_dataloader(GRAPH_PATH),
-        logger=logger,
-    )
-
+    cfg = base_config()
     experiment.run_experiment(cfg)
 
 
