@@ -1,11 +1,13 @@
 import fiddle as fdl
+from fiddle import selectors
+from fiddle.experimental.auto_config import auto_config
 from pytorch_lightning import Trainer
 from torch_geometric.loader import DataLoader
 
 from config.fiddle_tags import DatasetPath, FeatureConfigPath, GraphPath
 from equicast import TRACKING_URI, data, experiment
 from equicast.callbacks import StepTimer, TimeDeltaCheckpoint
-from equicast.data import EquivariantGraphDataHandler, FeatureConfig
+from equicast.data import EquivariantGraphDataHandler, FeatureConfig, MultiFrameEquivariantGraphDataHandler
 from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.metrics import WeatherBenchTracker
@@ -33,11 +35,13 @@ def base_config() -> fdl.Config[TrainConfig]:
         FeatureConfig.from_yaml,
         path=feature_config_path,
     )
+
     data_handler = fdl.Config(
         EquivariantGraphDataHandler,
         feature_config=feature_config,
         dataset_path=dataset_path,
     )
+
     backbone = fdl.Config(
         PaiNN,
         data_handler=data_handler,
@@ -51,26 +55,31 @@ def base_config() -> fdl.Config[TrainConfig]:
         input_nodes="grid",
         hidden_dim=128,
     )
+
+    weatherbench_tracker = fdl.Config(WeatherBenchTracker, data_handler=data_handler)
+
     model = fdl.Config(
         Model,
         backbone=backbone,
         data_handler=data_handler,
         loss_fn=fdl.Config(EquivariantMSELoss),
-        metrics_tracker=fdl.Config(WeatherBenchTracker, data_handler=data_handler),
+        metrics_tracker=weatherbench_tracker,
     )
 
     graph_provider = fdl.Config(
         data.StaticGraphProvider,
         graph_path=graph_path,
     )
+
     dataset = fdl.Config(
         data.AnemoiDataset,
         path=dataset_path,
         graph_provider=graph_provider,
     )
+
     dataloader = fdl.Config(
         DataLoader,
-        dataset,
+        dataset=dataset,
         num_workers=8,
         batch_size=1,
         shuffle=True,
