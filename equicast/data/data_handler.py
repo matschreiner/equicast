@@ -70,7 +70,7 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def prepare_backbone_target(self, data: Any) -> Any: ...
 
     @abstractmethod
-    def to_raw(self, backbone_output: Any) -> torch.Tensor:
+    def backbone_output_to_pred(self, backbone_output: Any) -> torch.Tensor:
         """Denormalize backbone output into a full feature tensor [nodes, num_features],
         indexed by name_to_index."""
         ...
@@ -118,7 +118,7 @@ class GraphDataHandler(BaseDataHandler):
         self.set_output_scalars(state[self.nodes].data, denormalized)
         return state
 
-    def to_raw(self, backbone_output: torch.Tensor) -> torch.Tensor:
+    def backbone_output_to_pred(self, backbone_output: torch.Tensor) -> torch.Tensor:
         scalar = self.normalizer.denormalize_output(backbone_output)
         raw = torch.zeros(scalar.shape[0], self.num_features, device=scalar.device, dtype=scalar.dtype)
         self.set_output_scalars(raw, scalar)
