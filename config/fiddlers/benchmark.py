@@ -1,17 +1,15 @@
 import fiddle as fdl
 
-from config.fiddle_tags import DatasetPath, GraphPath
 from equicast.callbacks import StepTimer
 
-GRAPH_PATH = "resources/stage_a/graph.pt"
-#  DATASET_PATH = "resources/benchmark.zarr"
-#  GRAPH_PATH = "storage/benchmark/stage_a/graph.pt"
+GRAPH_PATH = "resources/graphs/stage_a/graph.pt"
 DATASET_PATH = "storage/benchmark/benchmark.zarr"
 
 
 def fiddler(cfg: fdl.Config) -> None:
-    fdl.set_tagged(cfg, tag=DatasetPath, value=DATASET_PATH)
-    fdl.set_tagged(cfg, tag=GraphPath, value=GRAPH_PATH)
+    cfg.model.data_handler.dataset_path = DATASET_PATH
+    cfg.dataloader.dataset.path = DATASET_PATH
+    cfg.dataloader.dataset.graph_provider.graph_path = GRAPH_PATH
 
     cfg.dataloader.num_workers = 0
     cfg.dataloader.shuffle = False
