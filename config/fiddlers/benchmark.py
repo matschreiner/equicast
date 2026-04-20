@@ -3,8 +3,10 @@ import fiddle as fdl
 from config.fiddle_tags import DatasetPath, GraphPath
 from equicast.callbacks import StepTimer
 
-GRAPH_PATH = "resources/graph.pt"
-DATASET_PATH = "resources/benchmark.zarr"
+GRAPH_PATH = "resources/stage_a/graph.pt"
+#  DATASET_PATH = "resources/benchmark.zarr"
+#  GRAPH_PATH = "storage/benchmark/stage_a/graph.pt"
+DATASET_PATH = "storage/benchmark/benchmark.zarr"
 
 
 def fiddler(cfg: fdl.Config) -> None:
