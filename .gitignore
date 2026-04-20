@@ -22,3 +22,4 @@ mlflow_db
 graphcast
 saved_checkpoints
 anemoi-core
+config_gin
