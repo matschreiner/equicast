@@ -12,6 +12,21 @@ from equicast.model.layers.mlp import MLP
 from equicast.model.layers.positional_embedding import PositionalEmbedder
 
 
+class EquivariantLayerNorm(nn.Module):
+    """LayerNorm for (scalar, vector) pairs. Scalars: standard LN. Vectors: RMS of norms (equivariant)."""
+
+    def __init__(self, hidden_dim: int, eps: float = 1e-5):
+        super().__init__()
+        self.scalar_norm = nn.LayerNorm(hidden_dim)
+        self.eps = eps
+
+    def forward(self, scalar: torch.Tensor, vector: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        scalar = self.scalar_norm(scalar)
+        rms = vector.norm(dim=-1).pow(2).mean(dim=-1, keepdim=True).add(self.eps).sqrt()
+        vector = vector / rms.unsqueeze(-1)
+        return scalar, vector
+
+
 def _multiply_first_dim(w, x):
     with warnings.catch_warnings(record=True):
         return (w.T * x.T).T
@@ -89,7 +104,9 @@ class PaiNNBlock(nn.Module):
         super().__init__()
         self.embed_edge_length = PositionalEmbedder(hidden_dim)
         self.message_passing = PaiNNMessagePassing(hidden_dim, aggr)
+        self.norm1 = EquivariantLayerNorm(hidden_dim)
         self.update = PaiNNUpdate(hidden_dim)
+        self.norm2 = EquivariantLayerNorm(hidden_dim)
 
     def forward(self, scalar: torch.Tensor, vector: torch.Tensor, edges) -> tuple[torch.Tensor, torch.Tensor]:
         edge_index = edges["edge_index"].long()
@@ -97,13 +114,10 @@ class PaiNNBlock(nn.Module):
         edge_emb = self.embed_edge_length(edges.edge_length)
 
         d_scalar, d_vector = self.message_passing(scalar, vector, edge_index, edge_dirs, edge_emb)
-
-        scalar = scalar + d_scalar
-        vector = vector + d_vector
+        scalar, vector = self.norm1(scalar + d_scalar, vector + d_vector)
 
         d_scalar, d_vector = self.update(scalar, vector)
-
-        return scalar + d_scalar, vector + d_vector
+        return self.norm2(scalar + d_scalar, vector + d_vector)
 
 
 class PaiNN(nn.Module):
@@ -116,7 +130,7 @@ class PaiNN(nn.Module):
         aggr: str = "mean",
     ):
         super().__init__()
-        self.edges = edges
+        self.edges = [tuple(e) for e in edges]
         self.input_nodes = input_nodes
 
         scalar_in_dim = data_handler.in_dim
