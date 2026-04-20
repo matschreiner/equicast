@@ -1,0 +1,17 @@
+# @package _global_
+defaults:
+  - override /backbone: painn_minimal
+  - override /scheduler: cosine
+
+dataloader:
+  num_workers: 0
+
+scheduler:
+  warmup_steps: 10
+  total_steps: 100
+
+model:
+  compile_backbone: false
+
+logger:
+  experiment_name: minimal

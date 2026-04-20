@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - override /data/handler: multiframe
+
+data:
+  dataset_path: resources/benchmark.zarr
+  graph_provider:
+    graph_path: resources/graph.pt
+  dataset:
+    no_frames: 3
+
+dataloader:
+  num_workers: 0
+  shuffle: false
+
+trainer:
+  max_epochs: 1
+
+logger:
+  experiment_name: multiframe

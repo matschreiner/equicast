@@ -1,0 +1,18 @@
+# @package _global_
+data:
+  dataset_path: resources/benchmark.zarr
+  graph_provider:
+    graph_path: resources/graph.pt
+
+dataloader:
+  num_workers: 0
+  shuffle: false
+
+trainer:
+  max_epochs: 1000
+
+callbacks:
+  - _target_: equicast.callbacks.step_timer.StepTimer
+
+logger:
+  experiment_name: benchmark

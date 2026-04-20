@@ -1,0 +1,6 @@
+# @package _global_
+defaults:
+  - override /scheduler: cosine_batch4
+
+dataloader:
+  batch_size: 4

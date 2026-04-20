@@ -1,0 +1,4 @@
+_target_: equicast.model.schedulers.WarmupCosineAnnealingLR
+_partial_: true
+warmup_steps: 5000
+total_steps: 220000

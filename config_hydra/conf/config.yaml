@@ -1,0 +1,56 @@
+defaults:
+  - data/handler: equivariant
+  - backbone: painn
+  - loss: equivariant_mse
+  - scheduler: null
+  - _self_
+  - experiment: null
+
+_target_: equicast.experiment.hydra_setup.HydraTrainSetup
+_recursive_: false
+
+data:
+  dataset_path: storage/era5-o96-2024-tail200-6h.zarr
+  feature_config:
+    _target_: equicast.data.feature_config.FeatureConfig.from_yaml
+    path: config/features/base_equivariant.yaml
+  graph_provider:
+    _target_: equicast.data.graph_provider.StaticGraphProvider
+    graph_path: graph/aifs-graphcast-unnormed.pt
+  handler:
+    _target_: equicast.data.EquivariantGraphDataHandler
+  dataset:
+    _target_: equicast.data.AnemoiDataset
+    no_frames: 2
+    step: 1
+
+dataloader:
+  _target_: torch_geometric.loader.DataLoader
+  num_workers: 8
+  batch_size: 1
+  shuffle: true
+  pin_memory: true
+
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  lr: 1.0e-3
+
+model:
+  compile_backbone: true
+
+trainer:
+  _target_: pytorch_lightning.Trainer
+  log_every_n_steps: 1
+  gradient_clip_val: 1.0
+  enable_checkpointing: false
+
+callbacks:
+  - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+    save_initial: true
+  - _target_: equicast.callbacks.step_timer.StepTimer
+
+logger:
+  experiment_name: equicast
+
+ckpt_path: null

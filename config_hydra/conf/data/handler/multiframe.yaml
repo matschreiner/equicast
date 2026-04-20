@@ -1,0 +1,2 @@
+_target_: equicast.data.MultiFrameEquivariantGraphDataHandler
+n_input_frames: 2

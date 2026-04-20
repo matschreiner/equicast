@@ -1,0 +1,9 @@
+_target_: equicast.model.backbones.gnn.GNN
+edges:
+  - [grid, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, grid]
+input_nodes: grid
+hidden_dim: 204  # int(128 * 1.6)

@@ -1,0 +1,12 @@
+_target_: equicast.model.backbones.painn.PaiNN
+edges:
+  - [grid, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, grid]
+input_nodes: grid
+hidden_dim: 512
