@@ -1,0 +1,59 @@
+
+# GraphCast graph configuration following the paper specification
+#
+# Architecture: Encoder-Processor-Decoder with multi-scale icosahedral mesh
+#
+# From the paper:
+# - Grid nodes: 721 × 1440 = 1,038,240 (0.25° resolution)
+# - Mesh nodes: 40,962 (R=6 icosahedral refinement)
+# - Mesh edges: 327,660 (multi-scale from M0 to M6)
+# - Grid2Mesh edges: 1,618,746 (distance < 0.6 × M6 edge length)
+# - Mesh2Grid edges: 3,114,720 (3 per grid point from containing triangle)
+#
+# Edge features: length + 3D vector difference in receiver's local coordinate system
+
+overwrite: True
+
+attributes:
+  edges: &edges_attributes
+    edge_dirs:
+      _target_: anemoi.graphs.edges.attributes.EdgeDirection
+      norm: null
+    edge_length:
+      _target_: anemoi.graphs.edges.attributes.EdgeLength
+      norm: null
+
+nodes:
+  grid:
+    node_builder:
+      _target_: anemoi.graphs.nodes.AnemoiDatasetNodes
+      dataset: /home/masc/storage/mini_aifs.zarr
+
+  mesh:
+    node_builder:
+      _target_: anemoi.graphs.nodes.TriNodes
+      resolution: 5  # R=5 gives ~2,562 nodes, R=6 gives ~40,962 nodes
+
+edges:
+  - source_name: grid
+    target_name: mesh
+    edge_builders:
+      - _target_: anemoi.graphs.edges.KNNEdges
+        num_nearest_neighbours: 12
+    attributes: *edges_attributes
+
+  - source_name: mesh
+    target_name: mesh
+    edge_builders:
+      - _target_: anemoi.graphs.edges.MultiScaleEdges
+        x_hops: 1
+    attributes: *edges_attributes
+
+  - source_name: mesh
+    target_name: grid
+    edge_builders:
+      - _target_: anemoi.graphs.edges.KNNEdges
+        num_nearest_neighbours: 12
+    attributes: *edges_attributes
+
+
