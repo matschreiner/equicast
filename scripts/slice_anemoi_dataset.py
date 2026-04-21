@@ -90,8 +90,13 @@ def main():
     for name in src:
         if name not in temporal:
             print(f"  Copying '{name}' ...", end=" ", flush=True)
-            dst.create_dataset(name, data=src[name][:], compressor=None)
-            print(f"shape={src[name].shape}")
+            item = src[name]
+            if isinstance(item, zarr.hierarchy.Group):
+                zarr.copy(item, dst, name=name)
+                print("group")
+            else:
+                dst.create_dataset(name, data=item[:], compressor=None)
+                print(f"shape={item.shape}")
 
     # Copy attributes, updating temporal metadata
     print(f"Copying {len(src.attrs)} attributes...")
