@@ -1,17 +1,15 @@
 import fiddle as fdl
-from fiddle import selectors
-from fiddle.experimental.auto_config import auto_config
 from pytorch_lightning import Trainer
 from torch_geometric.loader import DataLoader
 
+from config.backbones import build_painn
 from config.fiddle_tags import DatasetPath, FeatureConfigPath, GraphPath
 from equicast import TRACKING_URI, data, experiment
 from equicast.callbacks import StepTimer, TimeDeltaCheckpoint
-from equicast.data import EquivariantGraphDataHandler, FeatureConfig, MultiFrameEquivariantGraphDataHandler
+from equicast.data import EquivariantGraphDataHandler, FeatureConfig
 from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.metrics import WeatherBenchTracker
-from config.backbones import build_painn
 from equicast.model.losses import EquivariantMSELoss
 from equicast.model.model import Model
 
