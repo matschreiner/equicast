@@ -2,7 +2,6 @@ import torch
 from torch import nn
 from torch_geometric.utils import scatter
 
-from equicast.data.data_handler import BaseDataHandler
 from equicast.model.layers.positional_embedding import PositionalEmbedder
 from equicast.model.layers.mlp import MLP
 
@@ -10,7 +9,8 @@ from equicast.model.layers.mlp import MLP
 class GNN(nn.Module):
     def __init__(
         self,
-        data_handler: BaseDataHandler,
+        in_dim: int,
+        out_dim: int,
         edges: list[tuple[str, str, str]],
         input_nodes: str = "grid",
         hidden_dim: int = 64,
@@ -21,8 +21,8 @@ class GNN(nn.Module):
         self.edges = edges
         self.input_nodes = input_nodes
 
-        self.embed_in = MLP(in_dim=data_handler.in_dim, out_dim=hidden_dim)
-        self.embed_out = MLP(in_dim=hidden_dim, out_dim=data_handler.out_dim)
+        self.embed_in = MLP(in_dim=in_dim, out_dim=hidden_dim)
+        self.embed_out = MLP(in_dim=hidden_dim, out_dim=out_dim)
         self.blocks = nn.ModuleList([Block(hidden_dim, aggr=aggr, edge_dir_dim=edge_dir_dim) for _ in edges])
 
     def forward(self, graph) -> torch.Tensor:

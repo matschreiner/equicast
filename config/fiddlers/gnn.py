@@ -1,9 +1,9 @@
 import fiddle as fdl
 
+from config.backbones import build_gnn
 from equicast import data
 from equicast.data import FeatureConfig
 from equicast.metrics import WeatherBenchTracker
-from equicast.model.backbones.gnn import GNN
 from equicast.model.losses import MSELoss
 
 FEATURE_CONFIG_PATH = "config/features/base.yaml"
@@ -20,7 +20,7 @@ def fiddler(cfg: fdl.Config) -> None:
     )
     cfg.model.data_handler = data_handler_cfg
     cfg.model.backbone = fdl.Config(
-        GNN,
+        build_gnn,
         data_handler=data_handler_cfg,
         edges=cfg.model.backbone.edges,
         input_nodes="grid",

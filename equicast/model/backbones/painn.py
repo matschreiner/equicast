@@ -6,7 +6,6 @@ import torch
 from torch import nn
 from torch_geometric.utils import scatter
 
-from equicast.data.equivariant_data_handler import EquivariantGraphDataHandler
 from equicast.model.layers.equivariant_conv import EquivariantLinear
 from equicast.model.layers.mlp import MLP
 from equicast.model.layers.positional_embedding import PositionalEmbedder
@@ -123,7 +122,10 @@ class PaiNNBlock(nn.Module):
 class PaiNN(nn.Module):
     def __init__(
         self,
-        data_handler: EquivariantGraphDataHandler,
+        in_dim: int,
+        out_dim: int,
+        in_vector_dim: int,
+        out_vector_dim: int,
         edges: list[tuple[str, str, str]],
         input_nodes: str = "grid",
         hidden_dim: int = 64,
@@ -133,13 +135,8 @@ class PaiNN(nn.Module):
         self.edges = [tuple(e) for e in edges]
         self.input_nodes = input_nodes
 
-        scalar_in_dim = data_handler.in_dim
-        scalar_out_dim = data_handler.out_dim
-        in_vector_dim = data_handler.in_vector_dim
-        out_vector_dim = data_handler.out_vector_dim
-
-        self.embed_scalar_in = MLP(in_dim=scalar_in_dim, out_dim=hidden_dim)
-        self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=scalar_out_dim)
+        self.embed_scalar_in = MLP(in_dim=in_dim, out_dim=hidden_dim)
+        self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=out_dim)
         self.embed_vector_in = EquivariantLinear(in_vector_dim, hidden_dim)
         self.embed_vector_out = EquivariantLinear(hidden_dim, out_vector_dim)
 

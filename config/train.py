@@ -11,7 +11,7 @@ from equicast.data import EquivariantGraphDataHandler, FeatureConfig, MultiFrame
 from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.metrics import WeatherBenchTracker
-from equicast.model.backbones.painn import PaiNN
+from config.backbones import build_painn
 from equicast.model.losses import EquivariantMSELoss
 from equicast.model.model import Model
 
@@ -43,7 +43,7 @@ def base_config() -> fdl.Config[TrainConfig]:
     )
 
     backbone = fdl.Config(
-        PaiNN,
+        build_painn,
         data_handler=data_handler,
         edges=[
             ("grid", "to", "mesh"),

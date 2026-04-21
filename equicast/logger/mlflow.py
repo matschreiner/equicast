@@ -55,6 +55,12 @@ class MLFlowLogger(MLFlowLoggerParent):
         except MlflowException:
             pass  # Ignore duplicate params when resuming a run
 
+    def log_metrics(self, metrics, step=None, **kwargs):
+        try:
+            super().log_metrics(metrics, step=step, **kwargs)
+        except MlflowException as e:
+            print(f"Warning: MLflow log_metrics failed (step={step}): {e}")
+
     def after_save_checkpoint(self, filepath: str):
         try:
             self.log_artifact(filepath, artifact_path=CHECKPOINT_PATH)
