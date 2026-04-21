@@ -14,6 +14,6 @@ def fiddler(cfg: fdl.Config) -> None:
     cfg.dataloader.num_workers = 0
     cfg.dataloader.shuffle = False
 
-    cfg.trainer.max_epochs = 1000
+    cfg.trainer.max_steps = 2000
     cfg.trainer.callbacks = [fdl.Config(StepTimer)]
     cfg.logger.experiment_name = "benchmark"
