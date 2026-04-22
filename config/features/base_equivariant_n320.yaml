@@ -1,0 +1,119 @@
+forcing:
+  - cos_latitude
+  - cos_longitude
+  - sin_latitude
+  - sin_longitude
+  - cos_julian_day
+  - cos_local_time
+  - lsm
+  - sin_julian_day
+  - sin_local_time
+
+diagnostic:
+  - 2t
+  - 2d
+  - msl
+  - skt
+  - 10u
+  - 10v
+
+prognostic:
+  - sp
+  - w_100
+  - w_1000
+  - w_150
+  - w_200
+  - w_250
+  - w_300
+  - w_400
+  - w_50
+  - w_500
+  - w_600
+  - w_700
+  - w_850
+  - w_925
+
+  - z
+  # - z_10
+  - z_100
+  - z_1000
+  - z_150
+  - z_200
+  - z_250
+  - z_300
+  - z_400
+  - z_50
+  - z_500
+  - z_600
+  - z_700
+  - z_850
+  - z_925
+
+  - q_100
+  - q_1000
+  - q_150
+  - q_200
+  - q_250
+  - q_300
+  - q_400
+  - q_50
+  - q_500
+  - q_600
+  - q_700
+  - q_850
+  - q_925
+
+  - t_100
+  - t_1000
+  - t_150
+  - t_200
+  - t_250
+  - t_300
+  - t_400
+  - t_50
+  - t_500
+  - t_600
+  - t_700
+  - t_850
+  - t_925
+
+prognostic_vector:
+  wind_50:
+    - u_50
+    - v_50
+  wind_100:
+    - u_100
+    - v_100
+  wind_150:
+    - u_150
+    - v_150
+  wind_200:
+    - u_200
+    - v_200
+  wind_250:
+    - u_250
+    - v_250
+  wind_300:
+    - u_300
+    - v_300
+  wind_400:
+    - u_400
+    - v_400
+  wind_500:
+    - u_500
+    - v_500
+  wind_600:
+    - u_600
+    - v_600
+  wind_700:
+    - u_700
+    - v_700
+  wind_850:
+    - u_850
+    - v_850
+  wind_925:
+    - u_925
+    - v_925
+  wind_1000:
+    - u_1000
+    - v_1000

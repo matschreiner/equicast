@@ -7,6 +7,8 @@ DATASET_PATH = "storage/benchmark/benchmark.zarr"
 
 
 def fiddler(cfg: fdl.Config) -> None:
+    cfg.trainer.precision = "bf16-mixed"
+
     cfg.model.data_handler.dataset_path = DATASET_PATH
     cfg.dataloader.dataset.path = DATASET_PATH
     cfg.dataloader.dataset.graph_provider.graph_path = GRAPH_PATH
