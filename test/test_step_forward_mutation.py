@@ -8,7 +8,7 @@ from torch_geometric.data import HeteroData
 
 from equicast.data.data_handler import GraphDataHandler
 from equicast.data.feature_config import FeatureConfig
-from equicast.model.model import Model
+from equicast.model.deterministic import Model
 
 
 @pytest.fixture

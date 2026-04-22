@@ -1,7 +1,6 @@
 import fiddle as fdl
 
 from equicast.logger import MLFlowLogger
-from equicast.model.backbones.painn import PaiNN
 from equicast.model.schedulers import WarmupCosineAnnealingLR
 
 

@@ -2,7 +2,7 @@ import torch
 from tqdm import tqdm
 
 from equicast.logger import BaseLogger
-from equicast.model.model import Model
+from equicast.model.base import BaseModel
 
 
 class Forecaster:
@@ -13,7 +13,7 @@ class Forecaster:
     forecaster just manages the autoregressive loop.
     """
 
-    def __init__(self, model: Model, logger: BaseLogger | None = None):
+    def __init__(self, model: BaseModel, logger: BaseLogger | None = None):
         self.model = model
         self.logger = logger
 

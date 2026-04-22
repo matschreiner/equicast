@@ -11,7 +11,7 @@ from equicast.experiment import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.metrics import WeatherBenchTracker
 from equicast.model.losses import EquivariantMSELoss
-from equicast.model.model import Model
+from equicast.model.deterministic import DeterministicModel
 
 DATASET_PATH = "storage/era5-o96-2024-tail200-6h.zarr"
 GRAPH_PATH = "graph/aifs-graphcast-unnormed.pt"
@@ -57,7 +57,7 @@ def base_config() -> fdl.Config[TrainConfig]:
     weatherbench_tracker = fdl.Config(WeatherBenchTracker, data_handler=data_handler)
 
     model = fdl.Config(
-        Model,
+        DeterministicModel,
         backbone=backbone,
         data_handler=data_handler,
         loss_fn=fdl.Config(EquivariantMSELoss),
