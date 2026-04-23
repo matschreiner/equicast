@@ -37,3 +37,16 @@ def build_graphcast(data_handler, edges, input_nodes="grid", hidden_dim=64, aggr
         hidden_dim=hidden_dim,
         aggr=aggr,
     )
+
+
+def build_diffusion_painn(data_handler, noise_emb_dim, edges, input_nodes="grid", hidden_dim=128, aggr="mean"):
+    return PaiNN(
+        in_dim=data_handler.in_dim + data_handler.out_dim + noise_emb_dim,
+        out_dim=data_handler.out_dim,
+        in_vector_dim=data_handler.in_vector_dim,
+        out_vector_dim=data_handler.out_vector_dim,
+        edges=edges,
+        input_nodes=input_nodes,
+        hidden_dim=hidden_dim,
+        aggr=aggr,
+    )
