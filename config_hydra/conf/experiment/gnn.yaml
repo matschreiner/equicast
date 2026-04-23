@@ -1,8 +1,8 @@
 # @package _global_
 defaults:
   - override /data/handler: graph
-  - override /backbone: gnn
-  - override /loss: mse
+  - override /model/backbone: gnn
+  - override /model/loss: mse
 
 logger:
   experiment_name: gnn

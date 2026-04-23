@@ -5,13 +5,12 @@ defaults:
 data:
   dataset_path: resources/benchmark.zarr
   graph_provider:
-    graph_path: resources/graph.pt
+    graph_path: resources/graphs/stage_a/graph.pt
   dataset:
     no_frames: 3
-
-dataloader:
-  num_workers: 0
-  shuffle: false
+  dataloader:
+    num_workers: 0
+    shuffle: false
 
 trainer:
   max_epochs: 1

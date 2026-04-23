@@ -1,4 +1,5 @@
 # @package _global_
-dataloader:
-  num_workers: 0
-  pin_memory: false
+data:
+  dataloader:
+    num_workers: 0
+    pin_memory: false

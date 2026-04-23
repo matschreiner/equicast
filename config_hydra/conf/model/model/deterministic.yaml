@@ -1,0 +1,2 @@
+_target_: equicast.model.deterministic.Deterministic
+compile_backbone: true

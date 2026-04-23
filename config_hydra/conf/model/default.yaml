@@ -1,0 +1,4 @@
+defaults:
+  - backbone: painn
+  - model: deterministic
+  - loss: equivariant_mse

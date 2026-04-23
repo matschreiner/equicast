@@ -3,10 +3,9 @@ data:
   dataset_path: /leonardo_work/DestE_340_26/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr
   dataset:
     step: 6
-
-dataloader:
-  num_workers: 7
-  batch_size: 1
+  dataloader:
+    num_workers: 7
+    batch_size: 1
 
 trainer:
   strategy: ddp

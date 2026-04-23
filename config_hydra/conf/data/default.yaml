@@ -1,0 +1,8 @@
+defaults:
+  - handler: equivariant
+  - feature_config: base_equivariant
+  - graph_provider: stage_a
+  - dataset: anemoi
+  - dataloader: default
+
+dataset_path: resources/benchmark.zarr

@@ -1,9 +1,10 @@
 # @package _global_
-callbacks:
-  - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
-    save_initial: true
-  - _target_: equicast.callbacks.step_timer.StepTimer
-  - _target_: equicast.callbacks.ema.EMA
-    decay: 0.9
-    update_starting_at_step: 5
-    update_every_n_steps: 100
+trainer:
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+      save_initial: true
+    - _target_: equicast.callbacks.step_timer.StepTimer
+    - _target_: equicast.callbacks.ema.EMA
+      decay: 0.9
+      update_starting_at_step: 5
+      update_every_n_steps: 100

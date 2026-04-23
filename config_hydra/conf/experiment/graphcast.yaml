@@ -1,8 +1,8 @@
 # @package _global_
 defaults:
   - override /data/handler: graph
-  - override /backbone: graphcast
-  - override /loss: mse
+  - override /model/backbone: graphcast
+  - override /model/loss: mse
 
 logger:
   experiment_name: graphcast

@@ -1,4 +1,4 @@
-_target_: equicast.model.backbones.painn.PaiNN
+_target_: config.backbones.build_painn
 edges:
   - [grid, to, mesh]
   - [mesh, to, mesh]
@@ -6,4 +6,4 @@ edges:
   - [mesh, to, mesh]
   - [mesh, to, grid]
 input_nodes: grid
-hidden_dim: 128
+hidden_dim: 256

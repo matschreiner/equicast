@@ -1,9 +1,12 @@
-_target_: equicast.model.backbones.graphcast.GraphCast
+_target_: config.backbones.build_painn
 edges:
   - [grid, to, mesh]
   - [mesh, to, mesh]
   - [mesh, to, mesh]
   - [mesh, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, mesh]
+  - [mesh, to, mesh]
   - [mesh, to, grid]
 input_nodes: grid
-hidden_dim: 166  # int(128 * 1.3)
+hidden_dim: 128

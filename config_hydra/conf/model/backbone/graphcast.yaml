@@ -1,4 +1,4 @@
-_target_: equicast.model.backbones.gnn.GNN
+_target_: config.backbones.build_graphcast
 edges:
   - [grid, to, mesh]
   - [mesh, to, mesh]
@@ -6,4 +6,4 @@ edges:
   - [mesh, to, mesh]
   - [mesh, to, grid]
 input_nodes: grid
-hidden_dim: 204  # int(128 * 1.6)
+hidden_dim: 166  # int(128 * 1.3)

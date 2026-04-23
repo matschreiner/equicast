@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - override /model/backbone: painn_diffusion
+  - override /model/model: diffusion
+  - override /model/loss: null
+
+logger:
+  experiment_name: diffusion
