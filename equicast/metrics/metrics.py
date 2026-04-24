@@ -37,8 +37,8 @@ class WeatherBenchTracker(BaseMetricsTracker):
         self.wind_idxs = {f"wind_{u.split('_')[1]}": (n2i[u], n2i[v]) for u, v in self.WIND_COMPONENTS}
 
     def compute_metrics(self, pred, target) -> dict[str, torch.Tensor]:
-        pred_raw = self.data_handler.backbone_output_to_pred(pred)
-        target_raw = self.data_handler.backbone_output_to_pred(target)
+        pred_raw = self.data_handler.backbone_out_to_phys_out(pred)
+        target_raw = self.data_handler.backbone_out_to_phys_out(target)
 
         metrics = {}
         for name, idx in self.scalar_idxs.items():

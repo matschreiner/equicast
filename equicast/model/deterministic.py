@@ -31,42 +31,30 @@ class Deterministic(BaseModel):
         self.backbone = torch.compile(backbone) if compile_backbone else backbone
         self.loss_fn = MSELoss() if loss_fn is None else loss_fn
 
-    def predict(self, input_):
-        input_ = input_.clone()
-        input_ = self.data_handler.prepare_backbone_input(input_)
-        backbone_out = self.backbone(input_)
-        return self.data_handler.update_state_with_backbone_output(input_, backbone_out)
-
-    def step_forward(self, input_, next_):
-        input_ = input_.clone()
-        pred = input_.clone()
-        next_ = next_.clone()
-
-        input_ = self.data_handler.prepare_backbone_input(input_)
-        backbone_out = self.backbone(input_)
-
-        pred = self.data_handler.update_state_with_backbone_output(pred, backbone_out)
-        next_ = self.data_handler.update_state_with_backbone_output(next_, backbone_out)
-        return next_, pred
+    def predict(self, physical_input):
+        physical_input = physical_input.clone()
+        backbone_input = self.data_handler.prepare_backbone_input(physical_input)
+        backbone_out = self.backbone(backbone_input)
+        return self.data_handler.update_state_with_backbone_output(physical_input, backbone_out)
 
     def training_step(self, batch, _):
-        input_, target = self.data_handler.prepare_training_batch(batch)
-        backbone_out = self.backbone(input_)
-        loss = self.loss_fn(backbone_out, target)
+        backbone_input, backbone_target = self.data_handler.prepare_training_batch(batch)
+        backbone_out = self.backbone(backbone_input)
+        loss = self.loss_fn(backbone_out, backbone_target)
 
         if self._should_log_metrics():
             self.log_lr()
-            self.log_loss(loss, input_.num_graphs)
-            self.log_metrics(backbone_out, target)
+            self.log_loss(loss, backbone_input.num_graphs)
+            self.log_metrics(backbone_out, backbone_target)
 
         return loss
 
     def validation_step(self, batch, _):
-        input_, target = self.data_handler.prepare_training_batch(batch)
-        backbone_out = self.backbone(input_)
-        loss = self.loss_fn(backbone_out, target)
+        backbone_input, backbone_target = self.data_handler.prepare_training_batch(batch)
+        backbone_out = self.backbone(backbone_input)
+        loss = self.loss_fn(backbone_out, backbone_target)
 
         self.log(
-            "val/loss", loss, logger=True, prog_bar=False, on_step=False, on_epoch=True, batch_size=input_.num_graphs
+            "val/loss", loss, logger=True, prog_bar=False, on_step=False, on_epoch=True, batch_size=backbone_input.num_graphs
         )
         return loss

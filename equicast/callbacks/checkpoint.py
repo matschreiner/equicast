@@ -71,6 +71,7 @@ class TimeDeltaCheckpoint(Callback):
             self.saver.save(trainer, "latest.ckpt")
             self.last_save_time = now
 
+
     def _get_interval(self, elapsed: float) -> float:
         if elapsed < self.phase1_duration:
             return self.phase1_interval

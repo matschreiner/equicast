@@ -70,7 +70,7 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def prepare_backbone_target(self, data: Any) -> Any: ...
 
     @abstractmethod
-    def backbone_output_to_pred(self, backbone_output: Any) -> torch.Tensor:
+    def backbone_out_to_phys_out(self, backbone_output: Any) -> torch.Tensor:
         """Denormalize backbone output into a full feature tensor [nodes, num_features],
         indexed by name_to_index."""
         ...
@@ -86,9 +86,9 @@ class GraphDataHandler(BaseDataHandler):
     """DataHandler for graph data."""
 
     def prepare_training_batch(self, batch: list) -> tuple:
-        input_ = self.prepare_backbone_input(batch[0])
-        target = self.prepare_backbone_target(batch[1])
-        return input_, target
+        backbone_input = self.prepare_backbone_input(batch[0])
+        backbone_target = self.prepare_backbone_target(batch[1])
+        return backbone_input, backbone_target
 
     def __init__(
         self,
@@ -100,25 +100,25 @@ class GraphDataHandler(BaseDataHandler):
         self.nodes = nodes
         self.normalizer = Normalizer(self.statistics, self.in_idxs, self.out_idxs)
 
-    def prepare_backbone_input(self, data: Data) -> Data:
-        raw = data[self.nodes].data
+    def prepare_backbone_input(self, phys_input: Data) -> Data:
+        raw = phys_input[self.nodes].data
         input_scalars = self.get_input_scalars(raw)
         output_scalars = self.get_output_scalars(raw)
-        data[self.nodes]["input"] = self.normalizer.normalize_input(input_scalars)
-        data[self.nodes]["residual"] = self.normalizer.normalize_output(output_scalars)
-        return data
+        phys_input[self.nodes]["input"] = self.normalizer.normalize_input(input_scalars)
+        phys_input[self.nodes]["residual"] = self.normalizer.normalize_output(output_scalars)
+        return phys_input
 
-    def prepare_backbone_target(self, data: Data) -> torch.Tensor:
-        raw = data[self.nodes].data
+    def prepare_backbone_target(self, phys_input: Data) -> torch.Tensor:
+        raw = phys_input[self.nodes].data
         output_scalars = self.get_output_scalars(raw)
         return self.normalizer.normalize_output(output_scalars)
 
-    def update_state_with_backbone_output(self, state: Data, backbone_output: torch.Tensor) -> Data:
+    def update_state_with_backbone_output(self, phys_input: Data, backbone_output: torch.Tensor) -> Data:
         denormalized = self.normalizer.denormalize_output(backbone_output)
-        self.set_output_scalars(state[self.nodes].data, denormalized)
-        return state
+        self.set_output_scalars(phys_input[self.nodes].data, denormalized)
+        return phys_input
 
-    def backbone_output_to_pred(self, backbone_output: torch.Tensor) -> torch.Tensor:
+    def backbone_out_to_phys_out(self, backbone_output: torch.Tensor) -> torch.Tensor:
         scalar = self.normalizer.denormalize_output(backbone_output)
         raw = torch.zeros(scalar.shape[0], self.num_features, device=scalar.device, dtype=scalar.dtype)
         self.set_output_scalars(raw, scalar)

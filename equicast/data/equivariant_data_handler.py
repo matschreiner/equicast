@@ -60,12 +60,12 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         self.vector_normalizer = VectorNormalizer(vector_mean_norm)
 
     def prepare_training_batch(self, batch: list[Data]) -> tuple:
-        input_ = self.prepare_backbone_input(batch[0])  # type: ignore
-        target = self.prepare_backbone_target(batch[1])  # type: ignore
-        return input_, target
+        backbone_input = self.prepare_backbone_input(batch[0])  # type: ignore
+        backbone_target = self.prepare_backbone_target(batch[1])  # type: ignore
+        return backbone_input, backbone_target
 
-    def prepare_backbone_frame(self, data: Data) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        raw = data[self.nodes].data
+    def prepare_backbone_frame(self, phys_input: Data) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        raw = phys_input[self.nodes].data
         scalars = self.normalizer.normalize_input(self.get_input_scalars(raw))
         vectors = self.vector_normalizer.normalize_vectors(self.get_input_vectors(raw))
         output_scalars = self.get_output_scalars(raw)
@@ -78,16 +78,16 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         return scalars, vectors, residual_scalar, residual_vector
 
-    def prepare_backbone_input(self, data: Data) -> Data:
-        scalars, vectors, residual_scalar, residual_vector = self.prepare_backbone_frame(data)
-        data[self.nodes]["input_scalar"] = scalars
-        data[self.nodes]["input_vector"] = vectors
-        data[self.nodes]["residual_scalar"] = residual_scalar
-        data[self.nodes]["residual_vector"] = residual_vector
-        return data
+    def prepare_backbone_input(self, phys_input: Data) -> Data:
+        scalars, vectors, residual_scalar, residual_vector = self.prepare_backbone_frame(phys_input)
+        phys_input[self.nodes]["input_scalar"] = scalars
+        phys_input[self.nodes]["input_vector"] = vectors
+        phys_input[self.nodes]["residual_scalar"] = residual_scalar
+        phys_input[self.nodes]["residual_vector"] = residual_vector
+        return phys_input
 
-    def prepare_backbone_target(self, data: Data) -> dict[str, torch.Tensor]:
-        raw = data[self.nodes].data
+    def prepare_backbone_target(self, phys_input: Data) -> dict[str, torch.Tensor]:
+        raw = phys_input[self.nodes].data
 
         output_scalars = self.get_output_scalars(raw)
         scalar_target = self.normalizer.normalize_output(output_scalars)
@@ -97,7 +97,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
         return {"scalar": scalar_target, "vector": vector_target}
 
-    def backbone_output_to_pred(self, backbone_output: dict) -> torch.Tensor:
+    def backbone_out_to_phys_out(self, backbone_output: dict) -> torch.Tensor:
         scalar = self.normalizer.denormalize_output(backbone_output["scalar"])
         vectors = self.vector_normalizer.denormalize_vectors(backbone_output["vector"])
         raw = torch.zeros(scalar.shape[0], self.num_features, device=scalar.device, dtype=scalar.dtype)
@@ -107,16 +107,21 @@ class EquivariantGraphDataHandler(BaseDataHandler):
 
     def update_state_with_backbone_output(
         self,
-        state: Data,
+        phys_input: Data,
         backbone_output: Any,
     ) -> Data:
+        if isinstance(backbone_output, torch.Tensor):
+            denormalized = self.normalizer.denormalize_output(backbone_output)
+            self.set_output_scalars(phys_input[self.nodes].data, denormalized)
+            return phys_input
+
         denormalized = self.normalizer.denormalize_output(backbone_output["scalar"])
-        self.set_output_scalars(state[self.nodes].data, denormalized)
+        self.set_output_scalars(phys_input[self.nodes].data, denormalized)
 
         vectors = self.vector_normalizer.denormalize_vectors(backbone_output["vector"])
-        self.set_output_vectors(state[self.nodes].data, vectors)
+        self.set_output_vectors(phys_input[self.nodes].data, vectors)
 
-        return state
+        return phys_input
 
     def to_cf(self, graph: Data) -> "xr.Dataset":
         """Convert a graph state to a CF-compliant xarray Dataset."""
