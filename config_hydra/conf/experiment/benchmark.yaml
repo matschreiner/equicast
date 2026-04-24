@@ -1,7 +1,10 @@
 # @package _global_
 data:
+  dataset:
+    repeat: 1000
   dataloader:
     num_workers: 0
+    persistent_workers: false
     shuffle: false
 
 trainer:

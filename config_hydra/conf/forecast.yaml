@@ -1,0 +1,12 @@
+defaults:
+  - data: default
+  - model: default
+  - logger: mlflow
+  - _self_
+  - experiment: null
+
+ckpt_path: null
+
+forecast:
+  start_idx: 0
+  n_steps: 40

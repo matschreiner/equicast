@@ -3,4 +3,10 @@ data:
   dataloader:
     num_workers: 0
     persistent_workers: false
-    pin_memory: false
+    shuffle: false
+
+forecast:
+  n_steps: 4
+
+logger:
+  experiment_name: forecast

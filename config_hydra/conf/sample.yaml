@@ -1,0 +1,13 @@
+defaults:
+  - data: default
+  - model: default
+  - logger: mlflow
+  - _self_
+  - experiment: null
+
+ckpt_path: null
+
+sample:
+  frame_idx: 0
+  save_trajectory: true
+  out_path: null

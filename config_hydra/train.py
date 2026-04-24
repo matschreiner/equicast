@@ -46,7 +46,7 @@ def build_train_config(cfg: DictConfig) -> TrainConfig:
     )
 
 
-@hydra.main(config_path="conf", config_name="config", version_base=None)
+@hydra.main(config_path="conf", config_name="train", version_base=None)
 def main(cfg: DictConfig):
     train_config = build_train_config(cfg)
     train_config.run()

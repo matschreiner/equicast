@@ -6,6 +6,7 @@ defaults:
 data:
   dataloader:
     num_workers: 0
+    persistent_workers: false
 
 optimization:
   scheduler:

@@ -1,0 +1,10 @@
+defaults:
+  - data: default
+  - model: default
+  - optimization: default
+  - trainer: default
+  - logger: mlflow
+  - _self_
+  - experiment: null
+
+ckpt_path: null
