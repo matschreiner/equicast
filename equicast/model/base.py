@@ -37,14 +37,14 @@ class BaseModel(pl.LightningModule):
         """Accept a physical input graph, return a physical output graph."""
         ...
 
-    def step_forward(self, physical_input, physical_next):
-        """Single autoregressive step: predict from physical_input, write output into physical_next."""
-        pred = self.predict(physical_input)
-        physical_next = physical_next.clone()
+    def step_forward(self, phys_input, phys_next):
+        """Single autoregressive step: predict from phys_input, write output into phys_next."""
+        pred = self.predict(phys_input)
+        phys_next = phys_next.clone()
         nodes = self.data_handler.nodes
-        physical_out = self.data_handler.get_output_scalars(pred[nodes].data)
-        self.data_handler.set_output_scalars(physical_next[nodes].data, physical_out)
-        return physical_next, pred
+        phys_out = self.data_handler.get_output_scalars(pred[nodes].data)
+        self.data_handler.set_output_scalars(phys_next[nodes].data, phys_out)
+        return phys_next, pred
 
     @property
     def device(self):

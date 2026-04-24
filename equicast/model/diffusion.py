@@ -174,13 +174,13 @@ class DiffusionModel(BaseModel):
             return x, torch.stack(trajectory)  # [steps+1, n_nodes, out_dim]
         return x
 
-    def predict(self, physical_input, sigma_min: float = 0.002, sigma_max: float = 80.0, rho: float = 7.0,
+    def predict(self, phys_input, sigma_min: float = 0.002, sigma_max: float = 80.0, rho: float = 7.0,
                 return_trajectory: bool = False):
-        physical_input = physical_input.clone()
-        backbone_input = self.data_handler.prepare_backbone_input(physical_input)
+        phys_input = phys_input.clone()
+        backbone_input = self.data_handler.prepare_backbone_input(phys_input)
         result = self._sample(backbone_input, sigma_min, sigma_max, rho, return_trajectory=return_trajectory)
         if return_trajectory:
             backbone_out, trajectory = result
-            physical_out = self.data_handler.update_state_with_backbone_output(physical_input, backbone_out)
+            physical_out = self.data_handler.update_state_with_backbone_output(phys_input, backbone_out)
             return physical_out, trajectory
-        return self.data_handler.update_state_with_backbone_output(physical_input, result)
+        return self.data_handler.update_state_with_backbone_output(phys_input, result)

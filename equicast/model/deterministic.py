@@ -31,11 +31,11 @@ class Deterministic(BaseModel):
         self.backbone = torch.compile(backbone) if compile_backbone else backbone
         self.loss_fn = MSELoss() if loss_fn is None else loss_fn
 
-    def predict(self, physical_input):
-        physical_input = physical_input.clone()
-        backbone_input = self.data_handler.prepare_backbone_input(physical_input)
+    def predict(self, phys_input):
+        phys_input = phys_input.clone()
+        backbone_input = self.data_handler.prepare_backbone_input(phys_input)
         backbone_out = self.backbone(backbone_input)
-        return self.data_handler.update_state_with_backbone_output(physical_input, backbone_out)
+        return self.data_handler.update_state_with_backbone_output(phys_input, backbone_out)
 
     def training_step(self, batch, _):
         backbone_input, backbone_target = self.data_handler.prepare_training_batch(batch)
