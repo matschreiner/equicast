@@ -34,25 +34,25 @@ class Deterministic(BaseModel):
     def predict(self, phys_input):
         phys_input = phys_input.clone()
         backbone_input = self.data_handler.prepare_backbone_input(phys_input)
-        backbone_out = self.backbone(backbone_input)
-        return self.data_handler.update_state_with_backbone_output(phys_input, backbone_out)
+        backbone_output = self.backbone(backbone_input)
+        return self.data_handler.update_state_with_backbone_outputput(phys_input, backbone_output)
 
     def training_step(self, batch, _):
         backbone_input, backbone_target = self.data_handler.prepare_training_batch(batch)
-        backbone_out = self.backbone(backbone_input)
-        loss = self.loss_fn(backbone_out, backbone_target)
+        backbone_output = self.backbone(backbone_input)
+        loss = self.loss_fn(backbone_output, backbone_target)
 
         if self._should_log_metrics():
             self.log_lr()
             self.log_loss(loss, backbone_input.num_graphs)
-            self.log_metrics(backbone_out, backbone_target)
+            self.log_metrics(backbone_output, backbone_target)
 
         return loss
 
     def validation_step(self, batch, _):
         backbone_input, backbone_target = self.data_handler.prepare_training_batch(batch)
-        backbone_out = self.backbone(backbone_input)
-        loss = self.loss_fn(backbone_out, backbone_target)
+        backbone_output = self.backbone(backbone_input)
+        loss = self.loss_fn(backbone_output, backbone_target)
 
         self.log(
             "val/loss", loss, logger=True, prog_bar=False, on_step=False, on_epoch=True, batch_size=backbone_input.num_graphs

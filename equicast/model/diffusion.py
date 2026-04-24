@@ -180,7 +180,7 @@ class DiffusionModel(BaseModel):
         backbone_input = self.data_handler.prepare_backbone_input(phys_input)
         result = self._sample(backbone_input, sigma_min, sigma_max, rho, return_trajectory=return_trajectory)
         if return_trajectory:
-            backbone_out, trajectory = result
-            physical_out = self.data_handler.update_state_with_backbone_output(phys_input, backbone_out)
+            backbone_output, trajectory = result
+            physical_out = self.data_handler.update_state_with_backbone_outputput(phys_input, backbone_output)
             return physical_out, trajectory
-        return self.data_handler.update_state_with_backbone_output(phys_input, result)
+        return self.data_handler.update_state_with_backbone_outputput(phys_input, result)

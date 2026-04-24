@@ -76,10 +76,10 @@ class BaseModel(pl.LightningModule):
         lr = opt.param_groups[0]["lr"]
         self.log("train/lr", lr, logger=True, prog_bar=True, on_step=True, on_epoch=False)
 
-    def log_metrics(self, backbone_out, backbone_target):
+    def log_metrics(self, backbone_output, backbone_target):
         if self.metrics_tracker is None:
             return
-        metrics = self.metrics_tracker.compute_metrics(backbone_out, backbone_target)
+        metrics = self.metrics_tracker.compute_metrics(backbone_output, backbone_target)
         self.log_dict(metrics, logger=True, prog_bar=True, on_step=True, on_epoch=False)
 
     def _should_log_metrics(self) -> bool:
