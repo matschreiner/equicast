@@ -213,16 +213,16 @@ class MultiFrameEquivariantGraphDataHandler(EquivariantGraphDataHandler):
 
     @property
     def in_dim(self) -> int:
-        return self.n_input_frames * self.feature_index.in_dim
+        return self.n_input_frames * super().in_dim
 
     @property
     def in_vector_dim(self) -> int:
-        return self.n_input_frames * self.feature_index.in_vector_dim
+        return self.n_input_frames * super().in_vector_dim
 
     def prepare_training_batch(self, batch: list[Data]) -> tuple:
-        input_ = self.prepare_backbone_input(batch[: self.n_input_frames])  # type: ignore
-        target = self.prepare_backbone_target(batch[self.n_input_frames])  # type: ignore
-        return input_, target
+        backbone_input = self.prepare_backbone_input(batch[: self.n_input_frames])  # type: ignore
+        backbone_target = self.prepare_backbone_target(batch[self.n_input_frames])  # type: ignore
+        return backbone_input, backbone_target
 
     def prepare_backbone_input(self, frames: list[Data]) -> Data:  # type: ignore
         frame_data = [self.prepare_backbone_frame(f) for f in frames]
