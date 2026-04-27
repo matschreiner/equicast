@@ -6,9 +6,11 @@ data:
     num_workers: 0
     persistent_workers: false
     shuffle: false
+    prefetch_factor: null
 
 trainer:
-  max_epochs: 1000
+  max_epochs: -1
+  max_steps: 5000
   callbacks:
     - _target_: equicast.callbacks.step_timer.StepTimer
 
