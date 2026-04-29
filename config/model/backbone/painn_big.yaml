@@ -1,4 +1,4 @@
-_target_: config.backbones.build_painn
+_target_: equicast.model.backbones.builders.build_painn
 edges:
   - [grid, to, mesh]
   - [mesh, to, mesh]

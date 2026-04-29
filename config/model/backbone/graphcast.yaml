@@ -1,4 +1,4 @@
-_target_: config.backbones.build_graphcast
+_target_: equicast.model.backbones.builders.build_graphcast
 edges:
   - [grid, to, mesh]
   - [mesh, to, mesh]

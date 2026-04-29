@@ -1,4 +1,4 @@
-_target_: config.backbones.build_gnn
+_target_: equicast.model.backbones.builders.build_gnn
 edges:
   - [grid, to, mesh]
   - [mesh, to, mesh]
