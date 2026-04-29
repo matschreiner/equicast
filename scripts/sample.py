@@ -13,7 +13,7 @@ from equicast.model.base import BaseModel
 from equicast.model.from_checkpoint import load_from_checkpoint
 
 
-@hydra.main(config_path="conf", config_name="sample", version_base=None)
+@hydra.main(config_path="../config_hydra/conf", config_name="sample", version_base=None)
 def main(cfg: DictConfig):
     assert cfg.ckpt_path, "ckpt_path must be set"
 
