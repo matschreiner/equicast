@@ -5,4 +5,4 @@ defaults:
   - dataset: anemoi
   - dataloader: default
 
-dataset_path: resources/benchmark.zarr
+dataset_path: storage/aifs-ea-an-oper-0001-mars-n320-1979-2022-6h-v6.zarr
