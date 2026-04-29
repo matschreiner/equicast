@@ -38,7 +38,7 @@ def build_forecast_config(cfg: DictConfig) -> ForecastConfig:
     )
 
 
-@hydra.main(config_path="../config_hydra/conf", config_name="forecast", version_base=None)
+@hydra.main(config_path="../config", config_name="forecast", version_base=None)
 def main(cfg: DictConfig):
     assert cfg.ckpt_path, "ckpt_path must be set"
     forecast_config = build_forecast_config(cfg)
