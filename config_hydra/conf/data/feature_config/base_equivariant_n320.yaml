@@ -1,2 +1,2 @@
 _target_: equicast.data.feature_config.FeatureConfig.from_yaml
-path: config/features/base_equivariant_n320.yaml
+path: resources/features/base_equivariant_n320.yaml

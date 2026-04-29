@@ -3,7 +3,7 @@ defaults:
   - override /data/handler: multiframe
 
 data:
-  dataset_path: resources/benchmark.zarr
+  dataset_path: storage/aifs-ea-an-oper-0001-mars-n320-1979-2022-6h-v6.zarr
   graph_provider:
     graph_path: resources/graphs/stage_a/graph.pt
   dataset:
