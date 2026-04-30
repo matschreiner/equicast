@@ -43,7 +43,7 @@ class TimeDeltaCheckpoint(Callback):
         phase2_interval: float = 300,  # 5 minutes
         phase2_duration: float = 7200,  # 2 hours
         phase3_interval: float = 1200,  # 20 minutes
-        save_initial: bool = True,
+        dirpath: str | None = None,
     ):
         super().__init__()
         self.phase1_interval = phase1_interval
@@ -51,16 +51,18 @@ class TimeDeltaCheckpoint(Callback):
         self.phase2_interval = phase2_interval
         self.phase2_duration = phase2_duration
         self.phase3_interval = phase3_interval
-        self.save_initial = save_initial
+        self.dirpath = dirpath
         self.start_time = None
         self.last_save_time = None
 
     def on_train_start(self, trainer, pl_module):
         self.start_time = time.time()
         self.last_save_time = self.start_time
-        self.saver = CheckpointSaver.from_trainer(trainer)
-        if self.save_initial:
-            self.saver.save(trainer, "initial.ckpt")
+
+        if self.dirpath:
+            self.saver = CheckpointSaver(self.dirpath, trainer.logger)
+        else:
+            self.saver = CheckpointSaver.from_trainer(trainer)
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         now = time.time()
@@ -71,6 +73,7 @@ class TimeDeltaCheckpoint(Callback):
             self.saver.save(trainer, "latest.ckpt")
             self.last_save_time = now
 
+        self.saver.save(trainer, "initial.ckpt")
 
     def _get_interval(self, elapsed: float) -> float:
         if elapsed < self.phase1_duration:
