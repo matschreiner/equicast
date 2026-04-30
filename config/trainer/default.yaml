@@ -5,5 +5,4 @@ precision: bf16-mixed
 enable_checkpointing: false
 callbacks:
   - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
-    save_initial: true
   - _target_: equicast.callbacks.step_timer.StepTimer
