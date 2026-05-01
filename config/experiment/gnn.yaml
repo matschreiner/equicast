@@ -1,6 +1,6 @@
 # @package _global_
 defaults:
-  - override /data/handler: graph
+  - override /model/data_handler: graph
   - override /model/backbone: gnn
   - override /model/loss: mse
 

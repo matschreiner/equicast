@@ -1,0 +1,14 @@
+defaults:
+  - feature_config: base_equivariant
+  - graph_provider: stage_a
+  - dataset: anemoi
+  - dataloader: default
+
+dataset_path:
+  storage/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr
+
+
+
+  
+rsync -av --progress -e "ssh -i ~/.ssh/tu_clave_leonardo -o IdentitiesOnly=yes" jschrei1@login.leonardo.cineca.it:/leonardo/home/userexternal/jschrei1/equicast/aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8_mini.zarr storage/
+

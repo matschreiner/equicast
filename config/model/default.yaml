@@ -1,4 +1,5 @@
 defaults:
+  - data_handler: equivariant
   - backbone: painn
   - model: deterministic
   - loss: equivariant_mse

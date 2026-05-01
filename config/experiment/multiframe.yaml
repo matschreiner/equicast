@@ -1,6 +1,6 @@
 # @package _global_
 defaults:
-  - override /data/handler: multiframe
+  - override /model/data_handler: multiframe
 
 data:
   dataset_path: storage/aifs-ea-an-oper-0001-mars-n320-1979-2022-6h-v6.zarr
