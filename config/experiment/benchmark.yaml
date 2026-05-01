@@ -1,7 +1,4 @@
 # @package _global_
-defaults:
-  - override /data/feature_config: base_equivariant_n320
-
 data:
   dataset_path: resources/benchmark.zarr
   dataset:

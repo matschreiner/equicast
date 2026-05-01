@@ -1,10 +1,10 @@
 _target_: equicast.model.backbones.builders.build_diffusion_painn
 edges:
-  - [grid, to, mesh]
-  - [mesh, to, mesh]
-  - [mesh, to, mesh]
-  - [mesh, to, mesh]
-  - [mesh, to, grid]
-input_nodes: grid
+  - [data, to, hidden]
+  - [hidden, to, hidden]
+  - [hidden, to, hidden]
+  - [hidden, to, hidden]
+  - [hidden, to, data]
+input_nodes: data
 hidden_dim: 128
 noise_emb_dim: 64

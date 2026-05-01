@@ -94,7 +94,7 @@ class GraphDataHandler(BaseDataHandler):
         self,
         dataset_path: str,
         feature_config: FeatureConfig,
-        nodes: str = "grid",
+        nodes: str = "data",
     ):
         super().__init__(dataset_path, feature_config)
         self.nodes = nodes

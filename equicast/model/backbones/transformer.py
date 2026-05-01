@@ -99,9 +99,9 @@ class GraphTransformer(nn.Module):
     """Graph Transformer backbone with encoder-processor-decoder support.
 
     Compatible with heterogeneous edge lists like:
-        [("grid", "to", "mesh"), ("mesh", "to", "mesh"), ("mesh", "to", "grid")]
+        [("data", "to", "hidden"), ("hidden", "to", "hidden"), ("hidden", "to", "data")]
 
-    Non-input node types (e.g. mesh) are initialised to zeros on the first
+    Non-input node types (e.g. hidden) are initialised to zeros on the first
     forward pass and built up through message passing.
     """
 
@@ -109,7 +109,7 @@ class GraphTransformer(nn.Module):
         self,
         feature_index: FeatureIndex,
         edges: list[tuple[str, str, str]],
-        input_nodes: str = "grid",
+        input_nodes: str = "data",
         hidden_dim: int = 128,
         num_heads: int = 4,
         node_encoder: GraphEncoder | None = None,

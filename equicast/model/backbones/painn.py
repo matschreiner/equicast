@@ -127,7 +127,7 @@ class PaiNN(nn.Module):
         in_vector_dim: int,
         out_vector_dim: int,
         edges: list[tuple[str, str, str]],
-        input_nodes: str = "grid",
+        input_nodes: str = "data",
         hidden_dim: int = 64,
         aggr: str = "mean",
     ):

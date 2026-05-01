@@ -72,7 +72,7 @@ class GraphCast(nn.Module):
         in_dim: int,
         out_dim: int,
         edges: list[tuple[str, str, str]],
-        input_nodes: str = "grid",
+        input_nodes: str = "data",
         hidden_dim: int = 64,
         aggr: str = "sum",
     ):

@@ -36,7 +36,7 @@ prognostic:
   - w_925
 
   - z
-  - z_10
+  # - z_10  # not available in all datasets
   - z_100
   - z_1000
   - z_150

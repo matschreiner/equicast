@@ -19,7 +19,7 @@ class AnemoiDataset(Dataset):
         graph_provider: BaseGraphProvider,
         no_frames: int = 2,
         step: int = 1,
-        node_name="grid",
+        node_name="data",
         repeat: int = 1,
     ):
         super().__init__()

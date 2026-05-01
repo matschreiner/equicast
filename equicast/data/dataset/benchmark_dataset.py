@@ -23,8 +23,8 @@ class BenchmarkDataset(Dataset):
             graph = graph_provider.get_graph(0)
             input_graph = graph.clone()
             target_graph = graph.clone()
-            input_graph["grid"].data = tensors["input"]
-            target_graph["grid"].data = tensors["target"]
+            input_graph["data"].data = tensors["input"]
+            target_graph["data"].data = tensors["target"]
             self.samples.append({"input": input_graph, "target": target_graph})
 
         self.length = length

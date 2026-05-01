@@ -1,8 +1,4 @@
 # @package _global_
 defaults:
-  - override /data/feature_config: base_equivariant_n320
-  - override /data/graph_provider: stage_b
 
-model:
-  data_handler:
-    nodes: data
+  - override /data/graph_provider: stage_b
