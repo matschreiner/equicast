@@ -11,7 +11,7 @@ from equicast.metrics import WeatherBenchTracker
 def build_train_config(cfg: DictConfig) -> TrainConfig:
     feature_config = instantiate(cfg.data.feature_config)
     graph_provider = instantiate(cfg.data.graph_provider)
-    data_handler = instantiate(cfg.data.handler, dataset_path=cfg.data.dataset_path, feature_config=feature_config)
+    data_handler = instantiate(cfg.model.data_handler, dataset_path=cfg.data.dataset_path, feature_config=feature_config)
     dataset = instantiate(cfg.data.dataset, path=cfg.data.dataset_path, graph_provider=graph_provider)
     dataloader = instantiate(cfg.data.dataloader, dataset=dataset)
 
