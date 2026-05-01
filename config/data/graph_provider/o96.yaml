@@ -1,2 +1,2 @@
 _target_: equicast.data.graph_provider.StaticGraphProvider
-graph_path: resources/graphs/stage_a/graph.pt
+graph_path: resources/graphs/o96/graph.pt

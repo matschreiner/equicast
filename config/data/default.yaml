@@ -1,6 +1,6 @@
 defaults:
   - feature_config: base_equivariant
-  - graph_provider: stage_a
+  - graph_provider: o96
   - dataset: anemoi
   - dataloader: default
 

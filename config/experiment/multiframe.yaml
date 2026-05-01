@@ -5,7 +5,7 @@ defaults:
 data:
   dataset_path: storage/aifs-ea-an-oper-0001-mars-n320-1979-2022-6h-v6.zarr
   graph_provider:
-    graph_path: resources/graphs/stage_a/graph.pt
+    graph_path: resources/graphs/o96/graph.pt
   dataset:
     no_frames: 3
   dataloader:

@@ -1,4 +1,4 @@
 # @package _global_
 defaults:
 
-  - override /data/graph_provider: stage_b
+  - override /data/graph_provider: n320
