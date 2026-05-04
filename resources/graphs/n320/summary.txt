@@ -1,0 +1,43 @@
+2026-05-04 10:15:11 INFO Saving interactive 3d plot of the graph...
+2026-05-04 10:15:17 INFO Saving interactive plots of isolated nodes ...
+2026-05-04 10:15:17 WARNING No isolated nodes found.
+2026-05-04 10:15:17 INFO Saving interactive plots of subgraphs ...
+2026-05-04 10:15:29 INFO Saving distribution plots of node ande edge attributes ...
+2026-05-04 10:15:30 WARNING No edge attributes found in the graph.
+
+📦 Path       : /home/masc/dmi/programming/equicast/resources/graphs/n320/graph.pt
+💽 Size       : 47.1 MiB (49421776)
+
+🪩  Nodes summary
+
+   Nodes name │ Num. nodes │ Attributes │ Attribute dim │ Min. latitude │ Max. latitude │ Min. longitude │ Max. longitude
+   ───────────┼────────────┼────────────┼───────────────┼───────────────┼───────────────┼────────────────┼───────────────
+   data       │     542080 │            │             0 │      -89.7849 │       89.7849 │              0 │        359.719
+   hidden     │      10242 │            │             0 │           -90 │            90 │       -178.606 │            180
+   ───────────┴────────────┴────────────┴───────────────┴───────────────┴───────────────┴────────────────┴───────────────
+
+
+🌐  Edges summary
+
+   Source │ Target │  Num. edges │ Isolated Source │ Isolated Target │ Min edges/target │ Max edges/target │ Attribute dim │                     Attributes
+   ───────┼────────┼─────────────┼─────────────────┼─────────────────┼──────────────────┼──────────────────┼───────────────┼───────────────────────────────
+   data   │ hidden │      542080 │               0 │               0 │               44 │              109 │             3 │ edge_dirs(2D), edge_length(1D)
+   hidden │ data   │ 1.62624e+06 │               0 │               0 │                3 │                3 │             3 │ edge_dirs(2D), edge_length(1D)
+   hidden │ hidden │       81840 │               0 │               0 │                6 │               30 │             3 │ edge_dirs(2D), edge_length(1D)
+   ───────┴────────┴─────────────┴─────────────────┴─────────────────┴──────────────────┴──────────────────┴───────────────┴───────────────────────────────
+
+
+📊 Attribute distributions
+
+   Type │ Source          │        Name │         Dtype │        Min. │         Mean │      Max. │  Std. dev.
+   ─────┼─────────────────┼─────────────┼───────────────┼─────────────┼──────────────┼───────────┼───────────
+   Edge │ data-->hidden   │   edge_dirs │ torch.float32 │          -1 │  0.000359119 │         1 │   0.707107
+   Edge │ data-->hidden   │ edge_length │ torch.float32 │ 1.75238e-05 │    0.0132755 │  0.023789 │  0.0048001
+   Edge │ hidden-->data   │   edge_dirs │ torch.float32 │          -1 │ -0.000142836 │         1 │   0.707107
+   Edge │ hidden-->data   │ edge_length │ torch.float32 │ 1.75238e-05 │    0.0229915 │ 0.0411443 │ 0.00830116
+   Edge │ hidden-->hidden │   edge_dirs │ torch.float32 │          -1 │ -1.11868e-09 │         1 │   0.707109
+   Edge │ hidden-->hidden │ edge_length │ torch.float32 │   0.0345983 │    0.0548643 │  0.628319 │  0.0480057
+   ─────┴─────────────────┴─────────────┴───────────────┴─────────────┴──────────────┴───────────┴───────────
+
+🔋 Graph ready.
+
