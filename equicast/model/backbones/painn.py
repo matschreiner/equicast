@@ -4,6 +4,7 @@ import warnings
 
 import torch
 from torch import nn
+from torch.utils.checkpoint import checkpoint
 from torch_geometric.utils import scatter
 
 from equicast.model.layers.equivariant_conv import EquivariantLinear
@@ -119,6 +120,12 @@ class PaiNNBlock(nn.Module):
         return self.norm2(scalar + d_scalar, vector + d_vector)
 
 
+def maybe_checkpoint(fn, enabled, *args):
+    if enabled:
+        return checkpoint(fn, *args, use_reentrant=False)
+    return fn(*args)
+
+
 class PaiNN(nn.Module):
     def __init__(
         self,
@@ -130,10 +137,12 @@ class PaiNN(nn.Module):
         input_nodes: str = "data",
         hidden_dim: int = 64,
         aggr: str = "mean",
+        gradient_checkpointing: bool = False,
     ):
         super().__init__()
         self.edges = [tuple(e) for e in edges]
         self.input_nodes = input_nodes
+        self.gradient_checkpointing = gradient_checkpointing
 
         self.embed_scalar_in = MLP(in_dim=in_dim, out_dim=hidden_dim)
         self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=out_dim)
@@ -147,7 +156,7 @@ class PaiNN(nn.Module):
         vector = self.embed_vector_in(graph[self.input_nodes].input_vector)
 
         for block, edge in zip(self.blocks, self.edges):
-            scalar, vector = block(scalar, vector, graph[edge])
+            scalar, vector = maybe_checkpoint(block, self.gradient_checkpointing, scalar, vector, graph[edge])
 
         scalar_out = self.embed_scalar_out(scalar) + graph[self.input_nodes].residual_scalar
         vector_out = self.embed_vector_out(vector) + graph[self.input_nodes].residual_vector
