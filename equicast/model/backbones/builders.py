@@ -3,7 +3,7 @@ from equicast.model.backbones.graphcast import GraphCast
 from equicast.model.backbones.painn import PaiNN
 
 
-def build_painn(data_handler, edges, input_nodes="data", hidden_dim=128, aggr="mean"):
+def build_painn(data_handler, edges, input_nodes="data", hidden_dim=128, aggr="mean", gradient_checkpointing=False):
     return PaiNN(
         in_dim=data_handler.in_dim,
         out_dim=data_handler.out_dim,
@@ -13,6 +13,7 @@ def build_painn(data_handler, edges, input_nodes="data", hidden_dim=128, aggr="m
         input_nodes=input_nodes,
         hidden_dim=hidden_dim,
         aggr=aggr,
+        gradient_checkpointing=gradient_checkpointing,
     )
 
 
