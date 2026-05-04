@@ -3,6 +3,10 @@ defaults:
   - override /data: n320
   - override /model/backbone: painn_big
 
+model:
+  backbone:
+    gradient_checkpointing: true
+
 trainer:
   max_steps: 5000
   callbacks:
