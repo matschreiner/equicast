@@ -2,6 +2,10 @@
 defaults:
   - override /data: n320
 
+model:
+  backbone:
+    gradient_checkpointing: true
+
 ckpt_path: experiments/01_stage_ab_local/stage_a/checkpoints/initial.ckpt
 
 trainer:
