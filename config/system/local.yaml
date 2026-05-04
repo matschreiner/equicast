@@ -1,0 +1,5 @@
+data:
+  dataloader:
+    num_workers: 0
+    persistent_workers: false
+    prefetch_factor: null

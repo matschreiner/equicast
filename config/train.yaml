@@ -5,6 +5,7 @@ defaults:
   - trainer: default
   - logger: mlflow
   - _self_
+  - system: null
   - experiment: null
 
 ckpt_path: null
