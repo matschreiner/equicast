@@ -1,0 +1,11 @@
+# @package _global_
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_minimal
+
+trainer:
+  max_steps: 50 
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+      dirpath: experiments/01_stage_ab_local/stage_a/checkpoints
+    - _target_: equicast.callbacks.step_timer.StepTimer
