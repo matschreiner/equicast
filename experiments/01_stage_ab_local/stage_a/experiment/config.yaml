@@ -4,7 +4,7 @@ defaults:
   - override /model/backbone: painn_minimal
 
 trainer:
-  max_steps: 50 
+  max_steps: 5000
   callbacks:
     - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
       dirpath: experiments/01_stage_ab_local/stage_a/checkpoints

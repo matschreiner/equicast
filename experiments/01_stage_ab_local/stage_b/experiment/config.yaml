@@ -6,7 +6,7 @@ defaults:
 ckpt_path: experiments/01_stage_ab_local/stage_a/checkpoints/initial.ckpt
 
 trainer:
-  max_steps: 10
+  max_steps: 5000
   callbacks:
     - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
       dirpath: experiments/01_stage_ab_local/stage_b/checkpoints
