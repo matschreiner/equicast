@@ -3,11 +3,13 @@
 set -e
 
 if [ -z "$1" ]; then
-    echo "Usage: create_graph <graph_name>"
+    echo "Usage: create_graph <path/to/graph.yaml>"
     exit 1
 fi
 
-name="$1"
+yaml="$1"
+dir="$(dirname "$yaml")"
+base="$(basename "$yaml" .yaml)"
 
-anemoi-graphs create "${name}.yaml" "${name}.pt" --overwrite
-anemoi-graphs inspect "${name}.pt" "${name}" 2>&1 | tee "${name}/summary.txt"
+anemoi-graphs create "${yaml}" "${dir}/${base}.pt" --overwrite
+anemoi-graphs inspect "${dir}/${base}.pt" "${dir}/${base}" 2>&1 | tee "${dir}/summary.txt"
