@@ -1,15 +1,11 @@
 # @package _global_
 defaults:
   - override /data: n320
-  - override /model/backbone: painn_big
-
-model:
-  backbone:
-    gradient_checkpointing: true
+  - override /model/backbone: painn_wide
 
 trainer:
   max_steps: 5000
   callbacks:
     - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
-      dirpath: experiments/01_stage_ab_local/stage_b/checkpoints
+      dirpath: experiments/01_stage_ab_local/stage_b_no_checkpoint/checkpoints
     - _target_: equicast.callbacks.step_timer.StepTimer

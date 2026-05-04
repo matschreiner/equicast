@@ -1,11 +1,7 @@
 # @package _global_
 defaults:
   - override /data: o96
-  - override /model/backbone: painn_big
-
-model:
-  backbone:
-    gradient_checkpointing: true
+  - override /model/backbone: painn_wide
 
 trainer:
   max_steps: 5000
