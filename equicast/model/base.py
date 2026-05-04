@@ -23,6 +23,8 @@ class BaseModel(pl.LightningModule):
         metrics_tracker: BaseMetricsTracker | None = None,
     ):
         super().__init__()
+        with ignore_module_warning("data_handler"):
+            self.save_hyperparameters()
         self.data_handler = data_handler
         self.optimizer_factory = optimizer_factory
         self.scheduler_factory = scheduler_factory

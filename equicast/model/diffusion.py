@@ -55,9 +55,6 @@ class DiffusionModel(BaseModel):
             scheduler_factory=scheduler_factory,
             metrics_tracker=metrics_tracker,
         )
-        with ignore_module_warning("backbone", "data_handler"):
-            self.save_hyperparameters()
-
         self.backbone = torch.compile(backbone) if compile_backbone else backbone
         self.sigma_data = sigma_data
         self.P_mean = P_mean

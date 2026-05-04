@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from equicast.model.base import BaseModel, default_optimizer_factory, ignore_module_warning
+from equicast.model.base import BaseModel, default_optimizer_factory
 from equicast.model.losses import EquivariantMSELoss, MSELoss
 
 # Alias for backwards compatibility with old checkpoints
@@ -25,9 +25,6 @@ class Deterministic(BaseModel):
             scheduler_factory=scheduler_factory,
             metrics_tracker=metrics_tracker,
         )
-        with ignore_module_warning("backbone", "data_handler"):
-            self.save_hyperparameters(ignore=["loss_fn"])
-
         self.backbone = torch.compile(backbone) if compile_backbone else backbone
         self.loss_fn = MSELoss() if loss_fn is None else loss_fn
 
