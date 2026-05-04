@@ -21,19 +21,39 @@ edges:
   - source_name: data
     target_name: hidden
     edge_builders:
-    - _target_: anemoi.graphs.edges.CutOffEdges
-      cutoff_factor: 0.7
+      - _target_: anemoi.graphs.edges.ReversedKNNEdges
+        num_nearest_neighbours: 1
     attributes: *edges_attributes
   - source_name: hidden
     target_name: data
     edge_builders:
-    - _target_: anemoi.graphs.edges.KNNEdges
-      num_nearest_neighbours: 3
+      - _target_: anemoi.graphs.edges.KNNEdges
+        num_nearest_neighbours: 3
     attributes: *edges_attributes
   - source_name: hidden
     target_name: hidden
     edge_builders:
-    - _target_: anemoi.graphs.edges.MultiScaleEdges
-      x_hops: 1
-      scale_resolutions: 5
+      - _target_: anemoi.graphs.edges.MultiScaleEdges
+        x_hops: 1
+        scale_resolutions: 5
     attributes: *edges_attributes
+# edges:
+#   - source_name: data
+#     target_name: hidden
+#     edge_builders:
+#     - _target_: anemoi.graphs.edges.CutOffEdges
+#       cutoff_factor: 0.7
+#     attributes: *edges_attributes
+#   - source_name: hidden
+#     target_name: data
+#     edge_builders:
+#     - _target_: anemoi.graphs.edges.KNNEdges
+#       num_nearest_neighbours: 3
+#     attributes: *edges_attributes
+#   - source_name: hidden
+#     target_name: hidden
+#     edge_builders:
+#     - _target_: anemoi.graphs.edges.MultiScaleEdges
+#       x_hops: 1
+#       scale_resolutions: 5
+#     attributes: *edges_attributes
