@@ -1,7 +1,6 @@
 # @package _global_
 defaults:
   - override /data: o96
-  - override /model/backbone: painn_minimal
 
 trainer:
   max_steps: 5000

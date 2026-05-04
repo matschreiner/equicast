@@ -1,7 +1,6 @@
 # @package _global_
 defaults:
   - override /data: n320
-  - override /model/backbone: painn_minimal
 
 ckpt_path: experiments/01_stage_ab_local/stage_a/checkpoints/initial.ckpt
 
