@@ -16,3 +16,4 @@ trainer:
   callbacks:
     - _target_: equicast.callbacks.memory_monitor.MemoryMonitor
     - _target_: equicast.callbacks.step_timer.StepTimer
+      start_step: 0
