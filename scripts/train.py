@@ -33,6 +33,7 @@ def build_train_config(cfg: DictConfig) -> TrainConfig:
     model = instantiate(cfg.model.model, **model_kwargs)
 
     logger = MLFlowLogger(experiment_name=cfg.logger.experiment_name, tracking_uri=cfg.logger.tracking_uri)
+    logger.log_config(cfg)
     callbacks = [instantiate(cb) for cb in cfg.trainer.callbacks]
     trainer = instantiate(cfg.trainer, callbacks=callbacks, logger=logger)
 

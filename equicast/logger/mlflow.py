@@ -60,6 +60,18 @@ class MLFlowLogger(MLFlowLoggerParent):
         except MlflowException as e:
             print(f"Warning: MLflow log_metrics failed (step={step}): {e}")
 
+    def log_config(self, cfg):
+        import tempfile
+        import os
+        from omegaconf import OmegaConf
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            OmegaConf.save(cfg, f)
+            tmp_path = f.name
+        try:
+            self.experiment.log_artifact(self.run_id, tmp_path, artifact_path="config")
+        finally:
+            os.unlink(tmp_path)
+
     def after_save_checkpoint(self, filepath: str):
         try:
             self.experiment.log_artifact(self.run_id, filepath, artifact_path="checkpoints")
