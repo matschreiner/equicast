@@ -62,8 +62,8 @@ class MLFlowLogger(MLFlowLoggerParent):
 
     def log_config(self, cfg):
         import tempfile
-        import os
         from omegaconf import OmegaConf
+        self.log_hyperparams(dict(OmegaConf.to_container(cfg, resolve=True)))
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             OmegaConf.save(cfg, f)
             tmp_path = f.name
