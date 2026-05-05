@@ -6,4 +6,4 @@ edges:
   - [hidden, to, hidden]
   - [hidden, to, data]
 input_nodes: data
-hidden_dim: 250
+hidden_dim: 200
