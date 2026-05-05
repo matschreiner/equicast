@@ -1,0 +1,14 @@
+# @package _global_
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_big
+
+logger:
+  tracking_uri: experiments/02_memory_benchmark/mlflow
+  experiment_name: memory_benchmark
+
+trainer:
+  max_steps: 5
+  callbacks:
+    - _target_: equicast.callbacks.memory_monitor.MemoryMonitor
+    - _target_: equicast.callbacks.step_timer.StepTimer
