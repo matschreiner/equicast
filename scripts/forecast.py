@@ -4,7 +4,6 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from equicast import TRACKING_URI
 from equicast.experiment.forecast import ForecastConfig
 from equicast.forecaster import Forecaster
 from equicast.logger import MLFlowLogger
@@ -21,7 +20,7 @@ def build_forecast_config(cfg: DictConfig) -> ForecastConfig:
     model = load_from_checkpoint(BaseModel, cfg.ckpt_path, data_handler=data_handler, weights_only=False)
     model.eval()
 
-    logger = MLFlowLogger(experiment_name=cfg.logger.experiment_name, tracking_uri=TRACKING_URI)
+    logger = MLFlowLogger(experiment_name=cfg.logger.experiment_name, tracking_uri=cfg.logger.tracking_uri)
 
     forecast_cfg = cfg.forecast
     start_idx = forecast_cfg.get("start_idx", 0)

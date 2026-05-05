@@ -2,7 +2,6 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from equicast import TRACKING_URI
 from equicast.experiment.train import TrainConfig
 from equicast.logger import MLFlowLogger
 from equicast.metrics import WeatherBenchTracker
@@ -33,7 +32,7 @@ def build_train_config(cfg: DictConfig) -> TrainConfig:
         model_kwargs["loss_fn"] = instantiate(loss_cfg)
     model = instantiate(cfg.model.model, **model_kwargs)
 
-    logger = MLFlowLogger(experiment_name=cfg.logger.experiment_name, tracking_uri=TRACKING_URI)
+    logger = MLFlowLogger(experiment_name=cfg.logger.experiment_name, tracking_uri=cfg.logger.tracking_uri)
     callbacks = [instantiate(cb) for cb in cfg.trainer.callbacks]
     trainer = instantiate(cfg.trainer, callbacks=callbacks, logger=logger)
 

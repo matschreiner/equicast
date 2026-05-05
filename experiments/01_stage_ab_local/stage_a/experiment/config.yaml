@@ -11,6 +11,5 @@ trainer:
   max_steps: 5000
   callbacks:
     - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
-      dirpath: experiments/01_stage_ab_local/stage_a/checkpoints
     - _target_: equicast.callbacks.step_timer.StepTimer
     - _target_: equicast.callbacks.memory_monitor.MemoryMonitor

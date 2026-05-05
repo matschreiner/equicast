@@ -4,21 +4,20 @@ import yaml
 from mlflow.exceptions import MlflowException
 from pytorch_lightning.loggers import MLFlowLogger as MLFlowLoggerParent
 
-from equicast import CHECKPOINT_PATH, TRACKING_URI
 
 
-def fix_artifact_location(experiment_name: str):
+def fix_artifact_location(experiment_name: str, tracking_uri: str):
     """Rewrite meta.yaml artifact_location to the local tracking URI.
 
     Needed when an experiment was created on a different machine (e.g. Leonardo)
     and its meta.yaml still points to that machine's absolute path.
     """
-    meta_path = os.path.join(TRACKING_URI, experiment_name, "meta.yaml")
+    meta_path = os.path.join(tracking_uri, experiment_name, "meta.yaml")
     if not os.path.exists(meta_path):
         return
     with open(meta_path) as f:
         meta = yaml.safe_load(f)
-    expected = f"{TRACKING_URI}/{experiment_name}"
+    expected = f"{tracking_uri}/{experiment_name}"
     if meta.get("artifact_location") != expected:
         meta["artifact_location"] = expected
         with open(meta_path, "w") as f:
@@ -47,7 +46,7 @@ def resolve_run(run_name_or_id: str) -> str:
 class MLFlowLogger(MLFlowLoggerParent):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        fix_artifact_location(self._experiment_name)
+        fix_artifact_location(self._experiment_name, self._tracking_uri)
 
     def log_hyperparams(self, params):
         try:
@@ -63,9 +62,7 @@ class MLFlowLogger(MLFlowLoggerParent):
 
     def after_save_checkpoint(self, filepath: str):
         try:
-            self.log_artifact(filepath, artifact_path=CHECKPOINT_PATH)
+            self.experiment.log_artifact(self.run_id, filepath, artifact_path="checkpoints")
         except Exception as e:
-            print(f"Warning: Could not upload checkpoint to MLflow: {e}")
+            print(f"Warning: Could not log checkpoint to MLflow: {e}")
 
-    def log_artifact(self, local_path, artifact_path, *args, **kwargs):
-        self.experiment.log_artifact(self.run_id, local_path, artifact_path=artifact_path, *args, **kwargs)

@@ -4,8 +4,6 @@ import subprocess
 import tempfile
 from abc import ABC, abstractmethod
 
-from equicast import CHECKPOINT_PATH
-
 logger = logging.getLogger(__name__)
 
 

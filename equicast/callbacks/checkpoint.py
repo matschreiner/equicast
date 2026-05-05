@@ -3,8 +3,6 @@ import time
 
 from pytorch_lightning import Callback
 
-from equicast import CHECKPOINT_PATH
-
 
 class CheckpointSaver:
     def __init__(self, dirpath: str, logger=None):
@@ -16,14 +14,14 @@ class CheckpointSaver:
         filepath = os.path.join(self.dirpath, filename)
         trainer.save_checkpoint(filepath)
         if trainer.is_global_zero and self.logger and hasattr(self.logger, "after_save_checkpoint"):
-            print(f"Saving checkpoint: {filepath}")
             self.logger.after_save_checkpoint(filepath)
 
     @classmethod
     def from_trainer(cls, trainer) -> "CheckpointSaver":
-        run_id = getattr(trainer.logger, "run_id", None) or time.strftime("%Y%m%d_%H%M%S")
-        dirpath = os.path.join(CHECKPOINT_PATH, run_id)
-        return cls(dirpath, trainer.logger)
+        logger = trainer.logger
+        run_id = getattr(logger, "run_id", None) or time.strftime("%Y%m%d_%H%M%S")
+        dirpath = os.path.join("checkpoints", run_id)
+        return cls(dirpath, logger)
 
 
 class TimeDeltaCheckpoint(Callback):
@@ -43,7 +41,6 @@ class TimeDeltaCheckpoint(Callback):
         phase2_interval: float = 300,  # 5 minutes
         phase2_duration: float = 7200,  # 2 hours
         phase3_interval: float = 1200,  # 20 minutes
-        dirpath: str | None = None,
     ):
         super().__init__()
         self.phase1_interval = phase1_interval
@@ -51,19 +48,13 @@ class TimeDeltaCheckpoint(Callback):
         self.phase2_interval = phase2_interval
         self.phase2_duration = phase2_duration
         self.phase3_interval = phase3_interval
-        self.dirpath = dirpath
         self.start_time = None
         self.last_save_time = None
 
     def on_train_start(self, trainer, pl_module):
         self.start_time = time.time()
         self.last_save_time = self.start_time
-
-        if self.dirpath:
-            self.saver = CheckpointSaver(self.dirpath, trainer.logger)
-        else:
-            self.saver = CheckpointSaver.from_trainer(trainer)
-
+        self.saver = CheckpointSaver.from_trainer(trainer)
         self.saver.save(trainer, "initial.ckpt")
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
