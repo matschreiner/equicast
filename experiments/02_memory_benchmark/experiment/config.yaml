@@ -1,15 +1,15 @@
 # @package _global_
 defaults:
-  - override /data: o96
-  - override /model/backbone: painn_big
+  - override /data: n320
+  - override /model/backbone: painn
 
 logger:
   tracking_uri: experiments/02_memory_benchmark/mlflow
   experiment_name: memory_benchmark
 
-data:
-  dataloader:
-    batch_size: 2
+# data:
+#   dataloader:
+#     batch_size: 2
 
 trainer:
   max_steps: 5
