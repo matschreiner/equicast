@@ -3,9 +3,14 @@ defaults:
   - override /data: n320
   - override /model/backbone: painn_wide
 
+logger:
+  tracking_uri: experiments/01_stage_ab_local/mlflow
+  experiment_name: stage_b_no_checkpoint
+
 trainer:
   max_steps: 5000
   callbacks:
     - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
       dirpath: experiments/01_stage_ab_local/stage_b_no_checkpoint/checkpoints
     - _target_: equicast.callbacks.step_timer.StepTimer
+    - _target_: equicast.callbacks.memory_monitor.MemoryMonitor

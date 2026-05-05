@@ -3,6 +3,10 @@ defaults:
   - override /data: n320
   - override /model/backbone: painn_wide
 
+logger:
+  tracking_uri: experiments/01_stage_ab_local/mlflow
+  experiment_name: stage_b
+
 ckpt_path: experiments/01_stage_ab_local/stage_a/checkpoints/initial.ckpt
 
 trainer:
@@ -11,3 +15,4 @@ trainer:
     - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
       dirpath: experiments/01_stage_ab_local/stage_b/checkpoints
     - _target_: equicast.callbacks.step_timer.StepTimer
+    - _target_: equicast.callbacks.memory_monitor.MemoryMonitor
