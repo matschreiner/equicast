@@ -1,0 +1,21 @@
+# @package _global_
+data:
+  dataset_path: resources/benchmark.zarr
+  dataset:
+    repeat: 1000
+  dataloader:
+    num_workers: 0
+    persistent_workers: false
+    shuffle: false
+    prefetch_factor: null
+
+logger:
+  tracking_uri: experiments/00_benchmark/mlflow
+  experiment_name: benchmark
+
+trainer:
+  max_epochs: -1
+  max_steps: 5000
+  callbacks:
+    - _target_: equicast.callbacks.step_timer.StepTimer
+      start_step: 0
