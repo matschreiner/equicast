@@ -3,6 +3,10 @@ defaults:
   - override /data: n320
   - override /model/backbone: painn_wide
 
+model:
+  backbone:
+    hidden_dim: 64
+
 logger:
   tracking_uri: experiments/01_stage_ab_local/mlflow
   experiment_name: stage_b
