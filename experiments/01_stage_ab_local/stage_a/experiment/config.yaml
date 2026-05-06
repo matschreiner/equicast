@@ -3,6 +3,7 @@ defaults:
   - override /data: o96
   - override /model/backbone: painn
   - override /model/data_handler: multiframe
+  - override /optimization/scheduler: cosine
 
 model:
   backbone:
@@ -19,6 +20,9 @@ data:
 optimization:
   optimizer:
     lr: 5.0e-3
+  scheduler:
+    warmup_steps: 3200
+    total_steps: 161500
 
 logger:
   tracking_uri: experiments/01_stage_ab_local/mlflow
