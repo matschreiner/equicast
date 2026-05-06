@@ -1,0 +1,19 @@
+# @package _global_
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_benchmark
+
+logger:
+  tracking_uri: experiments/04_lr_comparison/mlflow
+  experiment_name: lr_comparison
+
+optimization:
+  optimizer:
+    lr: 3e-3
+
+trainer:
+  max_steps: 5000
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+    - _target_: equicast.callbacks.step_timer.StepTimer
+    - _target_: equicast.callbacks.memory_monitor.MemoryMonitor
