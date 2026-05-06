@@ -2,17 +2,17 @@
 defaults:
   - override /data: n320
   - override /model/backbone: painn_wide
-  - override /model/data_handler: multiframe
+  # - override /model/data_handler: multiframe
 
 model:
   backbone:
     hidden_dim: 256
-  data_handler:
-    n_input_frames: 2
+  # data_handler:
+  #   n_input_frames: 2
 
-data:
-  dataset:
-    no_frames: 3
+# data:
+#   dataset:
+#     no_frames: 3
 
 logger:
   tracking_uri: experiments/06_max_model_size/mlflow
