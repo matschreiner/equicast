@@ -1,0 +1,20 @@
+# @package _global_
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_minimal
+  - override /model/data_handler: multiframe
+
+logger:
+  tracking_uri: experiments/03_multiframe_comparison/mlflow
+  experiment_name: multiframe
+
+data:
+  dataset:
+    no_frames: 3
+
+trainer:
+  max_steps: 5000
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+    - _target_: equicast.callbacks.step_timer.StepTimer
+    - _target_: equicast.callbacks.memory_monitor.MemoryMonitor
