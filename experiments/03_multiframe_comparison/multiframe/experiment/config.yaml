@@ -6,7 +6,7 @@ defaults:
 
 logger:
   tracking_uri: experiments/03_multiframe_comparison/mlflow
-  experiment_name: multiframe
+  experiment_name: multiframe_comparison
 
 data:
   dataset:

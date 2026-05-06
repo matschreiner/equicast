@@ -5,7 +5,7 @@ defaults:
 
 logger:
   tracking_uri: experiments/03_multiframe_comparison/mlflow
-  experiment_name: singleframe
+  experiment_name: multiframe_comparison
 
 trainer:
   max_steps: 5000
