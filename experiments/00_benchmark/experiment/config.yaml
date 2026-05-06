@@ -1,4 +1,7 @@
 # @package _global_
+defaults:
+  - override /model/backbone: painn_benchmark
+
 data:
   dataset_path: resources/benchmark.zarr
   dataset:
