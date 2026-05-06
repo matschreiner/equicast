@@ -83,3 +83,26 @@ def test_residual_comes_from_last_input_frame(handler, single_handler, batch):
         backbone_input_multi[handler.nodes]["residual_scalar"],
         backbone_input_single[single_handler.nodes]["residual_scalar"],
     )
+
+
+def test_scalars_are_concatenation_of_frames(handler, single_handler, batch):
+    backbone_input_multi, _ = handler.prepare_training_batch(batch)
+    frame0_scalars, _, _, _ = single_handler.prepare_backbone_frame(batch[0])
+    frame1_scalars, _, _, _ = single_handler.prepare_backbone_frame(batch[1])
+    expected = torch.cat([frame0_scalars, frame1_scalars], dim=-1)
+    assert torch.allclose(backbone_input_multi[handler.nodes]["input_scalar"], expected)
+
+
+def test_vectors_are_concatenation_of_frames(handler, single_handler, batch):
+    backbone_input_multi, _ = handler.prepare_training_batch(batch)
+    _, frame0_vectors, _, _ = single_handler.prepare_backbone_frame(batch[0])
+    _, frame1_vectors, _, _ = single_handler.prepare_backbone_frame(batch[1])
+    expected = torch.cat([frame0_vectors, frame1_vectors], dim=-2)
+    assert torch.allclose(backbone_input_multi[handler.nodes]["input_vector"], expected)
+
+
+def test_target_comes_from_third_frame(handler, single_handler, batch):
+    _, target_multi = handler.prepare_training_batch(batch)
+    _, target_single = single_handler.prepare_training_batch(batch[1:])
+    assert torch.allclose(target_multi["scalar"], target_single["scalar"])
+    assert torch.allclose(target_multi["vector"], target_single["vector"])
