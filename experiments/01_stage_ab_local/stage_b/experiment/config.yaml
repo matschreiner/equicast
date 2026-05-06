@@ -18,7 +18,7 @@ logger:
   tracking_uri: experiments/01_stage_ab_local/mlflow
   experiment_name: stage_b
 
-ckpt_path: experiments/01_stage_ab_local/mlflow/989249639477683992/f57859197bae42a69b023636542f42d8/artifacts/checkpoints/latest.ckpt
+ckpt_path: experiments/01_stage_ab_local/mlflow/989249639477683992/43cf4dce03134c6b911d9f285f5d3f73/artifacts/checkpoints/latest.ckpt
 
 trainer:
   max_steps: 5000
