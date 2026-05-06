@@ -1,7 +1,7 @@
 # @package _global_
 defaults:
   - override /data: o96
-  - override /model/backbone: painn_minimal
+  - override /model/backbone: painn_benchmark
   - override /model/data_handler: multiframe
 
 logger:
