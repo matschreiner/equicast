@@ -5,7 +5,6 @@ from mlflow.exceptions import MlflowException
 from pytorch_lightning.loggers import MLFlowLogger as MLFlowLoggerParent
 
 
-
 def fix_artifact_location(experiment_name: str, tracking_uri: str):
     """Rewrite meta.yaml artifact_location to the local tracking URI.
 
@@ -62,7 +61,9 @@ class MLFlowLogger(MLFlowLoggerParent):
 
     def log_config(self, cfg):
         import tempfile
+
         from omegaconf import OmegaConf
+
         self.log_hyperparams(dict(OmegaConf.to_container(cfg, resolve=True)))
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             OmegaConf.save(cfg, f)
@@ -77,4 +78,3 @@ class MLFlowLogger(MLFlowLoggerParent):
             self.experiment.log_artifact(self.run_id, filepath, artifact_path="checkpoints")
         except Exception as e:
             print(f"Warning: Could not log checkpoint to MLflow: {e}")
-
