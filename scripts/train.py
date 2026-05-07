@@ -43,7 +43,6 @@ def build_train_config(cfg: DictConfig) -> TrainConfig:
         dataloader=dataloader,
         logger=logger,
         ckpt_path=cfg.get("ckpt_path"),
-        job_details=cfg.get("job_details"),
     )
 
 

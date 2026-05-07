@@ -18,16 +18,12 @@ class TrainConfig(ExperimentConfig):
     val_dataloader: DataLoader | None = None
     experiment_name: str = "train"
     ckpt_path: str | None = None
-    job_details: str | None = None
 
     def run(self):
-        params = {
+        self.logger.log_hyperparams({
             "num_parameters": sum(p.numel() for p in self.model.parameters()),
             "command": " ".join(sys.argv),
-        }
-        if self.job_details is not None:
-            params["job_details"] = self.job_details
-        self.logger.log_hyperparams(params)
+        })
         self.trainer.fit(
             self.model,
             self.dataloader,

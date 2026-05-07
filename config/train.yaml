@@ -9,4 +9,3 @@ defaults:
   - experiment: null
 
 ckpt_path: null
-job_details: null
