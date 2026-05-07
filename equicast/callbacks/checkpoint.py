@@ -60,6 +60,9 @@ class TimeDeltaCheckpoint(Callback):
         self.saver = CheckpointSaver.from_trainer(trainer)
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
+        if not trainer.is_global_zero:
+            return
+
         now = time.time()
         elapsed = now - self.start_time
         since_last_save = now - self.last_save_time
