@@ -1,6 +1,7 @@
 import os
 import time
 
+import torch
 from pytorch_lightning import Callback
 
 
@@ -60,14 +61,19 @@ class TimeDeltaCheckpoint(Callback):
         self.saver = CheckpointSaver.from_trainer(trainer)
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
-        if not trainer.is_global_zero:
-            return
-
         now = time.time()
         elapsed = now - self.start_time
         since_last_save = now - self.last_save_time
+        should_save = int(since_last_save >= self._get_interval(elapsed))
 
-        if since_last_save >= self._get_interval(elapsed):
+        # Sync the save decision across ranks: trainer.save_checkpoint() calls
+        # strategy.barrier() internally, so ranks must agree or NCCL hangs.
+        if trainer.world_size > 1:
+            flag = torch.tensor(should_save, device=pl_module.device)
+            torch.distributed.all_reduce(flag, op=torch.distributed.ReduceOp.MAX)
+            should_save = flag.item()
+
+        if should_save:
             self.saver.save(trainer, "latest.ckpt")
             self.last_save_time = now
 
