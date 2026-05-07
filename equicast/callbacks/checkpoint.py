@@ -41,6 +41,7 @@ class TimeDeltaCheckpoint(Callback):
         phase2_interval: float = 300,  # 5 minutes
         phase2_duration: float = 7200,  # 2 hours
         phase3_interval: float = 1200,  # 20 minutes
+        save_best: bool = True,
     ):
         super().__init__()
         self.phase1_interval = phase1_interval
@@ -48,6 +49,7 @@ class TimeDeltaCheckpoint(Callback):
         self.phase2_interval = phase2_interval
         self.phase2_duration = phase2_duration
         self.phase3_interval = phase3_interval
+        self.save_best = save_best
         self.start_time = None
         self.last_save_time = None
         self._best_loss = float("inf")
@@ -67,7 +69,7 @@ class TimeDeltaCheckpoint(Callback):
             self.last_save_time = now
 
             loss = outputs
-            if loss is not None and loss.item() < self._best_loss:
+            if self.save_best and loss is not None and loss.item() < self._best_loss:
                 self._best_loss = loss.item()
                 self.saver.save(trainer, "best.ckpt")
 
