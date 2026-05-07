@@ -55,7 +55,7 @@ class TimeDeltaCheckpoint(Callback):
         self.start_time = time.time()
         self.last_save_time = self.start_time
         self.saver = CheckpointSaver.from_trainer(trainer)
-        self.saver.save(trainer, "initial.ckpt")
+        self.last_save_time = self.start_time
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         now = time.time()

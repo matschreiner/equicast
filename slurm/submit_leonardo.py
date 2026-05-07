@@ -94,7 +94,8 @@ def main():
     job_dir = JOBS_DIR / "{:04d}".format(idx)
     job_dir.mkdir(parents=True, exist_ok=True)
 
-    train_cmd = " ".join(cmd_args)
+    job_details = "slurm_job={idx},job_dir={dir}".format(idx=idx, dir=job_dir_remote)
+    train_cmd = " ".join(cmd_args) + " job_details='{}'".format(job_details)
     job_dir_remote = "{}/jobs/{:04d}".format(PROJECT_DIR, idx)
 
     begin_line = "#SBATCH --begin=now+{}hours".format(args.begin) if args.begin else ""
