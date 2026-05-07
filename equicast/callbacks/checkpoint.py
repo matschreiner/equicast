@@ -50,12 +50,12 @@ class TimeDeltaCheckpoint(Callback):
         self.phase3_interval = phase3_interval
         self.start_time = None
         self.last_save_time = None
+        self._best_loss = float("inf")
 
     def on_train_start(self, trainer, pl_module):
         self.start_time = time.time()
         self.last_save_time = self.start_time
         self.saver = CheckpointSaver.from_trainer(trainer)
-        self.last_save_time = self.start_time
 
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
         now = time.time()
@@ -65,6 +65,11 @@ class TimeDeltaCheckpoint(Callback):
         if since_last_save >= self._get_interval(elapsed):
             self.saver.save(trainer, "latest.ckpt")
             self.last_save_time = now
+
+            loss = outputs
+            if loss is not None and loss.item() < self._best_loss:
+                self._best_loss = loss.item()
+                self.saver.save(trainer, "best.ckpt")
 
     def _get_interval(self, elapsed: float) -> float:
         if elapsed < self.phase1_duration:
