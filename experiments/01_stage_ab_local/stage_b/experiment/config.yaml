@@ -20,7 +20,7 @@ logger:
   experiment_name: stage_b
 
 ckpt_path: experiments/01_stage_ab_local/mlflow/989249639477683992/cc8c0a0221444dffaa029e177926879f/artifacts/checkpoints/latest.ckpt
-weights_only: true
+weights_only: false
 
 optimization:
   scheduler:
