@@ -57,11 +57,13 @@ class TimeDeltaCheckpoint(ModelCheckpoint):
         return False
 
     def _save_checkpoint(self, trainer, filepath):
-        super()._save_checkpoint(trainer, filepath)
+        trainer.save_checkpoint(filepath, self.save_weights_only)
+        self._last_global_step_saved = trainer.global_step
+        self._last_checkpoint_saved = filepath
         if trainer.is_global_zero:
-            logger = trainer.logger
-            if logger and hasattr(logger, "after_save_checkpoint"):
-                logger.after_save_checkpoint(filepath)
+            for logger in trainer.loggers:
+                if hasattr(logger, "after_save_checkpoint"):
+                    logger.after_save_checkpoint(filepath)
 
     def _get_interval(self, elapsed: float) -> float:
         if elapsed < self.phase1_duration:
