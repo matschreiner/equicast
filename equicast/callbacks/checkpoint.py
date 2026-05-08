@@ -51,16 +51,20 @@ class TimeDeltaCheckpoint(ModelCheckpoint):
             return True
         now = time.time()
         elapsed = now - self.start_time
-        if (now - self.last_save_time) < self._get_interval(elapsed):
-            return True
-        self.last_save_time = now
-        return False
+        should_save = trainer.is_global_zero and (now - self.last_save_time) >= self._get_interval(elapsed)
+        should_save = trainer.strategy.broadcast(should_save, src=0)
+        if should_save and trainer.is_global_zero:
+            self.last_save_time = now
+        return not should_save
 
     def _save_checkpoint(self, trainer, filepath):
+        if trainer.is_global_zero:
+            print(f"[rank0] saving checkpoint step={trainer.global_step}...", flush=True)
         trainer.save_checkpoint(filepath, self.save_weights_only)
         self._last_global_step_saved = trainer.global_step
         self._last_checkpoint_saved = filepath
         if trainer.is_global_zero:
+            print(f"[rank0] checkpoint saved step={trainer.global_step}", flush=True)
             for logger in trainer.loggers:
                 if hasattr(logger, "after_save_checkpoint"):
                     logger.after_save_checkpoint(filepath)
