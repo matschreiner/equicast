@@ -3,6 +3,7 @@ defaults:
   - override /data: n320
   - override /model/backbone: painn
   - override /model/data_handler: multiframe
+  - override /optimization/scheduler: cosine
 
 model:
   backbone:
@@ -22,7 +23,6 @@ ckpt_path: experiments/01_stage_ab_local/mlflow/989249639477683992/cc8c0a0221444
 weights_only: true
 
 trainer:
-  max_steps: 5000
   callbacks:
     - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
     - _target_: equicast.callbacks.step_timer.StepTimer
