@@ -18,6 +18,7 @@ class TrainConfig(ExperimentConfig):
     val_dataloader: DataLoader | None = None
     experiment_name: str = "train"
     ckpt_path: str | None = None
+    weights_only: bool = False
 
     def run(self):
         from equicast.utils.git import get_git_hash
@@ -31,5 +32,5 @@ class TrainConfig(ExperimentConfig):
             self.dataloader,
             val_dataloaders=self.val_dataloader,
             ckpt_path=self.ckpt_path,
-            weights_only=False,
+            weights_only=self.weights_only,
         )

@@ -9,3 +9,4 @@ defaults:
   - experiment: null
 
 ckpt_path: null
+weights_only: false

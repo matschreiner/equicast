@@ -43,6 +43,7 @@ def build_train_config(cfg: DictConfig) -> TrainConfig:
         dataloader=dataloader,
         logger=logger,
         ckpt_path=cfg.get("ckpt_path"),
+        weights_only=cfg.get("weights_only", False),
     )
 
 
