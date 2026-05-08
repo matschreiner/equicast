@@ -20,9 +20,11 @@ class TrainConfig(ExperimentConfig):
     ckpt_path: str | None = None
 
     def run(self):
+        from equicast.utils.git import get_git_hash
         self.logger.log_hyperparams({
             "num_parameters": sum(p.numel() for p in self.model.parameters()),
             "command": " ".join(sys.argv),
+            "git_commit": get_git_hash() or "unknown",
         })
         self.trainer.fit(
             self.model,
