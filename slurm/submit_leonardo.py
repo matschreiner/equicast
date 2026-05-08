@@ -52,7 +52,11 @@ export PYTHONFAULTHANDLER=1
 export TORCH_DISTRIBUTED_DEBUG=INFO
 export NCCL_DEBUG=WARN
 
-srun --output={job_dir}/rank-%t.out --error={job_dir}/rank-%t.err {train_cmd}
+JOB_DIR={job_dir}
+srun \
+    --output=$JOB_DIR/rank-%t.out \
+    --error=$JOB_DIR/rank-%t.err \
+    {train_cmd}
 """
 
 JOBS_DIR = Path(__file__).resolve().parent.parent / "jobs"
