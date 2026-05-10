@@ -14,6 +14,7 @@ model:
 data:
   dataset:
     no_frames: 3
+    repeat: 1
 
 logger:
   tracking_uri: experiments/01_stage_ab_local/mlflow
