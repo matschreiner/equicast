@@ -20,7 +20,6 @@ class AnemoiDataset(Dataset):
         no_frames: int = 2,
         step: int = 1,
         node_name="data",
-        repeat: int = 1,
     ):
         super().__init__()
         self.data = open_dataset(path)
@@ -28,11 +27,9 @@ class AnemoiDataset(Dataset):
         self.no_frames = no_frames
         self.step = step
         self.node_name = node_name
-        self.repeat = repeat
-        self._base_len = len(self.data) - (self.no_frames - 1) * self.step
 
     def __len__(self):
-        return self._base_len * self.repeat
+        return len(self.data) - (self.no_frames - 1) * self.step
 
     def __getitem__(self, idx):
         idx = idx % self._base_len
