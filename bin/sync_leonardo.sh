@@ -1,6 +1,12 @@
 #!/bin/bash
-# Sync mlflow db and job logs from Leonardo.
 REMOTE="leonardo:/leonardo/home/userexternal/jschrei1/equicast"
 
-rsync -avpr "$REMOTE/jobs/" jobs/
-rsync -avpr "$REMOTE/experiments/" experiments/
+if [ $# -eq 0 ]; then
+    dirs=(jobs experiments)
+else
+    dirs=("$@")
+fi
+
+for dir in "${dirs[@]}"; do
+    rsync -avpr "$REMOTE/$dir/" "$dir/"
+done
