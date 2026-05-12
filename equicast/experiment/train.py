@@ -27,10 +27,15 @@ class TrainConfig(ExperimentConfig):
             "command": " ".join(sys.argv),
             "git_commit": get_git_hash() or "unknown",
         })
-        self.trainer.fit(
-            self.model,
-            self.dataloader,
-            val_dataloaders=self.val_dataloader,
-            ckpt_path=self.ckpt_path,
-            weights_only=self.weights_only,
-        )
+        if self.ckpt_path and self.weights_only:
+            import torch
+            ckpt = torch.load(self.ckpt_path, map_location="cpu", weights_only=False)
+            self.model.load_state_dict(ckpt["state_dict"])
+            self.trainer.fit(self.model, self.dataloader, val_dataloaders=self.val_dataloader)
+        else:
+            self.trainer.fit(
+                self.model,
+                self.dataloader,
+                val_dataloaders=self.val_dataloader,
+                ckpt_path=self.ckpt_path,
+            )
