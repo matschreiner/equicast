@@ -6,6 +6,8 @@ defaults:
   - override /optimization/scheduler: cosine
 
 model:
+  backbone:
+    hidden_dim: 1024
   data_handler:
     n_input_frames: 2
 
