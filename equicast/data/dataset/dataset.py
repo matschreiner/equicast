@@ -32,7 +32,6 @@ class AnemoiDataset(Dataset):
         return len(self.data) - (self.no_frames - 1) * self.step
 
     def __getitem__(self, idx):
-        idx = idx % self._base_len
         frames = []
 
         for i in range(self.no_frames):
