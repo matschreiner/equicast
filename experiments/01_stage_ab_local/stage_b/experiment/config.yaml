@@ -25,6 +25,7 @@ weights_only: true
 optimization:
   scheduler:
     warmup_steps: 3000
+    total_steps: 111000
 
 trainer:
   callbacks:
