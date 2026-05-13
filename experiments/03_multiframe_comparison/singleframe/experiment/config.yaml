@@ -8,7 +8,7 @@ logger:
   experiment_name: multiframe_comparison
 
 trainer:
-  max_steps: 5000
+  max_steps: 50000
   callbacks:
     - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
     - _target_: equicast.callbacks.step_timer.StepTimer
