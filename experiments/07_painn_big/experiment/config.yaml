@@ -7,9 +7,12 @@ defaults:
 
 model:
   backbone:
-    hidden_dim: 1024
     edges:
       - [data, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
       - [hidden, to, hidden]
       - [hidden, to, hidden]
       - [hidden, to, hidden]
