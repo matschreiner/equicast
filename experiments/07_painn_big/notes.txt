@@ -1,0 +1,4 @@
+path is: /home/masc/dmi/programming/equicast/experiments/07_painn_big/mlflow/327999199065632224/47a62ecbb4ff46c39a33575ef708a678/
+first run ran for 119536 steps
+round two is supposed to run for 240000steps
+

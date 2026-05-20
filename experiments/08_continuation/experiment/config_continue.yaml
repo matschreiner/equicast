@@ -1,0 +1,21 @@
+# @package _global_
+defaults:
+  - override /model/backbone: painn_minimal
+  - override /optimization/scheduler: cosine
+
+optimization:
+  optimizer:
+    lr: 1.0e-3
+  scheduler:
+    warmup_steps: 25
+    total_steps: 100
+
+ckpt_path: /home/masc/dmi/programming/equicast/experiments/08_continuation/mlflow/473617583830112667/f4e2221027584f31b18f21acea1c14a4/artifacts/checkpoints/latest.ckpt
+
+logger:
+  tracking_uri: experiments/08_continuation/mlflow
+
+trainer:
+  max_steps: 100
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint

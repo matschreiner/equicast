@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - override /experiment: forecast
+
+ckpt_path: experiments/07_painn_big/mlflow/327999199065632224/47a62ecbb4ff46c39a33575ef708a678/artifacts/checkpoints/latest.ckpt
+
+forecast:
+  n_steps: 40
