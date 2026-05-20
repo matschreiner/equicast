@@ -29,7 +29,6 @@ class Deterministic(BaseModel):
         self.loss_fn = MSELoss() if loss_fn is None else loss_fn
 
     def predict(self, phys_input):
-        phys_input = phys_input.clone()
         backbone_input = self.data_handler.prepare_backbone_input(phys_input)
         backbone_output = self.backbone(backbone_input)
         return self.data_handler.update_state_with_backbone_outputput(phys_input, backbone_output)
