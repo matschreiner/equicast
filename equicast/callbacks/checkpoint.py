@@ -22,11 +22,13 @@ class TimeDeltaCheckpoint(ModelCheckpoint):
         phase2_interval: float = 300,
         phase2_duration: float = 7200,
         phase3_interval: float = 1200,
+        save_last=True,
     ):
         super().__init__(
             dirpath=dirpath,
             filename="latest",
             save_top_k=-1,
+            save_last=save_last,
             every_n_train_steps=1,
             enable_version_counter=False,
         )
