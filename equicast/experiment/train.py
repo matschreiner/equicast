@@ -38,4 +38,5 @@ class TrainConfig(ExperimentConfig):
                 self.dataloader,
                 val_dataloaders=self.val_dataloader,
                 ckpt_path=self.ckpt_path,
+                weights_only=False,
             )

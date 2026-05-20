@@ -32,7 +32,9 @@ def build_train_config(cfg: DictConfig) -> TrainConfig:
         model_kwargs["loss_fn"] = instantiate(loss_cfg)
     model = instantiate(cfg.model.model, **model_kwargs)
 
-    logger = MLFlowLogger(experiment_name=cfg.logger.experiment_name, tracking_uri=cfg.logger.tracking_uri)
+    ckpt_path = cfg.get("ckpt_path")
+    run_id = ckpt_path.split("/artifacts/")[0].rsplit("/", 1)[-1] if ckpt_path and "/artifacts/" in ckpt_path else None
+    logger = MLFlowLogger(experiment_name=cfg.logger.experiment_name, tracking_uri=cfg.logger.tracking_uri, run_id=run_id)
     logger.log_config(cfg)
     callbacks = [instantiate(cb) for cb in cfg.trainer.callbacks]
     trainer = instantiate(cfg.trainer, callbacks=callbacks, logger=logger)
