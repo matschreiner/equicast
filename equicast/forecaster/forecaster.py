@@ -22,22 +22,19 @@ class Forecaster:
         Autoregressively forecast over the given timeseries.
 
         Args:
-            timeseries: List of graph states (consecutive timesteps)
-            output_dir: Directory where forecast outputs will be saved
+            timeseries: List of individual graph states (one per timestep)
 
         Returns:
-            List of predictions (model handles scaling internally)
+            List of predictions
         """
-        input_ = timeseries[0]
+        n_input = getattr(self.model.data_handler, "n_input_frames", 1)
+        window = timeseries[:n_input] if n_input > 1 else timeseries[0]
         forecast = []
 
         with torch.no_grad():
-            for next_ in tqdm(timeseries[1:], desc="Forecasting"):
-                input_, prediction = self.model.step_forward(
-                    input_,
-                    next_,
-                )
-
+            for next_ in tqdm(timeseries[n_input:], desc="Forecasting"):
+                next_state, prediction = self.model.step_forward(window, next_)
                 forecast.append(prediction)
+                window = window[1:] + [next_state] if n_input > 1 else next_state
 
         return forecast
