@@ -12,28 +12,28 @@ from equicast.model.from_checkpoint import load_from_checkpoint
 
 
 def build_forecast_config(cfg: DictConfig) -> ForecastConfig:
-    feature_config = instantiate(cfg.data.feature_config)
+    model = load_from_checkpoint(BaseModel, cfg.ckpt_path)
+    model.eval()
+    data_handler = model.data_handler
+
     graph_provider = instantiate(cfg.data.graph_provider)
-    data_handler = instantiate(cfg.data.handler, dataset_path=cfg.data.dataset_path, feature_config=feature_config)
     dataset = instantiate(cfg.data.dataset, path=cfg.data.dataset_path, graph_provider=graph_provider, no_frames=1)
 
-    model = load_from_checkpoint(BaseModel, cfg.ckpt_path, data_handler=data_handler, weights_only=False)
-    model.eval()
+    start_idx = cfg.forecast.get("start_idx", 0)
+    n_steps = cfg.forecast.n_steps
+    n_input = getattr(data_handler, "n_input_frames", 1)
+    timeseries = [dataset[start_idx + i][0] for i in range(n_input + n_steps)]
 
-    logger = MLFlowLogger(experiment_name=cfg.logger.experiment_name, tracking_uri=cfg.logger.tracking_uri)
-
-    forecast_cfg = cfg.forecast
-    start_idx = forecast_cfg.get("start_idx", 0)
-    n_steps = forecast_cfg.n_steps
-    timeseries = [dataset[start_idx + i][0] for i in range(n_steps + 1)]
+    experiment_dir = cfg.ckpt_path.split("/mlflow/")[0] if "/mlflow/" in cfg.ckpt_path else "."
+    run_id = cfg.ckpt_path.split("/artifacts/")[0].rsplit("/", 1)[-1] if "/artifacts/" in cfg.ckpt_path else "forecast"
 
     return ForecastConfig(
-        forecaster=Forecaster(model=model, logger=logger),
+        forecaster=Forecaster(model=model),
         input_timeseries=timeseries,
-        target_timeseries=timeseries[1:],
-        logger=logger,
+        target_timeseries=timeseries[n_input:],
         data_handler=data_handler,
-        model_id=logger.run_id or "forecast",
+        model_id=run_id,
+        output_dir=f"{experiment_dir}/forecasts",
     )
 
 

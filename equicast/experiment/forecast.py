@@ -5,21 +5,18 @@ from typing import Any
 from equicast.data.data_handler import BaseDataHandler
 from equicast.experiment.config import ExperimentConfig
 from equicast.forecaster import Forecaster
-from equicast.logger import BaseLogger
-
-
 @dataclass
 class ForecastConfig(ExperimentConfig):
     forecaster: Forecaster
     input_timeseries: list[Any]
     target_timeseries: list[Any]
-    logger: BaseLogger
     data_handler: BaseDataHandler
     model_id: str = ""
     experiment_name: str = "forecast"
+    output_dir: str = "forecasts"
 
     def run(self):
-        output_dir = f"forecasts/{self.model_id}"
+        output_dir = f"{self.output_dir}/{self.model_id}"
         forecast = self.forecaster.forecast(timeseries=self.input_timeseries)
 
         forecast_path = os.path.join(output_dir, "forecast.zarr")
