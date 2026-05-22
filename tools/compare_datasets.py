@@ -22,7 +22,7 @@ print(f"Common variables: {len(common_vars)}")
 dates6 = ds6["dates"][:]
 dates1 = ds1["dates"][:]
 
-cutoff = np.datetime64("2000-01-01")
+cutoff = np.datetime64("2020-01-01")
 common_dates = np.intersect1d(dates6[dates6 >= cutoff], dates1[dates1 >= cutoff])
 print(f"Common timestamps after 2000: {len(common_dates)}")
 
@@ -31,14 +31,18 @@ if len(common_dates) == 0:
     exit()
 
 rng = np.random.default_rng(42)
-samples = np.sort(rng.choice(common_dates, size=min(5, len(common_dates)), replace=False))
+samples = np.sort(rng.choice(common_dates, size=min(50, len(common_dates)), replace=False))
 
 nodes = np.linspace(0, ds6["data"].shape[-1] - 1, 500, dtype=int)
 
+all_diffs = []
 for date in samples:
     i6 = np.searchsorted(dates6, date)
     i1 = np.searchsorted(dates1, date)
     a = ds6["data"][i6][idx6][:, 0, :][:, nodes]
     b = ds1["data"][i1][idx1][:, 0, :][:, nodes]
-    diff = np.abs(a - b).mean()
-    print(f"  {date}  mean_abs_diff={diff:.6f}")
+    all_diffs.append(np.abs(a - b).mean(axis=-1))
+
+mean_diffs = np.mean(all_diffs, axis=0)
+for var, diff in zip(common_vars, mean_diffs):
+    print(f"  {var:20s}  mean_abs_diff={diff:.6f}")
