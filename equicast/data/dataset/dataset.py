@@ -20,6 +20,7 @@ class AnemoiDataset(Dataset):
         no_frames: int = 2,
         step: int = 1,
         node_name="data",
+        variables: list[str] | None = None,
     ):
         super().__init__()
         self.data = open_dataset(path)
@@ -27,6 +28,7 @@ class AnemoiDataset(Dataset):
         self.no_frames = no_frames
         self.step = step
         self.node_name = node_name
+        self._var_indices = [self.data.name_to_index[v] for v in variables] if variables is not None else None
 
     def __len__(self):
         return len(self.data) - (self.no_frames - 1) * self.step
@@ -37,6 +39,8 @@ class AnemoiDataset(Dataset):
         for i in range(self.no_frames):
             frame_idx = idx + i * self.step
             raw = self.data[frame_idx].squeeze()
+            if self._var_indices is not None:
+                raw = raw[self._var_indices]
             graph = self.graph_provider.get_graph(idx)
             graph[self.node_name].data = torch.from_numpy(raw.T)
             frames.append(graph)
