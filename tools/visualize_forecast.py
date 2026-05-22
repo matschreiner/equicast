@@ -26,8 +26,14 @@ def main():
     lon = pred_ds["longitude"].values
     latlon = np.stack([np.radians(lat), np.radians(lon)], axis=-1)
 
-    pred = pred_ds[args.feature].values
-    truth = truth_ds[args.feature].values
+    if args.feature.startswith("wind_"):
+        level = args.feature[5:]
+        u_name, v_name = (f"10u", f"10v") if level == "10" else (f"u_{level}", f"v_{level}")
+        pred = np.sqrt(pred_ds[u_name].values ** 2 + pred_ds[v_name].values ** 2)
+        truth = np.sqrt(truth_ds[u_name].values ** 2 + truth_ds[v_name].values ** 2)
+    else:
+        pred = pred_ds[args.feature].values
+        truth = truth_ds[args.feature].values
     n = min(len(pred), len(truth))
 
     output_path = os.path.join(args.forecast_dir, f"{args.feature}.mp4")
