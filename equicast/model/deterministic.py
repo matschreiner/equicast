@@ -31,7 +31,7 @@ class Deterministic(BaseModel):
     def predict(self, phys_input):
         backbone_input = self.data_handler.prepare_backbone_input(phys_input)
         backbone_output = self.backbone(backbone_input)
-        return self.data_handler.update_state_with_backbone_outputput(phys_input, backbone_output)
+        return self.data_handler.update_state_with_backbone_output(backbone_input, backbone_output)
 
     def training_step(self, batch, _):
         backbone_input, backbone_target = self.data_handler.prepare_training_batch(batch)

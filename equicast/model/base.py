@@ -44,8 +44,12 @@ class BaseModel(pl.LightningModule):
         pred = self.predict(phys_input)
         phys_next = phys_next.clone()
         nodes = self.data_handler.nodes
-        phys_out = self.data_handler.get_output_scalars(pred[nodes].data)
-        self.data_handler.set_output_scalars(phys_next[nodes].data, phys_out)
+        self.data_handler.set_output_scalars(
+            phys_next[nodes].data, self.data_handler.get_output_scalars(pred[nodes].data)
+        )
+        self.data_handler.set_output_vectors(
+            phys_next[nodes].data, self.data_handler.get_output_vectors(pred[nodes].data)
+        )
         return phys_next, pred
 
     @property
