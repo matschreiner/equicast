@@ -29,7 +29,10 @@ def build_train_config(cfg: DictConfig) -> TrainConfig:
         metrics_tracker=WeatherBenchTracker(data_handler=data_handler),
     )
     if loss_cfg:
-        model_kwargs["loss_fn"] = instantiate(loss_cfg)
+        loss_fn = instantiate(loss_cfg)
+        if hasattr(loss_fn, "build"):
+            loss_fn.build(data_handler)
+        model_kwargs["loss_fn"] = loss_fn
     model = instantiate(cfg.model.model, **model_kwargs)
 
     ckpt_path = cfg.get("ckpt_path")
