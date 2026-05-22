@@ -1,0 +1,65 @@
+# @package _global_
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_big
+  - override /model/data_handler: multiframe
+  - override /optimization/scheduler: cosine
+
+model:
+  backbone:
+    edges:
+      - [data, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, data]
+  data_handler:
+    n_input_frames: 2
+  loss:
+    _target_: equicast.model.losses.WeightedEquivariantMSELoss
+    variable_weights:
+      z: 12.0
+      t: 6.0
+      sp: 10.0
+      q: 0.6
+      tp: 0.025
+      cp: 0.0025
+
+data:
+  dataset:
+    no_frames: 3
+  dataloader:
+    batch_size: 1
+
+optimization:
+  optimizer:
+    lr: 1.0e-3
+  scheduler:
+    warmup_steps: 5000
+    total_steps: 120000
+
+ckpt_path: experiments/07_painn_big/mlflow/327999199065632224/47a62ecbb4ff46c39a33575ef708a678/artifacts/checkpoints/latest.ckpt
+weights_only: true
+
+logger:
+  tracking_uri: experiments/07_painn_big/mlflow
+  experiment_name: painn_big_weighted
+
+trainer:
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+    - _target_: equicast.callbacks.step_timer.StepTimer
+    - _target_: equicast.callbacks.memory_monitor.MemoryMonitor
