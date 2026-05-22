@@ -36,7 +36,12 @@ def build_train_config(cfg: DictConfig) -> TrainConfig:
     model = instantiate(cfg.model.model, **model_kwargs)
 
     ckpt_path = cfg.get("ckpt_path")
-    run_id = ckpt_path.split("/artifacts/")[0].rsplit("/", 1)[-1] if ckpt_path and "/artifacts/" in ckpt_path else None
+    weights_only = cfg.get("weights_only", False)
+    run_id = (
+        ckpt_path.split("/artifacts/")[0].rsplit("/", 1)[-1]
+        if ckpt_path and "/artifacts/" in ckpt_path and not weights_only
+        else None
+    )
     logger = MLFlowLogger(experiment_name=cfg.logger.experiment_name, tracking_uri=cfg.logger.tracking_uri, run_id=run_id)
     logger.log_config(cfg)
     callbacks = [instantiate(cb) for cb in cfg.trainer.callbacks]
