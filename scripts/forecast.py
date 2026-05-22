@@ -1,5 +1,6 @@
 """Autoregressive forecast from a trained model checkpoint."""
 
+import torch
 import hydra
 from hydra.utils import instantiate
 from omegaconf import DictConfig
@@ -12,12 +13,15 @@ from equicast.model.from_checkpoint import load_from_checkpoint
 
 
 def build_forecast_config(cfg: DictConfig) -> ForecastConfig:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = load_from_checkpoint(BaseModel, cfg.ckpt_path)
     model.eval()
+    model.to(device)
     data_handler = model.data_handler
 
+    variables = [v for v, _ in sorted(data_handler.name_to_index.items(), key=lambda x: x[1])]
     graph_provider = instantiate(cfg.data.graph_provider)
-    dataset = instantiate(cfg.data.dataset, path=cfg.data.dataset_path, graph_provider=graph_provider, no_frames=1)
+    dataset = instantiate(cfg.data.dataset, path=cfg.data.dataset_path, graph_provider=graph_provider, no_frames=1, variables=variables)
 
     start_idx = cfg.forecast.get("start_idx", 0)
     n_steps = cfg.forecast.n_steps
