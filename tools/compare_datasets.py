@@ -8,32 +8,37 @@ import zarr
 
 DS6H = "storage/aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8.zarr"
 DS1H = "storage/aifs-ea-an-oper-0001-mars-o96-1979-2024-1h-v3-with-era51.zarr"
-N_SAMPLES = 5
 
 ds6 = zarr.open(DS6H, "r")
 ds1 = zarr.open(DS1H, "r")
 
-dates6 = ds6["dates"][:].astype(str)
-dates1 = ds1["dates"][:].astype(str)
+vars6 = ds6.attrs["variables"]
+vars1 = ds1.attrs["variables"]
+common_vars = [v for v in vars6 if v in vars1]
+idx6 = [vars6.index(v) for v in common_vars]
+idx1 = [vars1.index(v) for v in common_vars]
+print(f"Common variables: {len(common_vars)}")
 
-common = sorted(set(dates6) & set(dates1) & {d for d in dates6 if d >= "2000-01-01"})
-print(f"Common timestamps after 2000: {len(common)}")
+dates6 = ds6["dates"][:]
+dates1 = ds1["dates"][:]
 
-if not common:
+cutoff = np.datetime64("2000-01-01")
+common_dates = np.intersect1d(dates6[dates6 >= cutoff], dates1[dates1 >= cutoff])
+print(f"Common timestamps after 2000: {len(common_dates)}")
+
+if len(common_dates) == 0:
     print("No overlap.")
     exit()
 
 rng = np.random.default_rng(42)
-samples = rng.choice(common, size=min(N_SAMPLES, len(common)), replace=False)
+samples = np.sort(rng.choice(common_dates, size=min(5, len(common_dates)), replace=False))
 
-dates6_list = list(dates6)
-dates1_list = list(dates1)
+nodes = np.linspace(0, ds6["data"].shape[-1] - 1, 500, dtype=int)
 
-for date in sorted(samples):
-    i6 = dates6_list.index(date)
-    i1 = dates1_list.index(date)
-    a = ds6["data"][i6, :, 0, :]
-    b = ds1["data"][i1, :, 0, :]
-    n = min(a.shape[0], b.shape[0])
-    diff = np.abs(a[:n] - b[:n]).mean()
+for date in samples:
+    i6 = np.searchsorted(dates6, date)
+    i1 = np.searchsorted(dates1, date)
+    a = ds6["data"][i6][idx6][:, 0, :][:, nodes]
+    b = ds1["data"][i1][idx1][:, 0, :][:, nodes]
+    diff = np.abs(a - b).mean()
     print(f"  {date}  mean_abs_diff={diff:.6f}")
