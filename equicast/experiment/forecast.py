@@ -21,6 +21,8 @@ class ForecastConfig(ExperimentConfig):
 
         forecast_path = os.path.join(output_dir, "forecast.zarr")
         target_path = os.path.join(output_dir, "target_forecast.zarr")
+        initial_path = os.path.join(output_dir, "initial_state.zarr")
 
         self.data_handler.outputs_to_zarr(forecast, forecast_path)
         self.data_handler.outputs_to_zarr(self.target_timeseries, target_path)
+        self.data_handler.outputs_to_zarr([self.input_timeseries[0]], initial_path)
