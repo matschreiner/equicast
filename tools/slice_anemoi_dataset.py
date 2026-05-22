@@ -38,6 +38,8 @@ def main():
     parser.add_argument(
         "--slice", default=":", dest="slice_str", help='Python slice notation, e.g. "-3000:" (default: ":")'
     )
+    parser.add_argument("--start", help="Start date, e.g. 2024-01-01")
+    parser.add_argument("--end", help="End date (exclusive), e.g. 2025-01-01")
     parser.add_argument("--subsample", type=int, default=1, help="Subsampling step (default: 1)")
     args = parser.parse_args()
 
@@ -51,8 +53,18 @@ def main():
     dst = zarr.open(args.output, mode="w")
 
     total_len = src.data.shape[0]
-    sl = parse_slice(args.slice_str)
-    indices = np.arange(total_len)[sl][:: args.subsample]
+
+    if args.start or args.end:
+        dates = src["dates"][:]
+        mask = np.ones(total_len, dtype=bool)
+        if args.start:
+            mask &= dates >= np.datetime64(args.start)
+        if args.end:
+            mask &= dates < np.datetime64(args.end)
+        indices = np.where(mask)[0][:: args.subsample]
+    else:
+        sl = parse_slice(args.slice_str)
+        indices = np.arange(total_len)[sl][:: args.subsample]
 
     if len(indices) == 0:
         print("Error: slice/subsample results in 0 frames", file=sys.stderr)
