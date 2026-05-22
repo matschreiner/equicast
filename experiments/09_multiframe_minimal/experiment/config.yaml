@@ -1,0 +1,28 @@
+# @package _global_
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_minimal
+  - override /model/data_handler: multiframe
+
+model:
+  data_handler:
+    n_input_frames: 2
+
+data:
+  dataset:
+    no_frames: 3
+
+optimization:
+  optimizer:
+    lr: 1.0e-3
+
+logger:
+  tracking_uri: experiments/09_multiframe_minimal/mlflow
+  experiment_name: multiframe_minimal
+
+trainer:
+  max_steps: 5
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+      phase1_interval: 1
+      save_last: true

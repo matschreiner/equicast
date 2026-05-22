@@ -1,0 +1,12 @@
+# @package _global_
+defaults:
+  - override /data: o96
+  - override /experiment: forecast
+
+ckpt_path: /home/masc/dmi/programming/equicast/experiments/09_multiframe_minimal/mlflow/261085322441388733/b204c611995749ae97310d37dd941e98/artifacts/checkpoints/latest.ckpt
+
+data:
+  dataset_path: storage/o96-test-dec2024.zarr
+
+forecast:
+  n_steps: 48
