@@ -30,7 +30,7 @@ class TrainConfig(ExperimentConfig):
         if self.ckpt_path and self.weights_only:
             import torch
             ckpt = torch.load(self.ckpt_path, map_location="cpu", weights_only=False)
-            self.model.load_state_dict(ckpt["state_dict"])
+            self.model.load_state_dict(ckpt["state_dict"], strict=False)
             self.trainer.fit(self.model, self.dataloader, val_dataloaders=self.val_dataloader)
         else:
             self.trainer.fit(
