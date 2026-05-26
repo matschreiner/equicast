@@ -35,6 +35,22 @@ def build_train_config(cfg: DictConfig) -> TrainConfig:
         model_kwargs["loss_fn"] = loss_fn
     model = instantiate(cfg.model.model, **model_kwargs)
 
+    rollout_cfg = cfg.get("rollout")
+    if rollout_cfg:
+        n_rollout_steps = rollout_cfg.n_steps
+        n_input = cfg.model.data_handler.get("n_input_frames", 1)
+        dataset = instantiate(cfg.data.dataset, path=cfg.data.dataset_path, graph_provider=graph_provider, no_frames=n_input + n_rollout_steps)
+        dataloader = instantiate(cfg.data.dataloader, dataset=dataset)
+
+        def _rollout_step(self, batch, _):
+            loss = self.rollout_training_step(batch, n_rollout_steps)
+            if self._should_log_metrics():
+                self.log_lr()
+                self.log_loss(loss, batch[0].num_graphs)
+            return loss
+
+        model.__class__ = type("RolloutModel", (type(model),), {"training_step": _rollout_step})
+
     ckpt_path = cfg.get("ckpt_path")
     weights_only = cfg.get("weights_only", False)
     run_id = (
