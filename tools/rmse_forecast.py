@@ -17,13 +17,16 @@ def load_field(ds, feature):
         level = feature[5:]
         u, v = (ds["10u"], ds["10v"]) if level == "10" else (ds[f"u_{level}"], ds[f"v_{level}"])
         return np.sqrt(u.values ** 2 + v.values ** 2)
-    return ds[feature].values
+    values = ds[feature].values
+    if feature.startswith("q"):
+        values = values * 1000  # kg/kg -> g/kg
+    return values
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("forecast_dir")
-    parser.add_argument("--features", nargs="+", default=["wind_850", "t_850", "z_500"])
+    parser.add_argument("--features", nargs="+", default=["wind_850", "t_850", "z_500", "q_700"])
     parser.add_argument("--timestep-hours", type=int, default=6)
     args = parser.parse_args()
 
@@ -48,8 +51,9 @@ def main():
 
         ax.plot(lead_times, rmse, label="forecast", marker="o", markersize=3)
         ax.plot(lead_times, persistence, label="persistence", linestyle="--", marker="o", markersize=3)
+        units = "g/kg" if feature.startswith("q") else None
         ax.set_xlabel("Lead time (hours)")
-        ax.set_ylabel("RMSE")
+        ax.set_ylabel(f"RMSE ({units})" if units else "RMSE")
         ax.set_title(feature)
         ax.legend()
         ax.grid(True, alpha=0.3)
