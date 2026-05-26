@@ -110,6 +110,8 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         phys_input: Data,
         backbone_output: Any,
     ) -> Data:
+        phys_input = phys_input.clone()
+
         if isinstance(backbone_output, torch.Tensor):
             denormalized = self.normalizer.denormalize_output(backbone_output)
             self.set_output_scalars(phys_input[self.nodes].data, denormalized)
