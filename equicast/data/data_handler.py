@@ -64,7 +64,7 @@ class BaseDataHandler(torch.nn.Module, ABC):
     def prepare_backbone_input(self, data: Any) -> Any: ...
 
     @abstractmethod
-    def update_state_with_backbone_output(self, state: Any, backbone_output: Any) -> Any: ...
+    def update_phys_with_backbone_output(self, state: Any, backbone_output: Any) -> Any: ...
 
     @abstractmethod
     def prepare_backbone_target(self, data: Any) -> Any: ...
@@ -113,7 +113,7 @@ class GraphDataHandler(BaseDataHandler):
         output_scalars = self.get_output_scalars(raw)
         return self.normalizer.normalize_output(output_scalars)
 
-    def update_state_with_backbone_output(self, phys_input: Data, backbone_output: torch.Tensor) -> Data:
+    def update_phys_with_backbone_output(self, phys_input: Data, backbone_output: torch.Tensor) -> Data:
         denormalized = self.normalizer.denormalize_output(backbone_output)
         self.set_output_scalars(phys_input[self.nodes].data, denormalized)
         return phys_input

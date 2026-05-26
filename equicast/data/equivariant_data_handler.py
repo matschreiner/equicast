@@ -105,7 +105,7 @@ class EquivariantGraphDataHandler(BaseDataHandler):
         self.set_output_vectors(raw, vectors)
         return raw
 
-    def update_state_with_backbone_output(
+    def update_phys_with_backbone_output(
         self,
         phys_input: Data,
         backbone_output: Any,

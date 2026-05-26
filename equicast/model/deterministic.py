@@ -31,7 +31,7 @@ class Deterministic(BaseModel):
     def predict(self, phys_input):
         backbone_input = self.data_handler.prepare_backbone_input(phys_input)
         backbone_output = self.backbone(backbone_input)
-        return self.data_handler.update_state_with_backbone_output(backbone_input, backbone_output)
+        return self.data_handler.update_phys_with_backbone_output(backbone_input, backbone_output)
 
     def training_step(self, batch, _):
         backbone_input, backbone_target = self.data_handler.prepare_training_batch(batch)
@@ -52,14 +52,14 @@ class Deterministic(BaseModel):
 
         total_loss = 0.0
         for i in range(n_rollout_steps):
-            target_frame = batch[n_input + i]
+            phys_target = batch[n_input + i]
             backbone_input = self.data_handler.prepare_backbone_input(window)
             backbone_output = self.backbone(backbone_input)
-            backbone_target = self.data_handler.prepare_backbone_target(target_frame)
+            backbone_target = self.data_handler.prepare_backbone_target(phys_target)
             total_loss = total_loss + self.loss_fn(backbone_output, backbone_target)
 
             with torch.no_grad():
-                next_state = self.data_handler.update_state_with_backbone_output(target_frame, backbone_output)
+                next_state = self.data_handler.update_phys_with_backbone_output(phys_target, backbone_output)
 
             window = window[1:] + [next_state] if n_input > 1 else next_state
 
