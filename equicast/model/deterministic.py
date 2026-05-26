@@ -45,12 +45,38 @@ class Deterministic(BaseModel):
 
         return loss
 
+    def rollout_training_step(self, batch, n_rollout_steps: int):
+        """Multi-step autoregressive training. batch must have n_input_frames + n_rollout_steps frames."""
+        n_input = getattr(self.data_handler, "n_input_frames", 1)
+        window = batch[:n_input] if n_input > 1 else batch[0]
+
+        total_loss = 0.0
+        for i in range(n_rollout_steps):
+            target_frame = batch[n_input + i]
+            backbone_input = self.data_handler.prepare_backbone_input(window)
+            backbone_output = self.backbone(backbone_input)
+            backbone_target = self.data_handler.prepare_backbone_target(target_frame)
+            total_loss = total_loss + self.loss_fn(backbone_output, backbone_target)
+
+            with torch.no_grad():
+                next_state = self.data_handler.update_state_with_backbone_output(target_frame, backbone_output)
+
+            window = window[1:] + [next_state] if n_input > 1 else next_state
+
+        return total_loss / n_rollout_steps
+
     def validation_step(self, batch, _):
         backbone_input, backbone_target = self.data_handler.prepare_training_batch(batch)
         backbone_output = self.backbone(backbone_input)
         loss = self.loss_fn(backbone_output, backbone_target)
 
         self.log(
-            "val/loss", loss, logger=True, prog_bar=False, on_step=False, on_epoch=True, batch_size=backbone_input.num_graphs
+            "val/loss",
+            loss,
+            logger=True,
+            prog_bar=False,
+            on_step=False,
+            on_epoch=True,
+            batch_size=backbone_input.num_graphs,
         )
         return loss
