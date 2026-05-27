@@ -58,8 +58,7 @@ class Deterministic(BaseModel):
             backbone_target = self.data_handler.prepare_backbone_target(phys_target)
             total_loss = total_loss + self.loss_fn(backbone_output, backbone_target)
 
-            with torch.no_grad():
-                next_state = self.data_handler.update_phys_with_backbone_output(phys_target, backbone_output)
+            next_state = self.data_handler.update_phys_with_backbone_output(phys_target, backbone_output)
 
             window = window[1:] + [next_state] if n_input > 1 else next_state
 
