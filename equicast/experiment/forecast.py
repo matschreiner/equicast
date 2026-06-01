@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from equicast.data.data_handler import BaseDataHandler
@@ -16,7 +17,8 @@ class ForecastConfig(ExperimentConfig):
     output_dir: str = "forecasts"
 
     def run(self):
-        output_dir = f"{self.output_dir}/{self.model_id}"
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M")
+        output_dir = f"{self.output_dir}/{timestamp}_{self.model_id}"
         forecast = self.forecaster.forecast(timeseries=self.input_timeseries)
 
         forecast_path = os.path.join(output_dir, "forecast.zarr")
