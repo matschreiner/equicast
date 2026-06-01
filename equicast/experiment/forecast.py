@@ -1,5 +1,6 @@
+import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
@@ -10,21 +11,21 @@ from equicast.forecaster import Forecaster
 class ForecastConfig(ExperimentConfig):
     forecaster: Forecaster
     input_timeseries: list[Any]
-    target_timeseries: list[Any]
     data_handler: BaseDataHandler
     model_id: str = ""
     experiment_name: str = "forecast"
     output_dir: str = "forecasts"
+    meta: dict = field(default_factory=dict)
 
     def run(self):
         timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M")
-        output_dir = f"{self.output_dir}/{timestamp}_{self.model_id}"
+        output_dir = f"{self.output_dir}/{self.model_id}/{timestamp}"
+        os.makedirs(output_dir, exist_ok=True)
         forecast = self.forecaster.forecast(timeseries=self.input_timeseries)
 
-        forecast_path = os.path.join(output_dir, "forecast.zarr")
-        target_path = os.path.join(output_dir, "target_forecast.zarr")
-        initial_path = os.path.join(output_dir, "initial_state.zarr")
+        self.data_handler.outputs_to_zarr(forecast, os.path.join(output_dir, "forecast.zarr"))
+        self.data_handler.outputs_to_zarr([self.input_timeseries[0]], os.path.join(output_dir, "initial_state.zarr"))
 
-        self.data_handler.outputs_to_zarr(forecast, forecast_path)
-        self.data_handler.outputs_to_zarr(self.target_timeseries, target_path)
-        self.data_handler.outputs_to_zarr([self.input_timeseries[0]], initial_path)
+        meta = {**self.meta, "created_at": timestamp}
+        with open(os.path.join(output_dir, "forecast.json"), "w") as f:
+            json.dump(meta, f, indent=2)
