@@ -34,10 +34,16 @@ def build_forecast_config(cfg: DictConfig) -> ForecastConfig:
     return ForecastConfig(
         forecaster=Forecaster(model=model),
         input_timeseries=timeseries,
-        target_timeseries=timeseries[n_input:],
         data_handler=data_handler,
         model_id=run_id,
         output_dir=f"{experiment_dir}/forecasts",
+        meta={
+            "model_id": run_id,
+            "ckpt_path": cfg.ckpt_path,
+            "dataset": cfg.data.dataset_path,
+            "start_idx": start_idx,
+            "n_steps": n_steps,
+        },
     )
 
 
