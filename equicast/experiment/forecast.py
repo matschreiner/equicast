@@ -7,6 +7,8 @@ from typing import Any
 from equicast.data.data_handler import BaseDataHandler
 from equicast.experiment.config import ExperimentConfig
 from equicast.forecaster import Forecaster
+
+
 @dataclass
 class ForecastConfig(ExperimentConfig):
     forecaster: Forecaster
@@ -15,17 +17,20 @@ class ForecastConfig(ExperimentConfig):
     model_id: str = ""
     experiment_name: str = "forecast"
     output_dir: str = "forecasts"
+    output_name: str = ""
     meta: dict = field(default_factory=dict)
 
     def run(self):
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M")
-        output_dir = f"{self.output_dir}/{self.model_id}/{timestamp}"
+        name = self.output_name or datetime.now().strftime("%Y-%m-%d_%H:%M")
+        output_dir = f"{self.output_dir}/{self.model_id}/{name}"
         os.makedirs(output_dir, exist_ok=True)
+
+        start_idx = self.meta.get("start_idx", 0)
+        prefix = f"forecast_{start_idx:04d}" if self.meta.get("batch") else "forecast"
+
         forecast = self.forecaster.forecast(timeseries=self.input_timeseries)
+        self.data_handler.outputs_to_zarr(forecast, os.path.join(output_dir, f"{prefix}.zarr"))
 
-        self.data_handler.outputs_to_zarr(forecast, os.path.join(output_dir, "forecast.zarr"))
-        self.data_handler.outputs_to_zarr([self.input_timeseries[0]], os.path.join(output_dir, "initial_state.zarr"))
-
-        meta = {**self.meta, "created_at": timestamp}
-        with open(os.path.join(output_dir, "forecast.json"), "w") as f:
+        meta = {**self.meta, "output_dir": output_dir}
+        with open(os.path.join(output_dir, f"{prefix}.json"), "w") as f:
             json.dump(meta, f, indent=2)
