@@ -31,8 +31,7 @@ class BaseModel(pl.LightningModule):
         self.metrics_tracker = metrics_tracker
 
     @abstractmethod
-    def training_step(self, batch, batch_idx):
-        ...
+    def training_step(self, batch, batch_idx): ...
 
     @abstractmethod
     def predict(self, input_):
@@ -98,6 +97,7 @@ class BaseModel(pl.LightningModule):
 def ignore_module_warning(*attr_names):
     pattern = "|".join(attr_names)
     import warnings
+
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore",
