@@ -1,0 +1,12 @@
+# @package _global_
+defaults:
+  - override /data: o96
+  - override /experiment: forecast
+
+ckpt_path: experiments/07_painn_big/mlflow/763936207679847620/f1b9b5c45d2b4514ba192e4846284713/artifacts/checkpoints/last.ckpt
+
+data:
+  dataset_path: storage/o96-test-dec2024.zarr
+
+forecast:
+  n_steps: 40

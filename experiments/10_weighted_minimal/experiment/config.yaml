@@ -1,0 +1,44 @@
+# @package _global_
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_minimal
+  - override /model/data_handler: multiframe
+
+model:
+  data_handler:
+    n_input_frames: 2
+  loss:
+    _target_: equicast.model.losses.WeightedEquivariantMSELoss
+    variable_weights:
+      z: 12.0
+      t: 6.0
+      sp: 10.0
+      q: 0.6
+      tp: 0.025
+      cp: 0.0025
+
+data:
+  dataset:
+    no_frames: 3
+  dataloader:
+    num_workers: 0
+    prefetch_factor: ~
+    persistent_workers: false
+
+rollout:
+  n_steps: 2
+
+optimization:
+  optimizer:
+    lr: 1.0e-3
+
+logger:
+  tracking_uri: experiments/10_weighted_minimal/mlflow
+  experiment_name: weighted_minimal
+
+trainer:
+  max_steps: 5
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+      phase1_interval: 1
+      save_last: true

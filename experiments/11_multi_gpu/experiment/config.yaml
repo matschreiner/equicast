@@ -1,0 +1,58 @@
+# @package _global_
+# Single-GPU baseline with gradient checkpointing.
+# Recomputes activations of each PaiNNBlock during backward — uses ~30% more compute
+# but reduces activation memory roughly proportional to number of blocks.
+# Use: python scripts/train.py --config-dir experiments/11_multi_gpu experiment=config
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_big
+  - override /model/data_handler: multiframe
+  - override /optimization/scheduler: cosine
+
+model:
+  backbone:
+    gradient_checkpointing: true
+    edges:
+      - [data, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, data]
+  data_handler:
+    n_input_frames: 2
+
+data:
+  dataset:
+    no_frames: 3
+  dataloader:
+    batch_size: 1
+
+optimization:
+  optimizer:
+    lr: 1.0e-3
+  scheduler:
+    warmup_steps: 5000
+    total_steps: 260000
+
+logger:
+  tracking_uri: experiments/11_multi_gpu/mlflow
+  experiment_name: multi_gpu_grad_ckpt
+
+trainer:
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+    - _target_: equicast.callbacks.step_timer.StepTimer
+    - _target_: equicast.callbacks.memory_monitor.MemoryMonitor

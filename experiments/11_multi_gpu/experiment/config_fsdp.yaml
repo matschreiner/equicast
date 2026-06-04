@@ -1,0 +1,76 @@
+# @package _global_
+# Multi-GPU training with FSDP — shards parameters + gradients + optimizer states across GPUs.
+# Each GPU only holds a fraction of the model, so memory per GPU scales as 1/N_gpus.
+# Slower than DDP due to communication overhead, but allows larger models or more GPUs.
+#
+# auto_wrap_policy wraps PaiNNBlock — one shard per message-passing block.
+# activation_checkpointing_policy recomputes forward pass of each block during backward,
+# further reducing activation memory at the cost of ~30% extra compute.
+#
+# Use: python scripts/train.py --config-dir experiments/11_multi_gpu experiment=config_fsdp
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_big
+  - override /model/data_handler: multiframe
+  - override /optimization/scheduler: cosine
+
+model:
+  backbone:
+    edges:
+      - [data, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, data]
+    # FSDP manages memory — disable gradient_checkpointing to avoid double recompute
+    gradient_checkpointing: false
+  data_handler:
+    n_input_frames: 2
+
+data:
+  dataset:
+    no_frames: 3
+  dataloader:
+    batch_size: 1
+
+optimization:
+  optimizer:
+    lr: 1.0e-3
+  scheduler:
+    warmup_steps: 5000
+    total_steps: 260000
+
+logger:
+  tracking_uri: experiments/11_multi_gpu/mlflow
+  experiment_name: multi_gpu_fsdp
+
+trainer:
+  strategy:
+    _target_: lightning.pytorch.strategies.FSDPStrategy
+    auto_wrap_policy:
+      _target_: torch.distributed.fsdp.wrap.ModuleWrapPolicy
+      module_classes:
+        - equicast.model.backbones.painn.PaiNNBlock
+    activation_checkpointing_policy:
+      _target_: torch.distributed.fsdp.wrap.ModuleWrapPolicy
+      module_classes:
+        - equicast.model.backbones.painn.PaiNNBlock
+    cpu_offload: false
+  devices: auto
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+    - _target_: equicast.callbacks.step_timer.StepTimer
+    - _target_: equicast.callbacks.memory_monitor.MemoryMonitor

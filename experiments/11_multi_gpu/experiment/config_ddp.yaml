@@ -1,0 +1,14 @@
+# @package _global_
+# Multi-GPU DDP — one full model replica per GPU, gradients averaged across GPUs.
+# Each GPU still needs to hold the full model + activations.
+# Use: python scripts/train.py --config-dir experiments/11_multi_gpu experiment=config_ddp
+defaults:
+  - config
+  - _self_
+
+logger:
+  experiment_name: multi_gpu_ddp
+
+trainer:
+  strategy: ddp
+  devices: auto
