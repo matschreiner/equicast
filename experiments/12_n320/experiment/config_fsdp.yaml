@@ -1,0 +1,34 @@
+# @package _global_
+# N320 training with FSDP across 2 GPUs.
+# FSDP shards model parameters + gradients + optimizer states across GPUs,
+# so each GPU holds only 1/N of the model — enables training models that
+# don't fit on a single GPU.
+#
+# activation_checkpointing_policy recomputes PaiNNBlock activations during
+# backward — disable gradient_checkpointing to avoid double recompute.
+#
+# Use: python scripts/train.py --config-dir experiments/12_n320 experiment=config_fsdp
+defaults:
+  - config
+  - _self_
+
+model:
+  backbone:
+    gradient_checkpointing: false
+
+logger:
+  experiment_name: n320_fsdp
+
+trainer:
+  strategy:
+    _target_: lightning.pytorch.strategies.FSDPStrategy
+    auto_wrap_policy:
+      _target_: torch.distributed.fsdp.wrap.ModuleWrapPolicy
+      module_classes:
+        - equicast.model.backbones.painn.PaiNNBlock
+    activation_checkpointing_policy:
+      _target_: torch.distributed.fsdp.wrap.ModuleWrapPolicy
+      module_classes:
+        - equicast.model.backbones.painn.PaiNNBlock
+    cpu_offload: false
+  devices: auto

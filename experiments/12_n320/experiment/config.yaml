@@ -1,0 +1,40 @@
+# @package _global_
+# Single-GPU N320 training with gradient checkpointing.
+# N320 has ~163k nodes vs O96's ~9k — much larger graph.
+# Gradient checkpointing recomputes PaiNNBlock activations during backward,
+# trading ~30% compute for significantly reduced activation memory.
+#
+# Use: python scripts/train.py --config-dir experiments/12_n320 experiment=config
+defaults:
+  - override /data: n320
+  - override /model/backbone: painn
+  - _self_
+
+model:
+  backbone:
+    hidden_dim: 64
+    edges:
+      - [data, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, data]
+
+data:
+  dataloader:
+    batch_size: 1
+
+optimization:
+  optimizer:
+    lr: 1.0e-3
+  scheduler:
+    warmup_steps: 5000
+    total_steps: 260000
+
+logger:
+  tracking_uri: experiments/12_n320/mlflow
+  experiment_name: n320
+
+trainer:
+  callbacks:
+    - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
+    - _target_: equicast.callbacks.step_timer.StepTimer
+    - _target_: equicast.callbacks.memory_monitor.MemoryMonitor
