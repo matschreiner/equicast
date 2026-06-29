@@ -8,6 +8,7 @@
 defaults:
   - override /data: n320
   - override /model/backbone: painn
+  - override /optimization/scheduler: cosine
   - _self_
 
 model:
@@ -26,8 +27,8 @@ optimization:
   optimizer:
     lr: 1.0e-3
   scheduler:
-    warmup_steps: 5000
-    total_steps: 260000
+    warmup_steps: 1000
+    total_steps: 100000
 
 logger:
   tracking_uri: experiments/12_n320/mlflow
