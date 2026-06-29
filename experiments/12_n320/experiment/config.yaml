@@ -11,9 +11,6 @@ defaults:
   - override /optimization/scheduler: cosine
   - _self_
 
-ckpt_path: experiments/07_painn_big/mlflow/763936207679847620/f1b9b5c45d2b4514ba192e4846284713/artifacts/checkpoints/last.ckpt
-weights_only: true
-
 model:
   backbone:
     edges:
