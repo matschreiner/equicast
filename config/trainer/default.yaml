@@ -5,3 +5,4 @@ precision: bf16-mixed
 callbacks:
   - _target_: equicast.callbacks.checkpoint.TimeDeltaCheckpoint
   - _target_: equicast.callbacks.step_timer.StepTimer
+  - _target_: equicast.callbacks.memory_monitor.MemoryMonitor
