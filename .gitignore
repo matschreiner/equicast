@@ -25,3 +25,4 @@ anemoi-core
 config_gin
 samples
 commands
+*.zarr
