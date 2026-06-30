@@ -23,14 +23,15 @@ class ForecastConfig(ExperimentConfig):
     def run(self):
         name = self.output_name or datetime.now().strftime("%Y-%m-%d_%H:%M")
         output_dir = f"{self.output_dir}/{self.model_id}/{name}"
-        os.makedirs(output_dir, exist_ok=True)
+        forecasts_dir = os.path.join(output_dir, "forecasts")
+        os.makedirs(forecasts_dir, exist_ok=True)
 
         start_idx = self.meta.get("start_idx", 0)
         prefix = f"forecast_{start_idx:04d}" if self.meta.get("batch") else "forecast"
 
         forecast = self.forecaster.forecast(timeseries=self.input_timeseries)
-        self.data_handler.outputs_to_zarr(forecast, os.path.join(output_dir, f"{prefix}.zarr"))
+        self.data_handler.outputs_to_zarr(forecast, os.path.join(forecasts_dir, f"{prefix}.zarr"))
 
         meta = {**self.meta, "output_dir": output_dir}
-        with open(os.path.join(output_dir, f"{prefix}.json"), "w") as f:
+        with open(os.path.join(forecasts_dir, f"{prefix}.json"), "w") as f:
             json.dump(meta, f, indent=2)
