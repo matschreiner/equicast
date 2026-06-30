@@ -4,7 +4,6 @@ import warnings
 
 import torch
 from torch import nn
-from torch.utils.checkpoint import checkpoint
 from torch_geometric.utils import scatter
 
 from equicast.model.layers.equivariant_conv import EquivariantLinear
@@ -49,12 +48,16 @@ class PaiNNMessagePassing(nn.Module):
         edge_index: torch.Tensor,
         edge_dirs: torch.Tensor,
         positional_embedding: torch.Tensor,
+        src_scalar: torch.Tensor | None = None,
+        src_vector: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         src, dst = edge_index
         num_nodes = scalar.size(0)
 
-        scalar_j = scalar[src]  # [edges, hidden_dim]
-        vector_j = vector[src]  # [edges, hidden_dim, 2]
+        _s = src_scalar if src_scalar is not None else scalar
+        _v = src_vector if src_vector is not None else vector
+        scalar_j = _s[src]  # [edges, hidden_dim]
+        vector_j = _v[src]  # [edges, hidden_dim, 2]
         edge_dirs = edge_dirs.unsqueeze(-2).expand(-1, self.hidden_dim, -1)
         # [edges, hidden_dim, 2]
 
@@ -120,12 +123,6 @@ class PaiNNBlock(nn.Module):
         return self.norm2(scalar + d_scalar, vector + d_vector)
 
 
-def maybe_checkpoint(fn, enabled, *args):
-    if enabled:
-        return checkpoint(fn, *args, use_reentrant=False)
-    return fn(*args)
-
-
 class PaiNN(nn.Module):
     def __init__(
         self,
@@ -137,12 +134,13 @@ class PaiNN(nn.Module):
         input_nodes: str = "data",
         hidden_dim: int = 64,
         aggr: str = "mean",
-        gradient_checkpointing: bool = False,
+        use_node_sharding: bool = False,
     ):
         super().__init__()
         self.edges = [tuple(e) for e in edges]
         self.input_nodes = input_nodes
-        self.gradient_checkpointing = gradient_checkpointing
+        self.use_node_sharding = use_node_sharding
+        self._sharder = None  # created lazily on first distributed forward
 
         self.embed_scalar_in = MLP(in_dim=in_dim, out_dim=hidden_dim)
         self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=out_dim)
@@ -154,11 +152,25 @@ class PaiNN(nn.Module):
     def forward(self, graph) -> dict[str, torch.Tensor]:
         scalar = self.embed_scalar_in(graph[self.input_nodes].input_scalar)
         vector = self.embed_vector_in(graph[self.input_nodes].input_vector)
-
-        for block, edge in zip(self.blocks, self.edges):
-            scalar, vector = maybe_checkpoint(block, self.gradient_checkpointing, scalar, vector, graph[edge])
-
+        scalar, vector = self._run_blocks(scalar, vector, graph)
         scalar_out = self.embed_scalar_out(scalar) + graph[self.input_nodes].residual_scalar
         vector_out = self.embed_vector_out(vector) + graph[self.input_nodes].residual_vector
-
         return {"scalar": scalar_out, "vector": vector_out}
+
+    def _run_blocks(self, scalar, vector, graph):
+        sharder = self._get_sharder()
+        if sharder:
+            for block, edge in zip(self.blocks, self.edges):
+                scalar, vector = sharder.run_block(block, scalar, vector, edge, graph[edge])
+            scalar, vector = sharder.gather(scalar, vector)
+        else:
+            for block, edge in zip(self.blocks, self.edges):
+                scalar, vector = block(scalar, vector, graph[edge])
+        return scalar, vector
+
+    def _get_sharder(self):
+        if self.use_node_sharding and self._sharder is None:
+            from equicast.utils.sharder import NodeSharder
+
+            self._sharder = NodeSharder.create()
+        return self._sharder

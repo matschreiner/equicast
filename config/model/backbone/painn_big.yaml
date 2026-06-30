@@ -10,4 +10,3 @@ edges:
   - [hidden, to, data]
 input_nodes: data
 hidden_dim: 512
-gradient_checkpointing: true

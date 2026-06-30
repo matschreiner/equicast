@@ -35,8 +35,6 @@ model:
       - [hidden, to, hidden]
       - [hidden, to, hidden]
       - [hidden, to, data]
-    # FSDP manages memory — disable gradient_checkpointing to avoid double recompute
-    gradient_checkpointing: false
   data_handler:
     n_input_frames: 2
 

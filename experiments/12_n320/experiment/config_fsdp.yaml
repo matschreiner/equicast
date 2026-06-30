@@ -8,10 +8,6 @@ defaults:
   - config
   - _self_
 
-model:
-  backbone:
-    gradient_checkpointing: false  # FSDP handles activation checkpointing — avoid double recompute
-
 logger:
   experiment_name: n320_fsdp
 

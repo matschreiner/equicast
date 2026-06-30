@@ -1,0 +1,20 @@
+# @package _global_
+# N320 training with hidden-node sharding across 2 GPUs.
+#
+# Each GPU processes N_hidden/2 destination nodes in the hidden→hidden blocks.
+# One all-gather per block lets each GPU index src features globally.
+# All distributed logic lives in NodeSharder (equicast/utils/sharder.py).
+#
+# Use: python scripts/train.py --config-dir experiments/12_n320 experiment=config_node_shard
+defaults:
+  - config
+  - _self_
+
+model:
+  backbone:
+    use_node_sharding: true
+  model:
+    compile_backbone: false  # dist.all_gather_into_tensor inside compiled fn needs care
+
+logger:
+  experiment_name: n320_node_shard
