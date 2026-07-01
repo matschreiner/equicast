@@ -16,7 +16,7 @@ trainer:
 
 model:
   backbone:
-    hidden_dim: 100
+    hidden_dim: 128
     edges:
       - [data, to, hidden]
       - [hidden, to, hidden]
