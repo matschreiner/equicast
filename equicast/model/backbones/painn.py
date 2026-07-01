@@ -140,7 +140,12 @@ class PaiNN(nn.Module):
         self.edges = [tuple(e) for e in edges]
         self.input_nodes = input_nodes
         self.use_node_sharding = use_node_sharding
-        self._sharder = None  # created lazily on first distributed forward
+        self._sharder = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['_sharder']
+        return state
 
         self.embed_scalar_in = MLP(in_dim=in_dim, out_dim=hidden_dim)
         self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=out_dim)
