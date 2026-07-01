@@ -11,8 +11,12 @@ defaults:
   - override /optimization/scheduler: cosine
   - _self_
 
+trainer:
+  max_steps: 3
+
 model:
   backbone:
+    hidden_dim: 128
     edges:
       - [data, to, hidden]
       - [hidden, to, hidden]
