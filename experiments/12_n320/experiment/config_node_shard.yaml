@@ -10,6 +10,9 @@ defaults:
   - config
   - _self_
 
+trainer:
+  devices: 2
+
 model:
   backbone:
     use_node_sharding: true

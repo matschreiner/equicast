@@ -174,8 +174,8 @@ class PaiNN(nn.Module):
         return scalar, vector
 
     def _get_sharder(self):
-        if self.use_node_sharding and self._sharder is None:
+        if self.use_node_sharding and getattr(self, '_sharder', None) is None:
             from equicast.utils.sharder import NodeSharder
 
             self._sharder = NodeSharder.create()
-        return self._sharder
+        return getattr(self, '_sharder', None)
