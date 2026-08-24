@@ -141,18 +141,16 @@ class PaiNN(nn.Module):
         self.input_nodes = input_nodes
         self.use_node_sharding = use_node_sharding
         self._sharder = None
+        self.embed_scalar_in = MLP(in_dim=in_dim, out_dim=hidden_dim)
+        self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=out_dim)
+        self.embed_vector_in = EquivariantLinear(in_vector_dim, hidden_dim)
+        self.embed_vector_out = EquivariantLinear(hidden_dim, out_vector_dim)
+        self.blocks = nn.ModuleList([PaiNNBlock(hidden_dim, aggr=aggr) for _ in edges])
 
     def __getstate__(self):
         state = self.__dict__.copy()
         del state['_sharder']
         return state
-
-        self.embed_scalar_in = MLP(in_dim=in_dim, out_dim=hidden_dim)
-        self.embed_scalar_out = MLP(in_dim=hidden_dim, out_dim=out_dim)
-        self.embed_vector_in = EquivariantLinear(in_vector_dim, hidden_dim)
-        self.embed_vector_out = EquivariantLinear(hidden_dim, out_vector_dim)
-
-        self.blocks = nn.ModuleList([PaiNNBlock(hidden_dim, aggr=aggr) for _ in edges])
 
     def forward(self, graph) -> dict[str, torch.Tensor]:
         scalar = self.embed_scalar_in(graph[self.input_nodes].input_scalar)
