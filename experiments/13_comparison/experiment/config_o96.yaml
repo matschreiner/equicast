@@ -1,0 +1,54 @@
+# @package _global_
+# O96 comparison run — hidden_dim=128, 18 blocks, multiframe (2 input frames), single GPU.
+# Run: python scripts/train.py --config-dir experiments/13_comparison experiment=config_o96
+defaults:
+  - override /data: o96
+  - override /model/backbone: painn_big
+  - override /model/data_handler: multiframe
+  - override /optimization/scheduler: cosine
+  - _self_
+
+model:
+  backbone:
+    hidden_dim: 128
+    edges:
+      - [data, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, hidden]
+      - [hidden, to, data]
+  data_handler:
+    n_input_frames: 2
+
+trainer:
+  max_steps: 200000
+
+data:
+  dataset:
+    no_frames: 3
+  dataloader:
+    batch_size: 1
+
+optimization:
+  optimizer:
+    lr: 1.0e-3
+  scheduler:
+    warmup_steps: 5000
+    total_steps: 200000
+
+logger:
+  tracking_uri: experiments/13_comparison/mlflow
+  experiment_name: o96_128
