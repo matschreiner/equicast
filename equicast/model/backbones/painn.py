@@ -149,8 +149,12 @@ class PaiNN(nn.Module):
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        del state['_sharder']
+        state.pop('_sharder', None)
         return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._sharder = None
 
     def forward(self, graph) -> dict[str, torch.Tensor]:
         scalar = self.embed_scalar_in(graph[self.input_nodes].input_scalar)
